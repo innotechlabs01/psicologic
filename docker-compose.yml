@@ -1,0 +1,59 @@
+version: '3.7'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    environment:
+      - VIRTUAL_HOST=example.com
+      - LETSENCRYPT_HOST=example.com
+      - LETSENCRYPT_EMAIL=your-email@example.com
+    networks:
+      - proxy-net
+    volumes:
+      - ./database.sqlite:/app/database.sqlite
+    restart: always
+
+  reverse-proxy:
+    image: jwilder/nginx-proxy:latest
+    container_name: reverse-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
+    networks:
+      - proxy-net
+    restart: always
+
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion:latest
+    container_name: letsencrypt-helper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - dhparam:/etc/nginx/dhparam
+    environment:
+      - NGINX_PROXY_CONTAINER=reverse-proxy
+    depends_on:
+      - reverse-proxy
+    networks:
+      - proxy-net
+    restart: always
+
+volumes:
+  certs:
+  vhost:
+  html:
+  dhparam:
+
+networks:
+  proxy-net:
+    external: true

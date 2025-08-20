@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Personalizado</title>
+  <link href="/css/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="flex h-screen">
+    <!-- Menú lateral -->
+    <div class="w-64 bg-blue-800 text-white flex flex-col">
+      <div class="p-4 text-2xl font-bold">Dashboard</div>
+      <nav id="sidebar-menu" class="flex-1">
+        <ul id="menu-items"></ul>
+      </nav>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="flex-1 p-8 overflow-auto">
+      <h1 class="text-3xl font-bold mb-4">Bienvenido, <span id="userEmail">Usuario</span></h1>
+      <div id="userContent" class="bg-white p-6 rounded-lg shadow-md">
+        <!-- Sección por defecto -->
+        <div id="game1" class="section">
+          <h2 class="text-2xl font-semibold mb-4">Ahorcado</h2>
+          <p>Juega al clásico juego de ahorcado. Adivina la palabra letra por letra antes de que se agoten tus intentos.</p>
+          <button id="playAhorcado" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Jugar</button>
+        </div>
+
+        <!-- Sección Trivia -->
+        <div id="game2" class="section hidden">
+          <h2 class="text-2xl font-semibold mb-4">Trivia</h2>
+          <p>Pon a prueba tus conocimientos con preguntas de cultura general.</p>
+          <button id="playTrivia" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Jugar</button>
+        </div>
+
+        <!-- Sección Memoria -->
+        <div id="game3" class="section hidden">
+          <h2 class="text-2xl font-semibold mb-4">Memoria</h2>
+          <p>Encuentra las parejas de cartas en el menor tiempo posible.</p>
+          <button id="playMemoria" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Jugar</button>
+        </div>
+
+        <!-- Sección Métodos de Pago -->
+         <div id="payment" class="section hidden">
+          <div id="payments-section"></div>
+         </div>
+
+        <!-- Sección Asistencia -->
+        <div id="assistance" class="section hidden">
+          <h2 class="text-2xl font-semibold mb-4">Asistencia</h2>
+          <p>Contacta con soporte para cualquier duda o problema.</p>
+          <div class="mt-4">
+            <textarea id="supportMessage" placeholder="Escribe tu mensaje..." class="border p-2 rounded w-full h-32 mb-2"></textarea>
+            <button id="sendSupportMessage" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/user_page.js"></script>
+</body>
+</html>

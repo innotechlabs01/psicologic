@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrativo</title>
+  <link href="/css/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+  <!-- Contenedor para el navbar -->
+  <div id="navbar-container"></div>
+
+  <!-- Mensaje de error para el navbar -->
+  <div id="navbar-error" class="hidden text-red-500 text-center p-4">Error al cargar el navbar. Verifica que navbar.html esté disponible.</div>
+ 
+  <div class="container mx-auto p-4">
+    <!-- Header -->
+    <h1 class="text-3xl font-bold text-center mb-6">Configuraciones</h1>
+
+    <!-- Sección Configuraciones -->
+      <div class="flex border-b border-gray-200 mb-4">
+        <button id="tab-games" class="px-4 py-2 font-semibold text-gray-800 border-b-2 border-blue-500 focus:outline-none">Juegos</button>
+        <button id="tab-payments" class="px-4 py-2 font-semibold text-gray-600 hover:text-gray-800 focus:outline-none">Métodos de Pago</button>
+        <button id="tab-modules" class="px-4 py-2 font-semibold text-gray-600 hover:text-gray-800 focus:outline-none">Modulos</button>
+      </div>
+      <div id="tab-content-games" class="tab-content">
+        <div class="mb-6">
+          <button onclick="openGameModal()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Agregar Juego</button>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-2">Juegos Existentes</h4>
+          <table class="w-full border-collapse text-sm rounded-lg overflow-hidden">
+            <thead>
+              <tr class="bg-blue-500 text-white">
+                <th class="py-3 px-4 border-b">ID</th>
+                <th class="py-3 px-4 border-b">Nombre</th>
+                <th class="py-3 px-4 border-b">Habilitado</th>
+                <th class="py-3 px-4 border-b">Usuario</th>
+                <th class="py-3 px-4 border-b">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="gamesTable" class="text-gray-800"></tbody>
+          </table>
+          <p id="noGames" class="text-gray-600 text-sm mt-4 hidden">No hay juegos registrados.</p>
+        </div>
+      </div>
+      <div id="tab-content-payments" class="tab-content hidden">
+        <div class="mb-6">
+          <h4 class="text-lg font-semibold mb-2">Agregar/Editar Método de Pago</h4>
+          <input id="payment-id" type="hidden">
+          <input id="payment-type" type="text" placeholder="Tipo (ej. Visa, PayPal)" class="border p-2 rounded w-full mb-2">
+          <input id="payment-details" type="text" placeholder="Detalles (ej. ****1234)" class="border p-2 rounded w-full mb-2">
+          <select id="payment-user" class="border p-2 rounded w-full mb-2">
+            <option value="">Seleccionar usuario</option>
+          </select>
+          <button onclick="savePaymentMethod()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Guardar</button>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-2">Métodos de Pago Existentes</h4>
+          <table class="w-full border-collapse text-sm rounded-lg overflow-hidden">
+            <thead>
+              <tr class="bg-blue-500 text-white">
+                <th class="py-3 px-4 border-b">Tipo</th>
+                <th class="py-3 px-4 border-b">Detalles</th>
+                <th class="py-3 px-4 border-b">Usuario</th>
+                <th class="py-3 px-4 border-b">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="paymentMethodsTable" class="text-gray-800"></tbody>
+          </table>
+          <p id="noPayments" class="text-gray-600 text-sm mt-4 hidden">No hay métodos de pago registrados.</p>
+        </div>
+      </div>
+      <div id="tab-content-modules" class="tab-content hidden">
+        <div class="mb-6">
+          <button onclick="openModuleModal()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Agregar Modulo</button>
+        </div>
+        <div>
+          <h4 class="text-lg font-semibold mb-2">Modulos Existentes</h4>
+          <table class="w-full border-collapse text-sm rounded-lg overflow-hidden">
+            <thead>
+              <tr class="bg-blue-500 text-white">
+                <th class="py-3 px-4 border-b">ID</th>
+                <th class="py-3 px-4 border-b">Nombre</th>
+                <th class="py-3 px-4 border-b">Accesible</th>
+                <th class="py-3 px-4 border-b">Juegos</th>
+                <th class="py-3 px-4 border-b">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="modulesTable" class="text-gray-800"></tbody>
+          </table>
+          <p id="noModules" class="text-gray-600 text-sm mt-4 hidden">No hay modulos registrados.</p>
+        </div>
+      </div>
+      <p id="tabs-error" class="text-red-500 text-sm mt-4 hidden">Error al cargar las pestañas. Verifica la consola.</p>
+
+
+    <!-- Sección Gestión de Usuarios -->
+    <div id="gestion-usuarios" class="hidden w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8 transition-opacity duration-300">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Gestión de Usuarios</h2>
+        <button id="main-logoutButton" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition" onclick="logout()">Cerrar Sesión</button>
+      </div>
+      <div id="tableContainer">
+        <table class="w-full border-collapse text-sm">
+          <thead>
+            <tr class="bg-blue-500 text-white">
+              <th class="p-3 border">Email</th>
+              <th class="p-3 border">Enlace</th>
+              <th class="p-3 border">Soporte Estable</th>
+              <th class="p-3 border">Suspendido</th>
+              <th class="p-3 border">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersTable" class="text-gray-800"></tbody>
+        </table>
+        <p id="tableError" class="text-red-500 text-sm mt-4 hidden">No se pudieron cargar los usuarios.</p>
+        <p id="noUsers" class="text-gray-600 text-sm mt-4 hidden">No hay usuarios registrados.</p>
+      </div>
+    </div>
+
+    <!-- Sección Gestión de Módulos (redundante, mantenida por fidelidad al original) -->
+    <div id="gestion-module" class="hidden w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8 transition-opacity duration-300">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Gestión de Modulos</h2>
+      </div>
+      <div>
+        <h4 class="text-lg font-semibold mb-2">Modulos Existentes</h4>
+        <table class="w-full border-collapse text-sm">
+          <thead>
+            <tr class="bg-blue-500 text-white">
+              <th class="p-3 border">ID</th>
+              <th class="p-3 border">Nombre</th>
+              <th class="p-3 border">Modules</th>
+              <th class="p-3 border">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="modulesTable" class="text-gray-800"></tbody>
+        </table>
+        <p id="noModules" class="text-gray-600 text-sm mt-4 hidden">No hay modulos registrados.</p>
+      </div>
+    </div>
+
+    <!-- Modal para editar usuario -->
+    <div id="editModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 class="text-xl font-bold mb-4">Editar Usuario</h2>
+        <label class="block mb-1">Email (no editable):</label>
+        <input id="edit-email" type="email" disabled class="border p-2 w-full mb-4 rounded bg-gray-100">
+        <label class="block mb-1">Soporte Estable:</label>
+        <input id="edit-support" type="checkbox" class="mb-4">
+        <label class="block mb-1">Suspendido:</label>
+        <input id="edit-suspended" type="checkbox" class="mb-4">
+        <h3 class="font-semibold mb-2">Configurar Acceso a Juegos</h3>
+        <div id="game-access-container" class="space-y-2 max-h-40 overflow-y-auto border p-2 rounded"></div>
+        <div class="mt-6 flex justify-end">
+          <button onclick="closeModal()" class="mr-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+          <button onclick="saveChanges()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Module-->
+    <div id="moduleModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 id="moduleModalTitle" class="text-xl font-bold mb-4">Agregar/Editar Modulo</h2>
+        <div class="mt-4">
+          <label class="block mb-1">Nombre del Modulo:</label>
+          <input id="module-name-modal" type="text" placeholder="Nombre del modulo (ej. Ahorcado)" class="border p-2 w-full mb-4 rounded">
+        </div>
+        <div class="mt-4">
+          <label class="block mb-1">Juegos Disponibles:</label>
+          <div id="module-games-tree" class="space-y-2 max-h-40 overflow-y-auto border p-2 rounded"></div>
+        </div>
+        <div class="mt-4">
+          <label class="block mb-1">Accesible:</label>
+          <input id="module-accessible-modal" type="checkbox" class="mb-4" checked>
+        </div>
+        <div class="mt-4">
+          <label class="block mb-1">ID del Modulo:</label>
+          <input id="module-id-modal" type="text" placeholder="ID del modulo (ej. 1)" class="border p-2 w-full mb-4 rounded">
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button onclick="closeModuleModal()" class="mr-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+          <button onclick="saveModuleModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para agregar/editar juego -->
+    <div id="gameModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 id="gameModalTitle" class="text-xl font-bold mb-4">Agregar/Editar Juego</h2>
+        <label class="block mb-1">Escoja un usuario:</label>
+        <select id="game-user" class="border p-2 rounded w-full my-2">
+          <option value="">Seleccionar usuario</option>
+        </select>
+        <input id="game-id-modal" type="hidden">
+        <label class="block mb-1">Nombre del Juego:</label>
+        <input id="game-name-modal" type="text" placeholder="Nombre del juego (ej. Ahorcado)" class="border p-2 w-full mb-4 rounded">
+        <label class="block mb-1">Habilitado:</label>
+        <input id="game-enabled-modal" type="checkbox" class="mb-4" checked>
+        <div class="mt-4">
+          <h5 class="font-semibold">Juegos Disponibles</h5>
+          <div id="game-games-tree" class="space-y-2 max-h-40 overflow-y-auto border p-2 rounded"></div>
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button onclick="closeGameModal()" class="mr-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+          <button onclick="saveGameModal()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+
+  <script>
+    // Datos simulados
+    let users = [
+      { id: 1, email: 'juan.perez@example.com', link: 'profile/juan', support: true, suspended: false, accessibleGames: ['1', '3'] },
+      { id: 2, email: 'maria.gomez@example.com', link: 'profile/maria', support: false, suspended: true, accessibleGames: ['2'] },
+      { id: 3, email: 'carlos.lopez@example.com', link: 'profile/carlos', support: true, suspended: false, accessibleGames: ['1', '2', '3'] }
+    ];
+
+    let paymentMethods = [
+      { id: 1, type: 'Visa', details: '****1234', userId: 1 },
+      { id: 2, type: 'PayPal', details: 'maria@example.com', userId: 2 }
+    ];
+
+    let games = [
+      { id: '1', name: 'Ahorcado', enabled: true, userId: 1 },
+      { id: '2', name: 'Trivia', enabled: true, userId: 2 },
+      { id: '3', name: 'Memoria', enabled: true, userId: 3 }
+    ];
+
+    let modules = [
+      { id: '1', name: 'Módulo Principal', accessible: true, games: ['1', '2'] },
+      { id: '2', name: 'Módulo Secundario', accessible: false, games: ['3'] }
+    ];
+
+    let currentUserId = null;
+
+    // Inicializar
+    function init() {
+      document.addEventListener('DOMContentLoaded', () => {
+        // Cargar navbar
+        fetch('navbar.html')
+          .then(response => {
+            if (!response.ok) throw new Error('No se pudo cargar navbar.html');
+            return response.text();
+          })
+          .then(data => {
+            document.getElementById('navbar-container').innerHTML = data;
+            const menuToggle = document.getElementById('menu-toggle');
+            if (menuToggle) {
+              menuToggle.addEventListener('click', () => {
+                const mobileMenu = document.getElementById('mobile-menu');
+                if (mobileMenu) mobileMenu.classList.toggle('hidden');
+              });
+            }
+            const configLink = document.querySelector('a[href="#configuraciones"]');
+            if (configLink) {
+              configLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('configuraciones');
+                console.log('Configuraciones clicked');
+              });
+            }
+            const usersLink = document.querySelector('a[href="#gestion-usuarios"]');
+            if (usersLink) {
+              usersLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('gestion-usuarios');
+                console.log('Gestión de Usuarios clicked');
+              });
+            }
+            const modulesLink = document.querySelector('a[href="#gestion-modulos"]');
+            if (modulesLink) {
+              modulesLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection('gestion-module');
+                console.log('Gestión de Modulos clicked');
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error al cargar el navbar:', error);
+            document.getElementById('navbar-error').classList.remove('hidden');
+          });
+
+        // Configurar pestañas
+        const tabGames = document.getElementById('tab-games');
+        const tabPayments = document.getElementById('tab-payments');
+        const tabModules = document.getElementById('tab-modules');
+        const tabsError = document.getElementById('tabs-error');
+        if (tabGames && tabPayments && tabModules) {
+          console.log('Pestañas vinculadas correctamente');
+          tabGames.addEventListener('click', () => {
+            showTab('tab-content-games');
+            tabGames.classList.add('border-blue-500', 'text-gray-800');
+            tabPayments.classList.remove('border-blue-500', 'text-gray-800');
+            tabPayments.classList.add('text-gray-600');
+            tabModules.classList.remove('border-blue-500', 'text-gray-800');
+            tabModules.classList.add('text-gray-600');
+            console.log('Pestaña Juegos activada');
+          });
+          tabPayments.addEventListener('click', () => {
+            showTab('tab-content-payments');
+            tabPayments.classList.add('border-blue-500', 'text-gray-800');
+            tabGames.classList.remove('border-blue-500', 'text-gray-800');
+            tabGames.classList.add('text-gray-600');
+            tabModules.classList.remove('border-blue-500', 'text-gray-800');
+            tabModules.classList.add('text-gray-600');
+            console.log('Pestaña Métodos de Pago activada');
+          });
+          tabModules.addEventListener('click', () => {
+            showTab('tab-content-modules');
+            tabModules.classList.add('border-blue-500', 'text-gray-800');
+            tabGames.classList.remove('border-blue-500', 'text-gray-800');
+            tabGames.classList.add('text-gray-600');
+            tabPayments.classList.remove('border-blue-500', 'text-gray-800');
+            tabPayments.classList.add('text-gray-600');
+            console.log('Pestaña Modulos activada');
+          });
+        } else {
+          console.error('Error: No se encontraron los elementos de las pestañas');
+          if (tabsError) tabsError.classList.remove('hidden');
+        }
+
+        // Cargar datos iniciales
+        loadUsersTable();
+        loadPaymentMethods();
+        loadGamesTable();
+        loadModulesTable();
+        loadUsersInSelect();
+        loadGamesInTree();
+
+        // Mostrar configuraciones por defecto
+        showSection('configuraciones');
+      });
+    }
+    init();
+
+    // Mostrar sección
+    function showSection(id) {
+      const configuraciones = document.getElementById('configuraciones');
+      const gestionUsuarios = document.getElementById('gestion-usuarios');
+      const gestionModule = document.getElementById('gestion-module');
+      if (configuraciones) configuraciones.classList.add('hidden');
+      if (gestionUsuarios) gestionUsuarios.classList.add('hidden');
+      if (gestionModule) gestionModule.classList.add('hidden');
+      const section = document.getElementById(id);
+      if (section) {
+        section.classList.remove('hidden');
+        console.log(`Sección ${id} mostrada`);
+      }
+    }
+
+    // Mostrar pestaña
+    function showTab(id) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+      const tabContent = document.getElementById(id);
+      if (tabContent) tabContent.classList.remove('hidden');
+    }
+
+    // Cargar tabla de usuarios
+    function loadUsersTable() {
+      const tableBody = document.getElementById('adminUsersTable');
+      const noUsers = document.getElementById('noUsers');
+      const tableError = document.getElementById('tableError');
+
+      if (!tableBody || !noUsers || !tableError) return;
+
+      tableBody.innerHTML = '';
+      if (!users || users.length === 0) {
+        noUsers.classList.remove('hidden');
+        tableError.classList.add('hidden');
+        return;
+      }
+
+      noUsers.classList.add('hidden');
+      tableError.classList.add('hidden');
+
+      users.forEach(user => {
+        const row = document.createElement('tr');
+        row.classList.add('hover:bg-gray-50');
+        row.innerHTML = `
+          <td class="p-3 border">${user.email}</td>
+          <td class="p-3 border"><a href="${user.link}" class="text-blue-500 hover:underline">Ver perfil</a></td>
+          <td class="p-3 border">${user.support ? 'Sí' : 'No'}</td>
+          <td class="p-3 border">${user.suspended ? 'Sí' : 'No'}</td>
+          <td class="p-3 border">
+            <button onclick="editUser(${user.id})" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 mr-2">Editar</button>
+            <button onclick="deleteUser(${user.id})" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Eliminar</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Cargar tabla de juegos
+    function loadGamesTable() {
+      const tableBody = document.getElementById('gamesTable');
+      const noGames = document.getElementById('noGames');
+
+      if (!tableBody || !noGames) return;
+
+      tableBody.innerHTML = '';
+      if (!games || games.length === 0) {
+        noGames.classList.remove('hidden');
+        return;
+      }
+
+      noGames.classList.add('hidden');
+
+      games.forEach(game => {
+        const user = users.find(u => u.id === game.userId) || { email: 'Sin asignar' };
+        const row = document.createElement('tr');
+        row.classList.add('hover:bg-gray-50');
+        row.innerHTML = `
+          <td class="p-3 border">${game.id}</td>
+          <td class="p-3 border">${game.name}</td>
+          <td class="p-3 border">${game.enabled ? 'Sí' : 'No'}</td>
+          <td class="p-3 border">${user.email}</td>
+          <td class="p-3 border">
+            <button onclick="editGame('${game.id}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 mr-2">Editar</button>
+            <button onclick="deleteGame('${game.id}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Eliminar</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Cargar tabla de módulos
+    function loadModulesTable() {
+      const tableBody = document.getElementById('modulesTable');
+      const noModules = document.getElementById('noModules');
+
+      if (!tableBody || !noModules) return;
+
+      tableBody.innerHTML = '';
+      if (!modules || modules.length === 0) {
+        noModules.classList.remove('hidden');
+        return;
+      }
+
+      noModules.classList.add('hidden');
+
+      modules.forEach(module => {
+        const moduleGames = module.games.map(gameId => {
+          const game = games.find(g => g.id === gameId);
+          return game ? game.name : 'Desconocido';
+        }).join(', ');
+        const row = document.createElement('tr');
+        row.classList.add('hover:bg-gray-50');
+        row.innerHTML = `
+          <td class="p-3 border">${module.id}</td>
+          <td class="p-3 border">${module.name}</td>
+          <td class="p-3 border">${module.accessible ? 'Sí' : 'No'}</td>
+          <td class="p-3 border">${moduleGames || 'Ninguno'}</td>
+          <td class="p-3 border">
+            <button onclick="editModule('${module.id}')" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 mr-2">Editar</button>
+            <button onclick="deleteModule('${module.id}')" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Eliminar</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Cargar métodos de pago
+    function loadPaymentMethods() {
+      const tableBody = document.getElementById('paymentMethodsTable');
+      const noPayments = document.getElementById('noPayments');
+
+      if (!tableBody || !noPayments) return;
+
+      tableBody.innerHTML = '';
+      if (!paymentMethods || paymentMethods.length === 0) {
+        noPayments.classList.remove('hidden');
+        return;
+      }
+
+      noPayments.classList.add('hidden');
+
+      paymentMethods.forEach(method => {
+        const user = users.find(u => u.id === method.userId) || { email: 'Sin asignar' };
+        const row = document.createElement('tr');
+        row.classList.add('hover:bg-gray-50');
+        row.innerHTML = `
+          <td class="p-3 border">${method.type}</td>
+          <td class="p-3 border">${method.details}</td>
+          <td class="p-3 border">${user.email}</td>
+          <td class="p-3 border">
+            <button onclick="editPaymentMethod(${method.id})" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 mr-2">Editar</button>
+            <button onclick="deletePaymentMethod(${method.id})" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Eliminar</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Cargar usuarios en los selectores
+    function loadUsersInSelect() {
+      const gameSelect = document.getElementById('game-user');
+      const paymentSelect = document.getElementById('payment-user');
+
+      if (gameSelect) {
+        gameSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+        users.forEach(user => {
+          const option = document.createElement('option');
+          option.value = user.id;
+          option.textContent = user.email;
+          gameSelect.appendChild(option);
+        });
+      }
+
+      if (paymentSelect) {
+        paymentSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+        users.forEach(user => {
+          const option = document.createElement('option');
+          option.value = user.id;
+          option.textContent = user.email;
+          paymentSelect.appendChild(option);
+        });
+      }
+    }
+
+    // Cargar juegos en el árbol de selección
+    function loadGamesInTree() {
+      const treeContainer = document.getElementById('game-games-tree');
+      const moduleTreeContainer = document.getElementById('module-games-tree');
+      if (treeContainer) {
+        treeContainer.innerHTML = '';
+        games.forEach(game => {
+          const label = document.createElement('label');
+          label.className = 'flex items-center';
+          label.innerHTML = `
+            <input type="checkbox" class="mr-2 game-checkbox" data-game-id="${game.id}">
+            ${game.name}
+          `;
+          treeContainer.appendChild(label);
+        });
+      }
+      if (moduleTreeContainer) {
+        moduleTreeContainer.innerHTML = '';
+        games.forEach(game => {
+          const label = document.createElement('label');
+          label.className = 'flex items-center';
+          label.innerHTML = `
+            <input type="checkbox" class="mr-2 module-game-checkbox" data-game-id="${game.id}">
+            ${game.name}
+          `;
+          moduleTreeContainer.appendChild(label);
+        });
+      }
+    }
+
+    // Abrir modal de juego
+    function openGameModal(id = null) {
+      const modal = document.getElementById('gameModal');
+      const modalTitle = document.getElementById('gameModalTitle');
+      const gameId = document.getElementById('game-id-modal');
+      const name = document.getElementById('game-name-modal');
+      const enabled = document.getElementById('game-enabled-modal');
+      const userId = document.getElementById('game-user');
+
+      if (!modal || !modalTitle || !gameId || !name || !enabled || !userId) return;
+
+      if (id) {
+        const game = games.find(g => g.id === id);
+        if (game) {
+          modalTitle.textContent = 'Editar Juego';
+          gameId.value = game.id;
+          name.value = game.name;
+          enabled.checked = game.enabled;
+          userId.value = game.userId || '';
+        }
+      } else {
+        modalTitle.textContent = 'Agregar Juego';
+        gameId.value = '';
+        name.value = '';
+        enabled.checked = true;
+        userId.value = '';
+      }
+
+      // Asegurar que el selector de usuarios esté poblado
+      loadUsersInSelect();
+      modal.classList.remove('hidden');
+    }
+
+    // Abrir modal de módulo
+    function openModuleModal(id = null) {
+      const modal = document.getElementById('moduleModal');
+      const modalTitle = document.getElementById('moduleModalTitle');
+      const moduleId = document.getElementById('module-id-modal');
+      const name = document.getElementById('module-name-modal');
+      const accessible = document.getElementById('module-accessible-modal');
+      const gamesTree = document.getElementById('module-games-tree');
+
+      if (!modal || !modalTitle || !moduleId || !name || !accessible || !gamesTree) return;
+
+      if (id) {
+        const module = modules.find(m => m.id === id);
+        if (module) {
+          modalTitle.textContent = 'Editar Modulo';
+          moduleId.value = module.id;
+          name.value = module.name;
+          accessible.checked = module.accessible;
+          gamesTree.querySelectorAll('.module-game-checkbox').forEach(checkbox => {
+            checkbox.checked = module.games.includes(checkbox.getAttribute('data-game-id'));
+          });
+        }
+      } else {
+        modalTitle.textContent = 'Agregar Modulo';
+        moduleId.value = '';
+        name.value = '';
+        accessible.checked = true;
+        gamesTree.querySelectorAll('.module-game-checkbox').forEach(checkbox => checkbox.checked = false);
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    // Cerrar modal de juego
+    function closeGameModal() {
+      const modal = document.getElementById('gameModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Cerrar modal de módulo
+    function closeModuleModal() {
+      const modal = document.getElementById('moduleModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Guardar juego desde el modal
+    function saveGameModal() {
+      const gameId = document.getElementById('game-id-modal');
+      const name = document.getElementById('game-name-modal');
+      const enabled = document.getElementById('game-enabled-modal');
+      const userId = document.getElementById('game-user');
+
+      if (!name || !enabled || !userId) return;
+
+      if (!name.value) {
+        alert('Por favor, ingresa el nombre del juego.');
+        return;
+      }
+
+      if (gameId.value) {
+        // Editar juego existente
+        const game = games.find(g => g.id === gameId.value);
+        if (game) {
+          const oldUserId = game.userId;
+          game.name = name.value;
+          game.enabled = enabled.checked;
+          game.userId = userId.value ? parseInt(userId.value) : null;
+
+          // Actualizar accessibleGames
+          if (game.userId) {
+            const user = users.find(u => u.id === game.userId);
+            if (user && !user.accessibleGames.includes(game.id)) {
+              user.accessibleGames.push(game.id);
+            }
+          }
+          if (oldUserId && oldUserId !== game.userId) {
+            const oldUser = users.find(u => u.id === oldUserId);
+            if (oldUser) {
+              oldUser.accessibleGames = oldUser.accessibleGames.filter(id => id !== game.id);
+            }
+          }
+        }
+      } else {
+        // Agregar nuevo juego
+        const newId = games.length ? String(Math.max(...games.map(g => parseInt(g.id))) + 1) : '1';
+        const newGame = {
+          id: newId,
+          name: name.value,
+          enabled: enabled.checked,
+          userId: userId.value ? parseInt(userId.value) : null
+        };
+        games.push(newGame);
+
+        // Actualizar accessibleGames
+        if (newGame.userId) {
+          const user = users.find(u => u.id === newGame.userId);
+          if (user && !user.accessibleGames.includes(newId)) {
+            user.accessibleGames.push(newId);
+          }
+        }
+      }
+
+      loadGamesTable();
+      loadUsersTable();
+      loadGamesInTree();
+      closeGameModal();
+    }
+
+    // Guardar módulo desde el modal
+    function saveModuleModal() {
+      const moduleId = document.getElementById('module-id-modal');
+      const name = document.getElementById('module-name-modal');
+      const accessible = document.getElementById('module-accessible-modal');
+      const gamesTree = document.getElementById('module-games-tree');
+
+      if (!name || !accessible || !gamesTree) return;
+
+      if (!name.value.trim()) {
+        alert('Por favor, ingresa el nombre del módulo.');
+        return;
+      }
+
+      const selectedGames = Array.from(gamesTree.querySelectorAll('.module-game-checkbox:checked')).map(cb => cb.getAttribute('data-game-id'));
+
+      if (moduleId.value) {
+        // Editar módulo existente
+        const module = modules.find(m => m.id === moduleId.value);
+        if (module) {
+          module.name = name.value.trim();
+          module.accessible = accessible.checked;
+          module.games = selectedGames;
+        }
+      } else {
+        // Agregar nuevo módulo
+        const newId = modules.length ? String(Math.max(...modules.map(m => parseInt(m.id))) + 1) : '1';
+        modules.push({
+          id: newId,
+          name: name.value.trim(),
+          accessible: accessible.checked,
+          games: selectedGames
+        });
+      }
+
+      loadModulesTable();
+      closeModuleModal();
+    }
+
+    // Editar juego
+    function editGame(id) {
+      openGameModal(id);
+    }
+
+    // Eliminar juego
+    function deleteGame(id) {
+      if (confirm('¿Estás seguro de que deseas eliminar este juego?')) {
+        games = games.filter(g => g.id !== id);
+        users.forEach(user => {
+          user.accessibleGames = user.accessibleGames.filter(gameId => gameId !== id);
+        });
+        modules.forEach(module => {
+          module.games = module.games.filter(gameId => gameId !== id);
+        });
+        loadGamesTable();
+        loadUsersTable();
+        loadModulesTable();
+        loadGamesInTree();
+      }
+    }
+
+    // Editar módulo
+    function editModule(id) {
+      openModuleModal(id);
+    }
+
+    // Eliminar módulo
+    function deleteModule(id) {
+      if (confirm('¿Estás seguro de que deseas eliminar este módulo?')) {
+        modules = modules.filter(m => m.id !== id);
+        loadModulesTable();
+      }
+    }
+
+    // Editar usuario
+    function editUser(id) {
+      const user = users.find(u => u.id === id);
+      if (!user) return;
+
+      currentUserId = id;
+      const editEmail = document.getElementById('edit-email');
+      const editSupport = document.getElementById('edit-support');
+      const editSuspended = document.getElementById('edit-suspended');
+      const gameAccessContainer = document.getElementById('game-access-container');
+      const editModal = document.getElementById('editModal');
+
+      if (editEmail && editSupport && editSuspended && gameAccessContainer && editModal) {
+        editEmail.value = user.email;
+        editSupport.checked = user.support;
+        editSuspended.checked = user.suspended;
+
+        // Cargar juegos dinámicamente
+        gameAccessContainer.innerHTML = '';
+        games.forEach(game => {
+          const label = document.createElement('label');
+          label.className = 'flex items-center';
+          label.innerHTML = `
+            <input id="access-game-${game.id}" type="checkbox" class="mr-2" ${user.accessibleGames.includes(game.id) && game.enabled ? 'checked' : ''} ${!game.enabled ? 'disabled' : ''}>
+            ${game.name}
+          `;
+          gameAccessContainer.appendChild(label);
+        });
+
+        editModal.classList.remove('hidden');
+      }
+    }
+
+    // Guardar cambios de usuario
+    function saveChanges() {
+      const user = users.find(u => u.id === currentUserId);
+      if (!user) return;
+
+      const editSupport = document.getElementById('edit-support');
+      const editSuspended = document.getElementById('edit-suspended');
+
+      if (editSupport && editSuspended) {
+        user.support = editSupport.checked;
+        user.suspended = editSuspended.checked;
+        user.accessibleGames = [];
+        games.forEach(game => {
+          const checkbox = document.getElementById(`access-game-${game.id}`);
+          if (checkbox && checkbox.checked && game.enabled) {
+            user.accessibleGames.push(game.id);
+          }
+        });
+
+        loadUsersTable();
+        loadGamesTable();
+        closeModal();
+      }
+    }
+
+    // Eliminar usuario
+    function deleteUser(id) {
+      if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+        users = users.filter(u => u.id !== id);
+        paymentMethods = paymentMethods.filter(m => m.userId !== id);
+        games = games.map(game => (game.userId === id ? { ...game, userId: null } : game));
+        loadUsersTable();
+        loadUsersInSelect();
+        loadPaymentMethods();
+        loadGamesTable();
+        loadGamesInTree();
+      }
+    }
+
+    // Guardar método de pago
+    function savePaymentMethod() {
+      const paymentId = document.getElementById('payment-id');
+      const type = document.getElementById('payment-type');
+      const details = document.getElementById('payment-details');
+      const userId = document.getElementById('payment-user');
+
+      if (!type || !details || !userId) return;
+
+      if (!type.value || !details.value) {
+        alert('Por favor, completa todos los campos.');
+        return;
+      }
+
+      if (paymentId.value) {
+        // Editar método existente
+        const method = paymentMethods.find(m => m.id === parseInt(paymentId.value));
+        if (method) {
+          method.type = type.value;
+          method.details = details.value;
+          method.userId = userId.value ? parseInt(userId.value) : null;
+        }
+      } else {
+        // Agregar nuevo método
+        const newId = paymentMethods.length ? Math.max(...paymentMethods.map(m => m.id)) + 1 : 1;
+        paymentMethods.push({
+          id: newId,
+          type: type.value,
+          details: details.value,
+          userId: userId.value ? parseInt(userId.value) : null
+        });
+      }
+
+      loadPaymentMethods();
+      paymentId.value = '';
+      type.value = '';
+      details.value = '';
+      userId.value = '';
+    }
+
+    // Editar método de pago
+    function editPaymentMethod(id) {
+      const method = paymentMethods.find(m => m.id === id);
+      if (!method) return;
+
+      const paymentId = document.getElementById('payment-id');
+      const type = document.getElementById('payment-type');
+      const details = document.getElementById('payment-details');
+      const userId = document.getElementById('payment-user');
+
+      if (paymentId && type && details && userId) {
+        paymentId.value = method.id;
+        type.value = method.type;
+        details.value = method.details;
+        userId.value = method.userId || '';
+      }
+    }
+
+    // Eliminar método de pago
+    function deletePaymentMethod(id) {
+      if (confirm('¿Estás seguro de que deseas eliminar este método de pago?')) {
+        paymentMethods = paymentMethods.filter(m => m.id !== id);
+        loadPaymentMethods();
+      }
+    }
+
+    // Cerrar modal de usuario
+    function closeModal() {
+      const editModal = document.getElementById('editModal');
+      if (editModal) editModal.classList.add('hidden');
+      currentUserId = null;
+    }
+
+    // Cerrar sesión
+    function logout() {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userLink');
+        window.location.href = '/index.html';
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        alert('Error al cerrar sesión. Intenta de nuevo.');
+      }
+    }
+  </script>
+</body>
+</html>

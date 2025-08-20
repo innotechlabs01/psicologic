@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrativo</title>
+  <link href="/css/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans flex flex-col min-h-screen">
+  <!-- Contenedor para el navbar -->
+  <div id="navbar-container"></div>
+
+  <!-- Error Message for Navbar -->
+  <div id="navbar-error" class="hidden text-red-500 text-center p-4">Error loading navbar content. Verify that navbar.html is available.</div>
+
+  <div class="container mx-auto p-4">
+    <!-- Header -->
+    <h1 class="text-3xl font-bold text-center mb-6">Gestión de Usuarios</h1>
+
+    <h2 class="text-2xl font-bold mb-4">Usuarios</h2>
+    <div id="tableContainer">
+        <table class="w-full bg-white shadow-md border-collapse rounded-lg overflow-hidden">
+          <thead>
+            <tr class="bg-blue-500 text-white">
+              <th class="py-3 px-4 text-left border-b">Email</th>
+              <th class="py-3 px-4 text-left border-b">Enlace</th>
+              <th class="py-3 px-4 text-left border-b">Soporte Estable</th>
+              <th class="py-3 px-4 text-left border-b">Suspendido</th>
+              <th class="py-3 px-4 text-left border-b">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersTable" class="text-gray-800"></tbody>
+        </table>
+        <p id="tableError" class="text-red-500 text-sm mt-4 hidden">No se pudieron cargar los usuarios.</p>
+        <p id="noUsers" class="text-gray-600 text-sm mt-4 hidden">No hay usuarios registrados.</p>
+      </div>
+  </div>
+  <!-- Contenedor principal -->
+
+  <!-- Modal para editar usuario -->
+  <div id="editModal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 class="text-xl font-bold mb-4">Editar Usuario</h2>
+      <label class="block mb-1">Email (no editable):</label>
+      <input id="edit-email" type="email" disabled class="border p-2 w-full mb-4 rounded bg-gray-100">
+      <label class="block mb-1">Soporte Estable:</label>
+      <input id="edit-support" type="checkbox" class="mb-4">
+      <label class="block mb-1">Suspendido:</label>
+      <input id="edit-suspended" type="checkbox" class="mb-4">
+      <h3 class="font-semibold mb-2">Configurar Acceso a Juegos</h3>
+      <div class="space-y-2">
+        <label class="flex items-center"><input id="access-game1" type="checkbox" class="mr-2"> Ahorcado</label>
+        <label class="flex items-center"><input id="access-game2" type="checkbox" class="mr-2"> Trivia</label>
+        <label class="flex items-center"><input id="access-game3" type="checkbox" class="mr-2"> Memoria</label>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button onclick="closeModal()" class="mr-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+        <button onclick="saveChanges()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Guardar</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/js/script.js"></script>
+
+  <script>
+    // Datos simulados de usuarios
+    let users = [
+      { id: 1, email: 'juan.perez@example.com', link: 'profile/juan', support: true, suspended: false, accessibleGames: ['game1', 'game3'] },
+      { id: 2, email: 'maria.gomez@example.com', link: 'profile/maria', support: false, suspended: true, accessibleGames: ['game2'] },
+      { id: 3, email: 'carlos.lopez@example.com', link: 'profile/carlos', support: true, suspended: false, accessibleGames: ['game1', 'game2', 'game3'] }
+    ];
+
+    let currentUserId = null;
+
+    // Inicializar
+    function init() {
+      // Cargar navbar
+      fetch('navbar.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('navbar-container').innerHTML = data;
+          document.getElementById('menu-toggle').addEventListener('click', () => {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+          });
+        })
+        .catch(() => {
+          document.getElementById('tableError').textContent = 'Error al cargar el navbar.';
+          document.getElementById('tableError').classList.remove('hidden');
+        });
+
+      // Cargar tabla de usuarios
+      loadUsersTable();
+    }
+    init();
+
+    // Cargar tabla de usuarios
+    function loadUsersTable() {
+      const tableBody = document.getElementById('adminUsersTable');
+      const noUsers = document.getElementById('noUsers');
+      const tableError = document.getElementById('tableError');
+
+      tableBody.innerHTML = '';
+      if (!users || users.length === 0) {
+        noUsers.classList.remove('hidden');
+        return;
+      }
+
+      noUsers.classList.add('hidden');
+      tableError.classList.add('hidden');
+
+      users.forEach(user => {
+        const row = document.createElement('tr');
+        row.classList.add('hover:bg-gray-50');
+        row.innerHTML = `
+          <td class="py-3 px-4 border-b">${user.email}</td>
+          <td class="py-3 px-4 border-b"><a href="${user.link}" class="text-blue-500 hover:underline">Ver perfil</a></td>
+          <td class="py-3 px-4 border-b">${user.support ? 'Sí' : 'No'}</td>
+          <td class="py-3 px-4 border-b">${user.suspended ? 'Sí' : 'No'}</td>
+          <td class=""py-3 px-4 border-b">
+            <button onclick="editUser(${user.id})" class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 mr-2">Editar</button>
+            <button onclick="deleteUser(${user.id})" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Eliminar</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Editar usuario
+    function editUser(id) {
+      const user = users.find(u => u.id === id);
+      if (!user) return;
+
+      currentUserId = id;
+      document.getElementById('edit-email').value = user.email;
+      document.getElementById('edit-support').checked = user.support;
+      document.getElementById('edit-suspended').checked = user.suspended;
+      document.getElementById('access-game1').checked = user.accessibleGames.includes('game1');
+      document.getElementById('access-game2').checked = user.accessibleGames.includes('game2');
+      document.getElementById('access-game3').checked = user.accessibleGames.includes('game3');
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    // Guardar cambios
+    function saveChanges() {
+      const user = users.find(u => u.id === currentUserId);
+      if (!user) return;
+
+      user.support = document.getElementById('edit-support').checked;
+      user.suspended = document.getElementById('edit-suspended').checked;
+      user.accessibleGames = [];
+      if (document.getElementById('access-game1').checked) user.accessibleGames.push('game1');
+      if (document.getElementById('access-game2').checked) user.accessibleGames.push('game2');
+      if (document.getElementById('access-game3').checked) user.accessibleGames.push('game3');
+
+      loadUsersTable();
+      closeModal();
+    }
+
+    // Eliminar usuario
+    function deleteUser(id) {
+      if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+        users = users.filter(u => u.id !== id);
+        loadUsersTable();
+      }
+    }
+
+    // Cerrar modal
+    function closeModal() {
+      document.getElementById('editModal').classList.add('hidden');
+      currentUserId = null;
+    }
+
+    // Cerrar sesión
+    function logout() {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userLink');
+        isAuthenticated = false;
+        isRedirecting = true;
+        window.location.href = '/index.html';
+        console.log('Sesión cerrada correctamente');
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        alert('Error al cerrar sesión. Intenta de nuevo.');
+      }
+    }
+  </script>
+</body>
+</html>

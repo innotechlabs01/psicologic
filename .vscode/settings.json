@@ -1,0 +1,10 @@
+{
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript", // ...
+    "html" // Add "html" to enable linting `.html` files.
+  ]
+}
