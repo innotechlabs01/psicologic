@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Personalizado</title>
   <link href="/css/output.css" rel="stylesheet">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none';">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; }
+    .input-group { margin-bottom: 20px; }
+    .input-group label { display: block; margin-bottom: 5px; }
+    .input-group input { width: 300px; padding: 5px; }
+    #listaSelecciones { list-style: none; padding: 0; }
+    #listaSelecciones li { margin: 10px 0; }
+    #error { color: red; }
+    .section { display: none; }
+    .section.active { display: block; }
+  </style>
 </head>
 <body class="bg-gray-100 font-sans">
   <div class="flex h-screen">
@@ -12,53 +25,77 @@
     <div class="w-64 bg-blue-800 text-white flex flex-col">
       <div class="p-4 text-2xl font-bold">Dashboard</div>
       <nav id="sidebar-menu" class="flex-1">
-        <ul id="menu-items"></ul>
+        <ul id="menu-items">
+          <li><a href="#" class="block p-4 hover:bg-blue-700" data-section="cardGame">Juego de Cartas</a></li>
+          <li><a href="#" class="block p-4 hover:bg-blue-700" data-section="game2">Trivia</a></li>
+          <li><a href="#" class="block p-4 hover:bg-blue-700" data-section="game3">Memoria</a></li>
+          <li><a href="#" class="block p-4 hover:bg-blue-700" data-section="payment">Métodos de Pago</a></li>
+          <li><a href="#" class="block p-4 hover:bg-blue-700" data-section="assistance">Asistencia</a></li>
+        </ul>
       </nav>
     </div>
 
     <!-- Contenido principal -->
     <div class="flex-1 p-8 overflow-auto">
-      <h1 class="text-3xl font-bold mb-4">Bienvenido, <span id="userEmail">Usuario</span></h1>
-      <div id="userContent" class="bg-white p-6 rounded-lg shadow-md">
-        <!-- Sección por defecto -->
-        <div id="game1" class="section">
-          <h2 class="text-2xl font-semibold mb-4">Ahorcado</h2>
-          <p>Juega al clásico juego de ahorcado. Adivina la palabra letra por letra antes de que se agoten tus intentos.</p>
-          <button id="playAhorcado" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Jugar</button>
+      <h1 class="text-3xl font-bold mb-4">Bienvenido, <span id="userEmail">Administrador</span></h1>
+      <div id="userContent">
+        <!-- Sección Juego de Cartas -->
+        <div id="cardGame" class="section active">
+          <h2 class="text-2xl font-semibold mb-4">Selecciones de Usuarios</h2>
+          <div id="error"></div>
+          <div class="input-group">
+            <label for="nombreUsuario1">Nombre del Usuario 1:</label>
+            <input type="text" id="nombreUsuario1" placeholder="Ej: Jugador 1">
+          </div>
+          <div class="input-group">
+            <label for="enlaceGenerado1">Enlace para Usuario 1:</label>
+            <input type="text" id="enlaceGenerado1" readonly>
+          </div>
+          <div class="input-group">
+            <label for="nombreUsuario2">Nombre del Usuario 2:</label>
+            <input type="text" id="nombreUsuario2" placeholder="Ej: Jugador 2">
+          </div>
+          <div class="input-group">
+            <label for="enlaceGenerado2">Enlace para Usuario 2:</label>
+            <input type="text" id="enlaceGenerado2" readonly>
+          </div>
+          <button id="generarBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Generar Enlaces</button>
+          <h3 class="mt-4">Selecciones:</h3>
+          <ul id="listaSelecciones"></ul>
         </div>
 
         <!-- Sección Trivia -->
-        <div id="game2" class="section hidden">
+        <div id="game2" class="section">
           <h2 class="text-2xl font-semibold mb-4">Trivia</h2>
           <p>Pon a prueba tus conocimientos con preguntas de cultura general.</p>
-          <button id="playTrivia" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Jugar</button>
+          <button id="playTrivia" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Jugar</button>
         </div>
 
         <!-- Sección Memoria -->
-        <div id="game3" class="section hidden">
+        <div id="game3" class="section">
           <h2 class="text-2xl font-semibold mb-4">Memoria</h2>
           <p>Encuentra las parejas de cartas en el menor tiempo posible.</p>
-          <button id="playMemoria" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Jugar</button>
+          <button id="playMemoria" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Jugar</button>
         </div>
 
         <!-- Sección Métodos de Pago -->
-         <div id="payment" class="section hidden">
+        <div id="payment" class="section">
           <div id="payments-section"></div>
-         </div>
+        </div>
 
         <!-- Sección Asistencia -->
-        <div id="assistance" class="section hidden">
+        <div id="assistance" class="section">
           <h2 class="text-2xl font-semibold mb-4">Asistencia</h2>
           <p>Contacta con soporte para cualquier duda o problema.</p>
           <div class="mt-4">
             <textarea id="supportMessage" placeholder="Escribe tu mensaje..." class="border p-2 rounded w-full h-32 mb-2"></textarea>
-            <button id="sendSupportMessage" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" >Enviar</button>
+            <button id="sendSupportMessage" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Enviar</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="/js/user_page.js"></script>
+  <script src="js/user_page.js"></script>
 </body>
 </html>

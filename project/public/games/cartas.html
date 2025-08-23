@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego de Cartas - Usuario</title>
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none';">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/carta.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .carta { 
+      display: inline-block; 
+      width: 100px; 
+      height: 150px; 
+      background: lightblue; 
+      margin: 10px; 
+      text-align: center; 
+      line-height: 150px; 
+      cursor: pointer; 
+    }
+    .seleccionada { background: yellow; }
+    #mensaje { color: red; }
+  </style>
+</head>
+<body>
+  <h1 id="titulo">Cargando...</h1>
+  <div id="mensaje"></div>
+  <div id="juego" class="section">
+    <h2>Selecciona tus cartas</h2>
+    <div id="mazo"></div>
+    <button id="enviarBtn">Enviar Selecciones</button>
+  </div>
+</body>
+</html>

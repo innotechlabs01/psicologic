@@ -1,205 +1,194 @@
-// ======================= ESTADO GLOBAL =======================
+const socket = io();
 const state = {
   users: [],
   currentUserId: null,
-  paymentScriptLoaded: false // 👈 bandera para no cargar dos veces
+  paymentScriptLoaded: false
 };
 
-// ======================= MENÚ ESTÁTICO =======================
 const MENU_ITEMS = [
-  { id: "game1", name: "Juego: Ahorcado", section: "game1", active: true },
+  { id: "cardGame", name: "Juego: Cartas", section: "cardGame", active: true },
   { id: "game2", name: "Juego: Trivia", section: "game2", active: true },
   { id: "game3", name: "Juego: Memoria", section: "game3", active: false },
   { id: "payment", name: "Métodos de Pago", section: "payment", active: true },
   { id: "assistance", name: "Asistencia", section: "assistance", active: true }
 ];
 
-// ======================= INICIALIZACIÓN =======================
 document.addEventListener("DOMContentLoaded", async () => {
   await loadUser();
   loadSidebarMenu(MENU_ITEMS);
   bindLogout();
-  showDefaultSection();
   loadClickGames();
+  setupAdminLogic();
+  showDefaultSection();
 });
 
-// ======================= USUARIO =======================
 async function loadUser() {
-  const userEmail = localStorage.getItem("userEmail");
-  if (!userEmail) {
-    console.error("No se encontró el usuario en localStorage");
-    return alert("Error al cargar el usuario. Intenta de nuevo.");
-  }
-
+  const userEmail = localStorage.getItem("userEmail") || "admin@example.com";
   try {
-    const res = await fetch(`/api/admin/user/${userEmail}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("token")
-      }
-    });
-
-    if (!res.ok) throw new Error(`Error API: ${res.status}`);
-
-    const data = await res.json();
-    if (data.user) {
-      const user = {
-        ...data.user,
-        accessibleSections: ["game1", "game2", "payment", "assistance"]
-      };
-      state.users = [user];
-      state.currentUserId = user.id;
-
-      document.getElementById("userEmail").textContent = user.name;
-    } else {
-      console.error("Usuario no encontrado:", data.message);
-      document.getElementById("userEmail").textContent = "Usuario Desconocido";
-    }
+    // Mock API response (replace with actual /api/admin/user call if available)
+    const user = {
+      id: "admin1",
+      name: userEmail.split('@')[0],
+      accessibleSections: ["cardGame", "game2", "game3", "payment", "assistance"]
+    };
+    state.users = [user];
+    state.currentUserId = user.id;
+    document.getElementById("userEmail").textContent = user.name;
   } catch (err) {
     console.error("Fallo en loadUser:", err.message);
-    alert("Error al cargar usuario.");
+    document.getElementById("error").textContent = "Error al cargar usuario.";
   }
 }
 
-function loadClickGames() {
-  const playAhorcado = document.getElementById("playAhorcado");
-  if (playAhorcado) {
-    playAhorcado.addEventListener("click", () => {
-      alert("¡Iniciando Ahorcado!");
-    });
-  }
-  const playTrivia = document.getElementById("playTrivia");
-  if (playTrivia) {
-    playTrivia.addEventListener("click", () => {
-      alert("¡Iniciando Trivia!");
-    });
-  }
-  const playMemoria = document.getElementById("playMemoria");
-  if (playMemoria) {
-    playMemoria.addEventListener("click", () => {
-      alert("¡Iniciando Memoria!");
-    });
-  }
-
-  const sendSupportMessage = document.getElementById("sendSupportMessage");
-  const supportMessage = document.getElementById("supportMessage");
-  if (sendSupportMessage) {
-    sendSupportMessage.addEventListener("click", () => {
-      if (!supportMessage.value) {
-        return alert("Por favor, escribe un mensaje.");
-      }
-      alert("¡Enviando mensaje de soporte!");
-      supportMessage.value = "";
-    });
-  }
-}
-
-// ======================= MENÚ =======================
 function loadSidebarMenu(items) {
   const menuContainer = document.getElementById("menu-items");
   const user = getCurrentUser();
-
-  if (!menuContainer || !user) return;
+  if (!menuContainer || !user) {
+    console.error("Menu container or user not found");
+    return;
+  }
 
   menuContainer.innerHTML = "";
-
   items.forEach(item => {
     if (item.active && user.accessibleSections.includes(item.section)) {
       const li = document.createElement("li");
       li.className = "p-4 hover:bg-blue-700 cursor-pointer";
       li.textContent = item.name;
-      
-      // Sección de pagos: carga dinámica de HTML + JS
-      li.onclick = () => {
+      li.addEventListener("click", () => {
         if (item.section === 'payment') {
           loadPaymentSection();
         }
         showSection(item.section);
-      };
-      
+      });
       menuContainer.appendChild(li);
     }
   });
 
-  // Botón logout
   const logoutLi = document.createElement("li");
   logoutLi.id = "logoutButton";
   logoutLi.className = "p-4 hover:bg-blue-700 cursor-pointer";
   logoutLi.textContent = "Cerrar Sesión";
-  logoutLi.onclick = logout;
+  logoutLi.addEventListener("click", logout);
   menuContainer.appendChild(logoutLi);
 }
 
-// ======================= PAGOS =======================
 async function loadPaymentSection() {
+  const paymentsSection = document.getElementById('payments-section');
+  if (!paymentsSection) {
+    console.error("Payments section not found");
+    document.getElementById('error').textContent = "Error: Sección de pagos no encontrada.";
+    return;
+  }
+
   try {
-    // Cargar el HTML en la sección
     const response = await fetch('/paymentMethod.html');
-    document.getElementById('payments-section').innerHTML = await response.text();
+    if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+    paymentsSection.innerHTML = await response.text();
 
-    // Cargar el JS dinámicamente solo una vez
     if (!state.paymentScriptLoaded) {
-      const script = document.createElement("script");
-      script.src = "/js/payment.js";
-      script.id = "payment-script";
-      script.defer = true;
-      document.body.appendChild(script);
-
-      state.paymentScriptLoaded = true;
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "/js/payment.js";
+        script.id = "payment-script";
+        script.defer = true;
+        script.onload = () => {
+          state.paymentScriptLoaded = true;
+          resolve();
+        };
+        script.onerror = () => reject(new Error("Failed to load payment.js"));
+        document.body.appendChild(script);
+      });
     }
-
   } catch (err) {
-    console.error("❌ Error cargando sección de pagos:", err);
+    console.error("Error cargando sección de pagos:", err);
+    document.getElementById('error').textContent = `Error cargando sección de pagos: ${err.message}`;
+  }
+}
+
+function loadClickGames() {
+  const buttons = [
+    { id: "playTrivia", action: () => alert("¡Iniciando Trivia!") },
+    { id: "playMemoria", action: () => alert("¡Iniciando Memoria!") },
+    { id: "sendSupportMessage", action: () => {
+      const supportMessage = document.getElementById("supportMessage");
+      if (!supportMessage?.value) {
+        alert("Por favor, escribe un mensaje.");
+        return;
+      }
+      alert("¡Enviando mensaje de soporte!");
+      supportMessage.value = "";
+    }}
+  ];
+
+  buttons.forEach(({ id, action }) => {
+    const button = document.getElementById(id);
+    if (button) {
+      button.addEventListener("click", action);
+    }
+  });
+}
+
+function showSection(sectionId) {
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(section => {
+    section.classList.toggle('active', section.id === sectionId);
+  });
+
+  if (!document.getElementById(sectionId)) {
+    console.error(`Sección no encontrada: ${sectionId}`);
+    document.getElementById('error')?.textContent = `Sección ${sectionId} no encontrada.`;
+    showDefaultSection();
   }
 }
 
 function showDefaultSection() {
   const user = getCurrentUser();
-  const defaultSection = user?.accessibleSections[0] || "game1";
-  showSection(defaultSection);
-}
-
-function showSection(sectionId) {
-  document.querySelectorAll(".section").forEach(s => s.classList.add("hidden"));
-
-  const section = document.getElementById(sectionId);
-  if (section) {
-    section.classList.remove("hidden");
+  const defaultSection = user?.accessibleSections[0] || "cardGame";
+  if (document.getElementById(defaultSection)) {
+    showSection(defaultSection);
   } else {
-    console.error("Sección no encontrada:", sectionId);
-    showDefaultSection();
+    console.error(`Sección por defecto (${defaultSection}) no encontrada.`);
+    document.getElementById('error')?.textContent = "Error: No se pudo cargar la sección por defecto.";
   }
 }
 
-// ======================= SOPORTE =======================
-function sendSupportMessage() {
-  const msg = document.getElementById("supportMessage").value.trim();
-  if (!msg) return alert("Escribe un mensaje.");
-  alert("Mensaje enviado: " + msg);
-  document.getElementById("supportMessage").value = "";
+function setupAdminLogic() {
+  const generarBtn = document.getElementById('generarBtn');
+  if (generarBtn) {
+    generarBtn.addEventListener('click', async () => {
+      const nombre1 = document.getElementById('nombreUsuario1').value || 'Jugador 1';
+      const nombre2 = document.getElementById('nombreUsuario2').value || 'Jugador 2';
+      try {
+        const response = await fetch(`/generar-enlaces?nombre1=${encodeURIComponent(nombre1)}&nombre2=${encodeURIComponent(nombre2)}`);
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+        const data = await response.json();
+        document.getElementById('enlaceGenerado1').value = data.enlace1;
+        document.getElementById('enlaceGenerado2').value = data.enlace2;
+      } catch (err) {
+        document.getElementById('error').textContent = `Error al generar los enlaces: ${err.message}`;
+      }
+    });
+  }
+
+  socket.on('actualizarAdmin', ({ nombre, cartas, token }) => {
+    const lista = document.getElementById('listaSelecciones');
+    if (lista) {
+      const li = document.createElement('li');
+      li.textContent = `${nombre} (Token: ${token}): ${cartas.join(', ')}`;
+      lista.appendChild(li);
+    }
+  });
+
+  socket.on('connect_error', (err) => {
+    document.getElementById('error').textContent = `Error de conexión con el servidor: ${err.message}`;
+  });
 }
 
-// ======================= LOGOUT =======================
-function bindLogout() {
-  const btn = document.getElementById("logoutButton");
-  if (btn) btn.addEventListener("click", logout);
+function getCurrentUser() {
+  return state.users.find(u => u.id === state.currentUserId) || { accessibleSections: ["cardGame", "game2", "game3", "payment", "assistance"] };
 }
 
 function logout() {
-  [
-    "accessToken",
-    "creditCardPayments",
-    "refreshToken",
-    "token",
-    "userEmail",
-    "userLink"
-  ].forEach(k => localStorage.removeItem(k));
-
+  ["accessToken", "creditCardPayments", "refreshToken", "token", "userEmail", "userLink"].forEach(k => localStorage.removeItem(k));
   window.location.href = "/index.html";
-}
-
-// ======================= HELPERS =======================
-function getCurrentUser() {
-  return state.users.find(u => u.id === state.currentUserId) || null;
 }
