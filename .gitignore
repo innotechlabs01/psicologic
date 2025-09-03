@@ -1,9 +1,28 @@
-/node_modules
-node_modules/*
-node_modules/.*
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*
 
-.vscode/*
-.vscode
+# Node.js dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
 
-.vercel/*
-.vercel
+# Build artifacts and temporary files
+dist/
+build/
+tmp/
+*.log
+
+# Operating system and editor specific files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
