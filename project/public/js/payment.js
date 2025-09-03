@@ -1,3 +1,18 @@
+// Payment state management
+let paymentState = {
+    lastPayment: null,
+    expirationDate: null,
+    status: 'inactive',
+    daysRemaining: 0
+};
+
+// Status colors and text mappings
+const STATUS_STYLES = {
+    pending: { color: 'text-yellow-600 bg-yellow-100', text: 'Pendiente' },
+    approved: { color: 'text-green-600 bg-green-100', text: 'Aprobado' },
+    rejected: { color: 'text-red-600 bg-red-100', text: 'Rechazado' }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   const state = {
     users: [],
@@ -47,17 +62,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!userEmail) return;
 
     try {
-      // Mock response (replace with actual /api/payments/:email)
-      const data = {
-        payments: [
-          { id: 1, userId: "admin1", cardNumber: "**** **** **** 1234", cardHolder: "Admin User", amount: 150, date: "2025-08-23", status: "paid" }
-        ]
-      };
-      state.payments = data.payments || [];
+      const response = await fetch(`/api/payments/${userEmail}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener los pagos');
+      }
+
+      const payments = await response.json();
+      state.payments = payments;
       renderTable();
+      updateSubscriptionStatus(payments);
     } catch (err) {
       console.error("Error cargando pagos:", err);
-      showError("Error cargando pagos.");
+      showError("Error cargando pagos: " + err.message);
     }
   }
 
@@ -71,26 +92,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     paymentsTableBody.innerHTML = '';
     if (state.payments.length === 0) {
-      paymentsTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-3">No hay pagos registrados</td></tr>`;
+      paymentsTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No hay pagos registrados</td></tr>`;
       return;
     }
 
-    state.payments.forEach((payment, index) => {
-      const user = state.users.find(u => u.id === payment.userId) || { email: 'Unassigned' };
-      const isOverdue = new Date(payment.date) < new Date();
-      const dateClass = isOverdue ? 'text-red-500' : 'text-yellow-500';
-
+    state.payments.forEach(payment => {
       const row = document.createElement('tr');
+      row.className = 'hover:bg-gray-50';
       row.innerHTML = `
-        <td class="py-3 px-4 border-b">${payment.cardNumber}</td>
-        <td class="py-3 px-4 border-b">${payment.cardHolder}</td>
-        <td class="py-3 px-4 border-b">${user.email}</td>
-        <td class="py-3 px-4 border-b">$${payment.amount}</td>
-        <td class="py-3 px-4 border-b ${dateClass}">${payment.date}</td>
-        <td class="py-3 px-4 border-b">
-          <button data-index="${index}" class="edit-payment bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded">
-            Editar
-          </button>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${payment.paymentId}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${new Date(payment.paymentDate).toLocaleDateString()}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          $${payment.amount.toFixed(2)}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${STATUS_STYLES[payment.status].color}">
+            ${STATUS_STYLES[payment.status].text}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${payment.nextPaymentDate ? new Date(payment.nextPaymentDate).toLocaleDateString() : 'N/A'}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          ${payment.blockedPaymentDate ? new Date(payment.blockedPaymentDate).toLocaleDateString() : 'N/A'}
         </td>
       `;
       paymentsTableBody.appendChild(row);
@@ -205,27 +233,106 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Inicialización
+  function updateSubscriptionStatus(payments) {
+    const latestPayment = payments[0];
+    if (!latestPayment) {
+      setStatusText('Sin pagos registrados');
+      setLastPaymentDate('N/A');
+      setNextPaymentDate('N/A');
+      setDaysRemaining('N/A');
+      showPaymentButton(true);
+      return;
+    }
+
+    const now = new Date();
+    const blockDate = new Date(latestPayment.blockedPaymentDate);
+    const daysRemaining = Math.ceil((blockDate - now) / (1000 * 60 * 60 * 24));
+
+    let status = 'Activa';
+    let showButton = false;
+
+    if (latestPayment.status !== 'approved') {
+      status = 'Pago pendiente';
+      showButton = true;
+    } else if (daysRemaining <= 5) {
+      status = 'Próxima a vencer';
+      showButton = true;
+    } else if (daysRemaining <= 0) {
+      status = 'Vencida';
+      showButton = true;
+    }
+
+    setStatusText(status);
+    setLastPaymentDate(new Date(latestPayment.paymentDate).toLocaleDateString());
+    setNextPaymentDate(new Date(latestPayment.nextPaymentDate).toLocaleDateString());
+    setDaysRemaining(Math.max(0, daysRemaining));
+    showPaymentButton(showButton);
+  }
+
+  function setStatusText(text) {
+    const element = document.getElementById('subscriptionStatus');
+    if (element) element.textContent = text;
+  }
+
+  function setLastPaymentDate(date) {
+    const element = document.getElementById('lastPaymentDate');
+    if (element) element.textContent = date;
+  }
+
+  function setNextPaymentDate(date) {
+    const element = document.getElementById('nextPaymentDate');
+    if (element) element.textContent = date;
+  }
+
+  function setDaysRemaining(days) {
+    const element = document.getElementById('daysRemaining');
+    if (element) element.textContent = typeof days === 'number' ? `${days} días` : days;
+  }
+
+  function showPaymentButton(show) {
+    const container = document.getElementById('paymentButtonContainer');
+    if (!container) return;
+
+    if (show) {
+      container.innerHTML = `
+        <button onclick="handlePayment()" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+          Realizar Pago
+        </button>
+      `;
+    } else {
+      container.innerHTML = '';
+    }
+  }
+
+  async function handlePayment() {
+    try {
+      const response = await fetch('/api/payments/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          userId: JSON.parse(localStorage.getItem('user')).id,
+          amount: 999 // $9.99 en centavos
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear el pago');
+      }
+
+      const { init_point } = await response.json();
+      window.location.href = init_point;
+    } catch (error) {
+      console.error('Error:', error);
+      showError(error.message);
+    }
+  }
+
   function initialize() {
-    const payButton = document.getElementById("payButton");
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const creditCardForm = document.getElementById('creditCardForm');
-
-    // Mock users (replace with actual API call)
-    state.users = [{ id: "admin1", email: "admin@example.com" }];
-
-    if (payButton) {
-      payButton.addEventListener("click", () => processCheckout("admin1", 150));
-    }
-    if (closeModalBtn) {
-      closeModalBtn.addEventListener("click", closeModal);
-    }
-    if (creditCardForm) {
-      creditCardForm.addEventListener("submit", saveCreditCard);
-    }
-
-    loadUsersInSelect();
     loadUserPayments();
-    checkNextPayment("admin1");
   }
 
   initialize();

@@ -13,10 +13,10 @@
   <!-- Dashboard -->
   <main class="flex-1 p-6 overflow-auto">
     <h1 class="text-3xl font-bold mb-6">Dashboard del Usuario</h1>
-    <section class="bg-white p-6 rounded-lg shadow-md">
-      <div id="user-info" class="space-y-4">
-        <!-- Sección Usuario -->
-        <div id="usuario" class="section">
+    <section id="main-content" class="bg-white p-6 rounded-lg shadow-md">
+      <!-- Sección Usuario -->
+      <div id="usuario" class="section">
+        <div class="space-y-4">
           <h2 class="text-xl font-semibold mb-4">Información del Usuario</h2>
           <p><strong>Nombre:</strong> <span id="user-name"></span></p>
           <p><strong>Email:</strong> <span id="user-email"></span></p>
@@ -26,55 +26,53 @@
             Editar
           </button>
         </div>
+      </div>
 
-        <!-- Secciones de juegos -->
-        <div id="game1" class="section hidden">
-          <h2 class="text-xl font-semibold mb-4">Ahorcado</h2>
-          <p>Adivina la palabra antes de que se agoten tus intentos.</p>
-          <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Jugar
-          </button>
+      <!-- Sección de Cartas -->
+      <div id="cardGame" class="section hidden">
+        <div class="space-y-4">
+          <h2 class="text-xl font-semibold mb-4">Juego de Cartas</h2>
+          <div id="cards-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Las cartas se cargarán dinámicamente -->
+          </div>
         </div>
+      </div>
 
-        <div id="game2" class="section hidden">
+      <!-- Sección de Trivia -->
+      <div id="game2" class="section hidden">
+        <div class="space-y-4">
           <h2 class="text-xl font-semibold mb-4">Trivia</h2>
           <p>Pon a prueba tus conocimientos de cultura general.</p>
-          <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <button id="playTrivia" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             Jugar
           </button>
         </div>
+      </div>
 
-        <div id="game3" class="section hidden">
+      <!-- Sección de Memoria -->
+      <div id="game3" class="section hidden">
+        <div class="space-y-4">
           <h2 class="text-xl font-semibold mb-4">Memoria</h2>
           <p>Encuentra las parejas de cartas en el menor tiempo posible.</p>
-          <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <button id="playMemoria" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             Jugar
           </button>
         </div>
+      </div>
 
-        <!-- Métodos de Pago -->
-        <div id="payment" class="section hidden">
-          <h2 class="text-xl font-semibold mb-4">Métodos de Pago</h2>
-          <p>Gestiona tus métodos de pago.</p>
-          <div id="paymentMethods" class="mt-4 text-gray-600">
-            No hay métodos de pago registrados.
-          </div>
-          <div class="mt-4">
-            <h3 class="text-lg font-semibold">Agregar Método de Pago</h3>
-            <input type="text" id="cardNumber" placeholder="Número de tarjeta" class="border p-2 rounded w-full mb-2">
-            <input type="text" id="cardExpiry" placeholder="MM/AA" class="border p-2 rounded w-full mb-2">
-            <input type="text" id="cardCVC" placeholder="CVC" class="border p-2 rounded w-full mb-2">
-            <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" onclick="App.addPaymentMethod()">
-              Agregar
-            </button>
-          </div>
+      <!-- Métodos de Pago -->
+      <div id="payment" class="section hidden">
+        <div id="payments-section" class="w-full">
+          <!-- El contenido se cargará dinámicamente -->
         </div>
+      </div>
 
-        <!-- Asistencia -->
-        <div id="assistance" class="section hidden">
+      <!-- Asistencia -->
+      <div id="assistance" class="section hidden">
+        <div class="space-y-4">
           <h2 class="text-xl font-semibold mb-4">Asistencia</h2>
           <textarea id="supportMessage" placeholder="Escribe tu mensaje..." class="border p-2 rounded w-full h-32 mb-2"></textarea>
-          <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onclick="App.sendSupportMessage()">
+          <button id="sendSupportMessage" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             Enviar
           </button>
         </div>
@@ -93,13 +91,15 @@
       <label class="block mb-1">Teléfono:</label>
       <input id="edit-phone" type="tel" class="border p-2 w-full mb-4 rounded">
       <div class="mt-6 flex justify-end">
-        <button onclick="App.closeModal()" class="mr-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
-        <button onclick="App.saveChanges()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Guardar</button>
+        <button onclick="window.App.closeModal()" class="mr-2 bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancelar</button>
+        <button onclick="window.App.saveChanges()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Guardar</button>
       </div>
     </div>
   </div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script src="/js/script.js"></script>
   <script src="/js/dashboard.js"></script>
+  <script src="/js/user_page.js"></script>
 </body>
 </html>

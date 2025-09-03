@@ -13,13 +13,19 @@ router.post('/register', async (req, res) => {
   const link = `/user-page/${uuidv4()}`;
   try {
     const user = await User.create({ name, email, password: hashedPass, link, createdAt: new Date() });
-    await Payment.create({ paymentId: uuidv4(), userId: user.id, amount: parseFloat(100000), status: 'approved', 
-      paymentDate: new Date(), nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
+    await Payment.create({ 
+      paymentId: uuidv4(), 
+      userId: user.id, 
+      amount: parseFloat(100000), 
+      status: 'approved', 
+      paymentDate: new Date(), 
+      nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
       blockedPaymentDate: new Date(Date.now() + (30 + 5) * 24 * 60 * 60 * 1000), 
       createdAt: new Date(), 
     });
     res.json({ message: 'Registrado con éxito', link: user.link });
   } catch (err) {
+    console.error(err);
     res.status(400).json({ message: 'El email ya existe' });
   }
 });
@@ -31,8 +37,8 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ message: 'Credenciales inválidas' });
   }
   if (user.suspended) return res.status(403).json({ message: 'Cuenta suspendida' });
-  const token = jwt.sign({ email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '4500s' }); // 1h15m
-  res.json({ token, link: user.link, role: user.role });
+  const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '4500s' }); // 1h15m
+  res.json({ token, link: user.link, role: user.role, user: { name: user.name, suspense: user.suspended, id: user.id } });
 });
 
 router.get('/verify', (req, res) => {

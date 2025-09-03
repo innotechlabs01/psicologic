@@ -2,13 +2,13 @@
 import express from "express";
 import User from "../../models/user.js";
 import Payment from "../../models/payment.js";
-import { authenticateJWT } from "../../middlewares/auth.js";
+import { authenticate } from "../../middlewares/auth.js";
 
 const router = express.Router();
 
 // ===== Endpoints de pagos específicos =====
 
-router.get("/payment-status/:paymentId", authenticateJWT, async (req, res) => {
+router.get("/payment-status/:paymentId", authenticate, async (req, res) => {
   try {
     const { paymentId } = req.params;
     console.log(`📍 Buscando información del pago: ${paymentId}`);
@@ -17,7 +17,7 @@ router.get("/payment-status/:paymentId", authenticateJWT, async (req, res) => {
       where: { paymentId },
       include: [{
         model: User,
-        attributes: ['id', 'email', 'name', 'suspended']
+        attributes: ['id', 'email', 'name', 'suspense']
       }]
     });
 
@@ -45,11 +45,12 @@ router.get("/payment-status/:paymentId", authenticateJWT, async (req, res) => {
       paymentDate: payment.paymentDate,
       nextPaymentDate: payment.nextPaymentDate,
       blockedPaymentDate: payment.blockedPaymentDate,
+      suspense: payment.suspense,
       user: {
         id: payment.User.id,
         email: payment.User.email,
         name: payment.User.name,
-        suspended: payment.User.suspended
+        suspense: payment.User.suspense
       }
     };
 
@@ -66,20 +67,26 @@ router.get("/payment-status/:paymentId", authenticateJWT, async (req, res) => {
 
 // ===== Endpoints de suscripción =====
 
-router.get("/status/:userId", authenticateJWT, async (req, res) => {
+router.get("/status/:userId", authenticate, async (req, res) => {
   try {
     if (req.params.userId != req.user.id && req.user.role !== 'admin') {
       console.warn(`⚠️ Intento de acceso no autorizado a información de usuario ${req.params.userId} por usuario ${req.user.id}`);
       return res.status(403).json({ error: 'No tienes permiso para ver esta información' });
     }
 
-    console.log("Paso el If de autenticación");
-
     const user = await User.findOne({
       where: {
-        id: req.params.userId,
-        suspended: false,
+        id: req.params.userId
       },
+      include: [{
+        model: Payment,
+        where: {
+          status: 'approved'
+        },
+        required: false,
+        order: [['paymentDate', 'DESC']],
+        limit: 1
+      }]
     });
 
     console.log('Usuario encontrado para estado de suscripción:', user ? user.email : 'No encontrado');
@@ -88,44 +95,40 @@ router.get("/status/:userId", authenticateJWT, async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    const payment = await Payment.findAll({
-      where: {
-        userId: req.params.userId
-      },
-      order: [['paymentDate', 'DESC']],
-    });
-
-    console.log('Pagos encontrados:', payment);
-    const jsonPayment = [];
-    if (payment.length > 0) {
-      payment.forEach(p => {
-        console.log('Pago:', p.dataValues);
-        const now = new Date();
-        const expirationDate = p.dataValues.blockedPaymentDate;
-        const daysRemaining = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
-
-        let status = 'active';
-        if (daysRemaining <= 5 && daysRemaining > 0) {
-          status = 'warning';
-        } else if (daysRemaining <= 0) {
-          status = 'expired';
-        }
-        jsonPayment.push({
-          id: p.dataValues.id,
-          paymentId: p.dataValues.paymentId,
-          status: status,
-          amount: p.dataValues.amount,
-          paymentDate: p.dataValues.paymentDate,
-          nextPaymentDate: p.dataValues.nextPaymentDate,
-          blockedPaymentDate: p.dataValues.blockedPaymentDate,
-          daysRemaining: Math.max(0, daysRemaining),
-          email: user.email,
-          name: user.name
-        })
-      })
+    if (!user.Payments || user.Payments.length === 0) {
+      return res.json({
+        status: 'inactive',
+        lastPayment: null,
+        nextPaymentDate: null,
+        expirationDate: null,
+        daysRemaining: 0,
+        email: user.email,
+        name: user.name
+      });
     }
-    console.log("jsonPayment:", jsonPayment);
-    res.json(jsonPayment);
+
+    const lastPayment = user.Payments[0];
+    const now = new Date();
+    const expirationDate = lastPayment.blockedPaymentDate;
+    const daysRemaining = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+
+    let status = 'active';
+    if (daysRemaining <= 5 && daysRemaining > 0) {
+      status = 'warning';
+    } else if (daysRemaining <= 0) {
+      status = 'expired';
+    }
+
+    res.json({
+      status,
+      lastPayment: lastPayment.paymentDate,
+      nextPaymentDate: lastPayment.nextPaymentDate,
+      expirationDate: lastPayment.blockedPaymentDate,
+      daysRemaining: Math.max(0, daysRemaining),
+      suspense: lastPayment.suspense,
+      email: user.email,
+      name: user.name
+    });
   } catch (err) {
     console.error("❌ Error obteniendo estado del pago:", err);
     res.status(500).json({ error: "Error obteniendo estado del pago" });
@@ -134,7 +137,7 @@ router.get("/status/:userId", authenticateJWT, async (req, res) => {
 
 // ===== Endpoints de historial de pagos =====
 
-router.get("/user/:userId", authenticateJWT, async (req, res) => {
+router.get("/user/:userId", authenticate, async (req, res) => {
   try {
     const { userId } = req.params;
     
@@ -159,7 +162,7 @@ router.get("/user/:userId", authenticateJWT, async (req, res) => {
   }
 });
 
-router.get("/:email", authenticateJWT, async (req, res) => {
+router.get("/:email", authenticate, async (req, res) => {
   try {
     const user = await User.findOne({
       where: { email: req.params.email }
@@ -187,7 +190,7 @@ router.get("/:email", authenticateJWT, async (req, res) => {
 
 // ===== Endpoints de creación de pagos =====
 
-router.post("/checkout", authenticateJWT, async (req, res) => {
+router.post("/checkout", authenticate, async (req, res) => {
   try {
     const { userId, amount } = req.body;
 
@@ -205,22 +208,29 @@ router.post("/checkout", authenticateJWT, async (req, res) => {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    const body = {
+    const preference = {
       items: [
         {
           title: "Suscripción mensual",
           unit_price: Number(amount),
           quantity: 1,
         },
-      ]
+      ],
+      back_urls: {
+        success: process.env.MP_SUCCESS_URL || "http://localhost:3000/success",
+        failure: process.env.MP_FAILURE_URL || "http://localhost:3000/failure",
+        pending: process.env.MP_PENDING_URL || "http://localhost:3000/pending",
+      },
+      auto_return: "approved",
+      payer: {
+        email: user.email,
+      },
     };
     
-    // En la ruta /api/payments/checkout
-    const { client, Preference } = req.app.locals.mercadopago;
-    const preference = new Preference(client);
-    const response = await preference.create({ body });
+    const { client } = req.app.locals.mercadopago;
+    const response = await client.create({ body: preference });
 
-    res.json({ id: userId, init_point: response.body.init_point });
+    res.json({ id: response.body.id, init_point: response.body.init_point });
   } catch (err) {
     console.error("❌ Error creando preferencia:", err);
     res.status(500).json({ error: "Error creando pago" });

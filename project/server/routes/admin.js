@@ -1,10 +1,10 @@
 import express from 'express';
 import User from '../models/user.js';
-import { authenticate, isAdmin } from '../middlewares/auth.js';
+import { authenticateJWT, isAdmin } from '../middlewares/auth.js';
 const router = express.Router();
 
 // Obtener todos los usuarios
-router.get('/users', authenticate, isAdmin, async (req, res) => {
+router.get('/users', authenticateJWT, isAdmin, async (req, res) => {
   const users = await User.findAll({ attributes: ['id', 'email', 'link', 'name', 'suspended'] });
   if (users) {
     res.json(users);
@@ -14,8 +14,9 @@ router.get('/users', authenticate, isAdmin, async (req, res) => {
 });
 
 // Obtener un usuario por email
-router.get('/user/:email', authenticate, async (req, res) => {
+router.get('/users/:email', authenticateJWT, async (req, res) => {
   const user = await User.findOne({ where: { email: req.params.email } });
+  console.log("Usuario encontrado:", user);
   if (user) {
     res.json({ user });
   } else {
@@ -24,7 +25,7 @@ router.get('/user/:email', authenticate, async (req, res) => {
 });
 
 // Actualizar un usuario
-router.put('/user/:id', authenticate, isAdmin, async (req, res) => {
+router.put('/user/:id', authenticateJWT, isAdmin, async (req, res) => {
   const { soporte_estable, suspended } = req.body;
   await User.update({ soporte_estable, suspended }, { where: { id: req.params.id } });
   res.json({ message: 'Usuario actualizado' });

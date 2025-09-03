@@ -1,28 +1,44 @@
-<nav class="bg-blue-600 text-white p-4">
-    <div class="container mx-auto flex justify-between items-center">
-        <div class="text-2xl font-bold">
-            <a href="dashboard.html">Panel Administrativo</a>
+<nav class="bg-blue-600 text-white fixed w-full top-0 z-50 transition-all duration-300 ease-in-out">
+    <!-- Navbar principal -->
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo/Título - más pequeño en móvil -->
+            <div class="flex-shrink-0">
+                <a href="dashboard.html" class="text-lg md:text-xl font-bold hover:text-gray-200 transition-colors duration-200">
+                    Panel Admin
+                </a>
+            </div>
+
+            <!-- Botón menú móvil -->
+            <div class="md:hidden">
+                <button id="menu-toggle" class="p-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Menú escritorio -->
+            <div class="hidden md:flex md:items-center md:space-x-4">
+                <a href="settings.html" class="px-3 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors duration-200">Configuraciones</a>
+                <a href="paymentMethod.html" class="px-3 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors duration-200">Métodos de Pago</a>
+                <a href="user.html" class="px-3 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors duration-200">Usuario</a>
+                <button id="logoutButton" class="ml-4 px-4 py-2 text-sm bg-red-500 hover:bg-red-600 rounded-md transition-colors duration-200" onclick="logout()">Cerrar Sesión</button>
+            </div>
         </div>
-        <div class="md:hidden">
-            <button id="menu-toggle" class="focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                </svg>
-            </button>
-        </div>
-        <ul id="menu" class="hidden md:flex space-x-6 items-center">
-            <li><a href="settings.html" class="hover:text-gray-200">Configuraciones</a></li>
-            <li><a href="paymentMethod.html" class="hover:text-gray-200">Métodos de Pago</a></li>
-            <li><a href="user.html" class="hover:text-gray-200">Usuario</a></li>
-            <li><button id="logoutButton" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition" onclick="logout()">Cerrar Sesión</button></li>
-        </ul>
     </div>
-    <!-- Menú móvil horizontal -->
-    <ul id="mobile-menu" class="hidden flex space-x-4 bg-blue-700 p-4 md:hidden items-center">
-        <li><a href="dashboard.html" class="hover:text-gray-200">Dashboard</a></li>
-        <li><a href="settings.html" class="hover:text-gray-200">Configuraciones</a></li>
-        <li><a href="paymentMethod.html" class="hover:text-gray-200">Métodos de Pago</a></li>
-        <li><a href="user.html" class="hover:text-gray-200">Usuario</a></li>
-        <li><button id="mobile-logoutButton" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition" onclick="logout()">Cerrar Sesión</button></li>
-    </ul>
+
+    <!-- Menú móvil -->
+    <div id="mobile-menu" class="md:hidden h-0 overflow-hidden transition-all duration-300 ease-in-out">
+        <div class="px-2 pt-2 pb-3 space-y-1 bg-blue-700">
+            <a href="settings.html" class="block px-3 py-2 rounded-md text-base hover:bg-blue-600 transition-colors duration-200">Configuraciones</a>
+            <a href="paymentMethod.html" class="block px-3 py-2 rounded-md text-base hover:bg-blue-600 transition-colors duration-200">Métodos de Pago</a>
+            <a href="user.html" class="block px-3 py-2 rounded-md text-base hover:bg-blue-600 transition-colors duration-200">Usuario</a>
+            <button id="mobile-logoutButton" class="w-full text-left px-3 py-2 rounded-md text-base bg-red-500 hover:bg-red-600 transition-colors duration-200" onclick="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
 </nav>
+
+<!-- Espaciador para compensar el navbar fijo -->
+<div class="h-16"></div>
+<script src="/js/nav-handler.js"></script>

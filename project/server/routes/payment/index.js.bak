@@ -1,0 +1,398 @@
+// routes/paymentRoutes.js
+import express from "express";
+import User from "../../models/user.js";
+import Payment from "../../models/payment.js";
+import { authenticate } from "../../middlewares/auth.js";
+
+const router = express.Router();
+
+// ===== Endpoints de pagos específicos =====
+
+// Obtener información detallada de un pago
+router.get("/payment-status/:paymentId", authenticate, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    console.log(`📍 Buscando información del pago: ${paymentId}`);
+
+    const payment = await Payment.findOne({
+      where: { paymentId },
+      include: [{
+        model: User,
+        attributes: ['id', 'email', 'name', 'suspense']
+      }]
+    });
+
+    if (!payment) {
+      console.warn(`❌ Pago no encontrado: ${paymentId}`);
+      return res.status(404).json({
+        error: "Pago no encontrado",
+        message: "El pago solicitado no existe en el sistema"
+      });
+    }
+
+    // Verificar permisos
+    if (payment.userId !== req.user.id && req.user.role !== 'admin') {
+      console.warn(`⚠️ Intento de acceso no autorizado al pago ${paymentId} por usuario ${req.user.id}`);
+      return res.status(403).json({
+        error: "Acceso denegado",
+        message: "No tienes permiso para ver este pago"
+      });
+    }
+
+    // Preparar respuesta
+    const response = {
+      id: payment.id,
+      paymentId: payment.paymentId,
+      status: payment.status,
+      amount: payment.amount,
+      paymentDate: payment.paymentDate,
+      nextPaymentDate: payment.nextPaymentDate,
+      blockedPaymentDate: payment.blockedPaymentDate,
+      suspense: payment.suspense,
+      user: {
+        id: payment.User.id,
+        email: payment.User.email,
+        name: payment.User.name,
+        suspense: payment.User.suspense
+      }
+    };
+
+    console.log(`✅ Consulta exitosa de pago ${paymentId} para usuario ${req.user.id}`);
+    res.json(response);
+
+  } catch (err) {
+    console.error("❌ Error al obtener estado del pago:", err);
+    res.status(500).json({
+      error: "Error del servidor",
+      message: "Hubo un error al procesar tu solicitud"
+    });
+  }
+});
+
+// Obtener estado de suscripción del usuario
+router.get("/status/:userId", verifyToken, async (req, res) => {
+  try {
+    // Verificar que el usuario que hace la petición tiene acceso a esta información
+    if (req.params.userId != req.user.id && req.user.role !== 'admin') {
+      console.warn(`⚠️ Intento de acceso no autorizado a información de usuario ${req.params.userId} por usuario ${req.user.id}`);
+      return res.status(403).json({ error: 'No tienes permiso para ver esta información' });
+    }
+
+    const user = await User.findOne({
+      where: {
+        id: req.params.userId
+      },
+
+// ==== Crear orden de pago ====
+router.post("/checkout", async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+
+    if (!userId || !amount) {
+      return res.status(400).json({ error: "userId y amount son requeridos" });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const preference = {
+      items: [
+        {
+          title: "Suscripción mensual",
+          unit_price: Number(amount),
+          quantity: 1,
+        },
+      ],
+      back_urls: {
+        success: process.env.MP_SUCCESS_URL || "http://localhost:3000/success",
+        failure: process.env.MP_FAILURE_URL || "http://localhost:3000/failure",
+        pending: process.env.MP_PENDING_URL || "http://localhost:3000/pending",
+      },
+      auto_return: "approved",
+      payer: {
+        email: user.email,
+      },
+    };
+    
+    // Usa el cliente de Mercado Pago que guardaste globalmente
+    const { client } = req.app.locals.mercadopago;
+
+    const response = await client.create({ body: preference });
+
+    res.json({ id: response.body.id, init_point: response.body.init_point });
+  } catch (err) {
+    console.error("❌ Error creando preferencia:", err);
+    res.status(500).json({ error: "Error creando pago" });
+  }
+});
+
+// ==== Webhook ====
+
+router.post("/webhook", async (req, res) => {
+  try {
+    const { type, data } = req.body;
+
+    if (type === "payment" && data.id) {
+      const { client } = req.app.locals.mercadopago;
+      const resp = await client.payment.findById({ id: data.id });
+
+      const { status, transaction_amount: amount, payer } = resp.body;
+      const email = payer?.email;
+
+      if (!email) {
+        console.warn("⚠️ Pago recibido sin email");
+        return res.sendStatus(200);
+      }
+
+      const user = await User.findOne({ where: { email } });
+
+      if (user) {
+        const now = new Date();
+        const nextPaymentDate =
+          status === "approved"
+            ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // +30 días
+            : null;
+
+        const blockedPaymentDate =
+          status === "approved"
+            ? new Date(now.getTime() + (30 + 5) * 24 * 60 * 60 * 1000) // +35 días
+            : null;
+
+        try {
+          // Crear nuevo pago
+          await Payment.create({
+            paymentId: data.id,
+            userId: user.id,
+            amount,
+            status,
+            paymentDate: now,
+            nextPaymentDate,
+            blockedPaymentDate,
+            suspense: status === "approved",
+            createdAt: now,
+            updatedAt: now
+          });
+
+          // Actualizar estado del usuario
+          user.suspense = status === "approved";
+          await user.save();
+
+          console.log('✅ Pago registrado correctamente:', {
+            paymentId: data.id,
+            userId: user.id,
+            status,
+            amount
+          });
+        } catch (error) {
+          if (error.name === 'SequelizeUniqueConstraintError') {
+            console.log('ℹ️ Pago ya registrado:', data.id);
+          } else {
+            throw error;
+          }
+        }
+      } else {
+        console.warn("⚠️ Usuario no encontrado para el email:", email);
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("❌ Error en webhook:", err);
+    res.sendStatus(500);
+  }
+});
+
+// ==== Obtener pagos por email ====
+router.get("/:email", verifyToken, async (req, res) => {
+  try {
+    const user = await User.findOne({
+      where: {
+        email: req.params.email
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const payments = await Payment.findAll({
+      where: {
+        userId: user.id
+      },
+      order: [
+        ['paymentDate', 'DESC']
+      ]
+    });
+
+    if (payments.length === 0) {
+      return res.json([]); // Devolver array vacío en lugar de 404
+    }
+    
+    res.json(payments);
+  } catch (err) {
+    console.error("❌ Error obteniendo pagos:", err);
+    res.status(500).json({ error: "Error obteniendo pagos" });
+  }
+});
+
+// ==== Obtener pagos por ID de usuario ====
+router.get("/user/:userId", verifyToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const payments = await Payment.findAll({
+      where: {
+        userId
+      },
+      order: [
+        ['paymentDate', 'DESC']
+      ]
+    });
+
+    res.json(payments);
+  } catch (err) {
+    console.error("❌ Error obteniendo pagos:", err);
+    res.status(500).json({ error: "Error obteniendo pagos" });
+  }
+});
+
+// Endpoint para obtener el estado del pago del usuario
+// Obtener estado de un pago específico por paymentId
+router.get("/payment-status/:paymentId", verifyToken, async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    
+    const payment = await Payment.findOne({
+      where: { paymentId },
+      include: [{
+        model: User,
+        attributes: ['id', 'email', 'name', 'suspense']
+      }]
+    });
+
+    if (!payment) {
+      console.warn(`❌ Pago no encontrado: ${paymentId}`);
+      return res.status(404).json({ 
+        error: "Pago no encontrado",
+        message: "El pago solicitado no existe en el sistema"
+      });
+    }
+
+    // Verificar que el usuario que hace la petición tiene acceso a esta información
+    if (payment.userId !== req.user.id && req.user.role !== 'admin') {
+      console.warn(`⚠️ Intento de acceso no autorizado al pago ${paymentId} por usuario ${req.user.id}`);
+      return res.status(403).json({ 
+        error: "Acceso denegado",
+        message: "No tienes permiso para ver este pago" 
+      });
+    }
+
+    // Preparar respuesta con información relevante
+    const response = {
+      id: payment.id,
+      paymentId: payment.paymentId,
+      status: payment.status,
+      amount: payment.amount,
+      paymentDate: payment.paymentDate,
+      nextPaymentDate: payment.nextPaymentDate,
+      blockedPaymentDate: payment.blockedPaymentDate,
+      suspense: payment.suspense,
+      user: {
+        id: payment.User.id,
+        email: payment.User.email,
+        name: payment.User.name,
+        suspense: payment.User.suspense
+      }
+    };
+
+    console.log(`✅ Consulta exitosa de pago ${paymentId} para usuario ${req.user.id}`);
+    res.json(response);
+
+  } catch (err) {
+    console.error("❌ Error al obtener estado del pago:", err);
+    res.status(500).json({ 
+      error: "Error del servidor",
+      message: "Hubo un error al procesar tu solicitud"
+    });
+  }
+});
+
+// Obtener estado de suscripción del usuario
+router.get("/status/:userId", authenticate, async (req, res) => {
+  try {
+    // Verificar que el usuario que hace la petición tiene acceso a esta información
+    if (req.params.userId != req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'No tienes permiso para ver esta información' });
+    }
+
+    const user = await User.findOne({
+      where: {
+        id: req.params.userId
+      },
+      include: [{
+        model: Payment,
+        where: {
+          status: 'approved'
+        },
+        required: false,
+        order: [['paymentDate', 'DESC']],
+        limit: 1
+      }]
+    });
+
+    console.log('Usuario encontrado para estado de suscripción:', user ? user.email : 'No encontrado');
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Si no hay pagos, devolver estado inactivo
+    if (!user.Payments || user.Payments.length === 0) {
+      return res.json({
+        status: 'inactive',
+        lastPayment: null,
+        nextPaymentDate: null,
+        expirationDate: null,
+        daysRemaining: 0,
+        email: user.email,
+        name: user.name
+      });
+    }
+
+    const lastPayment = user.Payments[0];
+    const now = new Date();
+    const expirationDate = lastPayment.blockedPaymentDate;
+    const daysRemaining = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+
+    let status = 'active';
+    if (daysRemaining <= 5 && daysRemaining > 0) {
+      status = 'warning';
+    } else if (daysRemaining <= 0) {
+      status = 'expired';
+    }
+
+    res.json({
+      status,
+      lastPayment: lastPayment.paymentDate,
+      nextPaymentDate: lastPayment.nextPaymentDate,
+      expirationDate: lastPayment.blockedPaymentDate,
+      daysRemaining: Math.max(0, daysRemaining),
+      suspense: lastPayment.suspense,
+      email: user.email,
+      name: user.name
+    });
+  } catch (err) {
+    console.error("❌ Error obteniendo estado del pago:", err);
+    res.status(500).json({ error: "Error obteniendo estado del pago" });
+  }
+});
+
+
+export default router;
