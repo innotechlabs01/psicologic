@@ -164,6 +164,9 @@
 .h-0 {
   height: calc(var(--spacing) * 0);
 }
+.h-2\.5 {
+  height: calc(var(--spacing) * 2.5);
+}
 .h-6 {
   height: calc(var(--spacing) * 6);
 }
@@ -377,6 +380,9 @@
 .bg-gray-100 {
   background-color: var(--color-gray-100);
 }
+.bg-gray-200 {
+  background-color: var(--color-gray-200);
+}
 .bg-gray-500 {
   background-color: var(--color-gray-500);
 }
@@ -398,11 +404,17 @@
 .bg-red-500 {
   background-color: var(--color-red-500);
 }
+.bg-red-600 {
+  background-color: var(--color-red-600);
+}
 .bg-white {
   background-color: var(--color-white);
 }
 .bg-yellow-100 {
   background-color: var(--color-yellow-100);
+}
+.bg-yellow-600 {
+  background-color: var(--color-yellow-600);
 }
 .bg-cover {
   background-size: cover;
@@ -772,11 +784,6 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-.md\:flex-row {
-  @media (width >= 48rem) {
-    flex-direction: row;
-  }
-}
 .md\:items-center {
   @media (width >= 48rem) {
     align-items: center;
@@ -788,15 +795,6 @@
       --tw-space-x-reverse: 0;
       margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse));
       margin-inline-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-x-reverse)));
-    }
-  }
-}
-.md\:space-x-6 {
-  @media (width >= 48rem) {
-    :where(& > :not(:last-child)) {
-      --tw-space-x-reverse: 0;
-      margin-inline-start: calc(calc(var(--spacing) * 6) * var(--tw-space-x-reverse));
-      margin-inline-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-x-reverse)));
     }
   }
 }

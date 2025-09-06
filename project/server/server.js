@@ -32,7 +32,7 @@ const app = express();
 const server = createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.DOMAIN || 'http://localhost:3000',
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -58,7 +58,7 @@ app.use(helmet({
     }
   }
 }));
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: process.env.DOMAIN || 'http://localhost:3000', credentials: true }));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,

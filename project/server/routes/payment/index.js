@@ -8,6 +8,18 @@ const router = express.Router();
 
 // ===== Endpoints de pagos específicos =====
 
+router.get("/success", (req, res) => { 
+  res.sendFile('success.html', { root: path.join(process.cwd(), 'project/public') }); 
+});
+
+router.get("/failure", (req, res) => { 
+  res.sendFile('failure.html', { root: path.join(process.cwd(), 'project/public') }); 
+});
+
+router.get("/pending", (req, res) => { 
+  res.sendFile('pending.html', { root: path.join(process.cwd(), 'project/public') }); 
+});
+
 router.get("/payment-status/:paymentId", authenticateJWT, async (req, res) => {
   try {
     const { paymentId } = req.params;
@@ -53,7 +65,6 @@ router.get("/payment-status/:paymentId", authenticateJWT, async (req, res) => {
       }
     };
 
-    console.log(`✅ Consulta exitosa de pago ${paymentId} para usuario ${req.user.id}`);
     res.json(response);
   } catch (err) {
     console.error("❌ Error al obtener estado del pago:", err);
@@ -63,6 +74,84 @@ router.get("/payment-status/:paymentId", authenticateJWT, async (req, res) => {
     });
   }
 });
+
+router.post('/paymentFail', authenticateJWT, async (req, res) => {
+  try {
+    const { userId, paymentId, status } = req.body;
+
+    const payment = await Payment.findOne({
+      where: {
+        userId: userId,
+      }
+    });
+
+    let statusPayment = status;
+
+    const now = new Date();
+    const expirationDate = payment.blockedPaymentDate;
+    const daysRemaining = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+
+    if (daysRemaining < 5) {
+     statusPayment = 'warning';
+      // Aquí puedes buscar el usuario si tienes el email o preferenceId
+      await Payment.create({
+        userId: userId,
+        paymentId: paymentId,
+        amount: 100000,
+        status: statusPayment,
+        suspense: false,
+        paymentDate: new Date(),
+        nextPaymentDate: payment.nextPaymentDate,
+        blockedPaymentDate: payment.blockedPaymentDate,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    } else if (daysRemaining < 0) {
+      statusPayment = 'expired';
+      // Aquí puedes buscar el usuario si tienes el email o preferenceId
+      await Payment.create({
+        userId: userId,
+        paymentId: paymentId,
+        amount: 100000,
+        status: statusPayment,
+        suspense: false,
+        paymentDate: new Date(),
+        nextPaymentDate: payment.nextPaymentDate,
+        blockedPaymentDate: payment.blockedPaymentDate,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      await User.update({
+        suspended: true,
+      }, {
+        where: {
+          id: userId,
+        }
+      });
+    } else {
+      // Aquí puedes buscar el usuario si tienes el email o preferenceId
+      await Payment.create({
+        userId: userId,
+        paymentId: paymentId,
+        amount: 100000,
+        status: statusPayment,
+        paymentDate: new Date(),
+        nextPaymentDate: payment.nextPaymentDate,
+        blockedPaymentDate: payment.blockedPaymentDate,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+
+    console.log('📌 Pago fallido registrado');
+    res.sendStatus(200);
+  } catch (error) {
+    console.error('❌ Error al registrar pago fallido:', error);
+    res.sendStatus(500);
+  }
+});
+
 
 // ===== Endpoints de suscripción =====
 
@@ -95,14 +184,12 @@ router.get("/status/:userId", authenticateJWT, async (req, res) => {
       order: [['paymentDate', 'DESC']],
     });
 
-    console.log('Pagos encontrados:', payment);
     const jsonPayment = [];
     if (payment.length > 0) {
       payment.forEach(p => {
-        console.log('Pago:', p.dataValues);
         const now = new Date();
         const expirationDate = p.dataValues.blockedPaymentDate;
-        const daysRemaining = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
+        let daysRemaining = Math.ceil((expirationDate - now) / (1000 * 60 * 60 * 24));
 
         let status = 'active';
         if (daysRemaining <= 5 && daysRemaining > 0) {
@@ -110,6 +197,9 @@ router.get("/status/:userId", authenticateJWT, async (req, res) => {
         } else if (daysRemaining <= 0) {
           status = 'expired';
         }
+
+        daysRemaining = daysRemaining < 0 ? 0 : daysRemaining;
+
         jsonPayment.push({
           id: p.dataValues.id,
           paymentId: p.dataValues.paymentId,
@@ -124,7 +214,6 @@ router.get("/status/:userId", authenticateJWT, async (req, res) => {
         })
       })
     }
-    console.log("jsonPayment:", jsonPayment);
     res.json(jsonPayment);
   } catch (err) {
     console.error("❌ Error obteniendo estado del pago:", err);
@@ -206,13 +295,24 @@ router.post("/checkout", authenticateJWT, async (req, res) => {
     }
 
     const body = {
+      payer: {
+        email: user.email,
+      },
       items: [
         {
-          title: "Suscripción mensual",
+          description: "Suscripción mensual",
+          title: "Page Web Psicologic InnoTech Labs SAS",
           unit_price: Number(amount),
+          currency_id: "COL",
           quantity: 1,
         },
-      ]
+      ],
+      back_urls: {
+        success: process.env.DOMAIN + "/success",
+        failure: process.env.DOMAIN + "/failure",
+        pending: process.env.DOMAIN + "/pending",
+      },
+      notification_url: process.env.DOMAIN + "/api/payments/webhook",
     };
     
     // En la ruta /api/payments/checkout
@@ -220,7 +320,7 @@ router.post("/checkout", authenticateJWT, async (req, res) => {
     const preference = new Preference(client);
     const response = await preference.create({ body });
 
-    res.json({ id: userId, init_point: response.body.init_point });
+    res.json({ id: userId, init_point: response.init_point });
   } catch (err) {
     console.error("❌ Error creando preferencia:", err);
     res.status(500).json({ error: "Error creando pago" });
@@ -233,31 +333,31 @@ router.post("/webhook", async (req, res) => {
   try {
     const { type, data } = req.body;
 
-    if (type === "payment" && data.id) {
+    console.log("Webhook recibido: ", { type, data });
+    console.log("Webhook recibido req.body: ", req.body);
+
+    if (type === "payment" && data.preference_id) {
       const { client } = req.app.locals.mercadopago;
       const resp = await client.payment.findById({ id: data.id });
 
-      const { status, transaction_amount: amount, payer } = resp.body;
+      const { status, transaction_amount: amount, payer, external_reference } = resp.body;
       const email = payer?.email;
+      const now = new Date();
 
-      if (!email) {
-        console.warn("⚠️ Pago recibido sin email");
-        return res.sendStatus(200);
+      // Buscar usuario por email o por external_reference si está disponible
+      let user = null;
+      if (email) {
+        user = await User.findOne({ where: { email, suspended: false } });
+      } else if (external_reference) {
+        user = await User.findOne({ where: { external_reference } });
       }
 
-      const user = await User.findOne({ where: { email } });
-
       if (user) {
-        const now = new Date();
         const nextPaymentDate =
-          status === "approved"
-            ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // +30 días
-            : null;
+          status === "approved" ? new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000) : null;
 
         const blockedPaymentDate =
-          status === "approved"
-            ? new Date(now.getTime() + (30 + 5) * 24 * 60 * 60 * 1000) // +35 días
-            : null;
+          status === "approved" ? new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000) : null;
 
         try {
           await Payment.create({
@@ -273,10 +373,13 @@ router.post("/webhook", async (req, res) => {
             updatedAt: now
           });
 
-          user.suspense = status === "approved";
-          await user.save();
+          // Actualizar el estado del usuario si el pago fue aprobado
+          if (status === "approved") {
+            user.suspense = true;
+            await user.save();
+          }
 
-          console.log('✅ Pago registrado correctamente:', {
+          console.log(`✅ Pago registrado: ${status}`, {
             paymentId: data.id,
             userId: user.id,
             status,
@@ -289,10 +392,27 @@ router.post("/webhook", async (req, res) => {
             throw error;
           }
         }
-      } else {
-        console.warn("⚠️ Usuario no encontrado para el email:", email);
       }
-    }
+    } else {
+        console.warn("⚠️ Usuario no encontrado para el pago:", {
+          data
+        });
+
+        // Guardar el pago sin usuario para seguimiento posterior
+        await Payment.create({
+          paymentId: data.id,
+          userId: null,
+          amount,
+          status,
+          paymentDate: now,
+          preferenceId: data.preference_id,
+          suspense: false,
+          createdAt: now,
+          updatedAt: now
+        });
+
+        console.log("📌 Pago sin usuario registrado, guardado para seguimiento.");
+      }
 
     res.sendStatus(200);
   } catch (err) {
@@ -300,5 +420,6 @@ router.post("/webhook", async (req, res) => {
     res.sendStatus(500);
   }
 });
+
 
 export default router;

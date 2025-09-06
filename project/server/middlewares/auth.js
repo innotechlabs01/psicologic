@@ -18,16 +18,11 @@ export function authenticateGameToken(tokensValidos = new Map()) {
       return res.status(403).json({ error: 'Token de juego requerido' });
     }
 
-    console.log(`🔍 Token recibido: ${token}`);
-    console.log('🔍 Tokens válidos:', Array.from(tokensValidos.keys()));
-    console.log('🔍 ¿Token existe en Map?:', tokensValidos.has(token));
-
     if (!tokensValidos.has(token)) {
       return res.status(403).json({ error: 'Token de juego inválido o expirado' });
     }
 
     req.gameData = tokensValidos.get(token);
-    console.log(`🎮 Token de juego válido para ${req.path}`);
     next();
   };
 }
@@ -42,13 +37,10 @@ export function authenticateJWT(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, SECRET_KEY);
-    console.log('🔍 Token decodificado:', decoded);
    // Validar antigüedad del token
     const issuedAt = decoded.iat * 1000; // Convertir a milisegundos
     const now = Date.now();
     const age = now - issuedAt;
-
-    console.log(`⏰ Token emitido hace: ${Math.floor(age / 60000)} minutos`);
 
     if (age > MAX_TOKEN_AGE_MS) {
       console.warn(`⏰ Token demasiado antiguo: ${Math.floor(age / 60000)} minutos`);
@@ -56,7 +48,6 @@ export function authenticateJWT(req, res, next) {
     }
 
     req.user = decoded;
-    console.log(`✅ Usuario autenticado: ${decoded.email}`);
     next();
   } catch (err) {
     console.error('❌ Token inválido:', err.message);

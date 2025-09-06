@@ -2,10 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Pago Exitoso</title> 
+  <title>Pago Pendiente</title> 
   <link rel="stylesheet" href="/css/output.css">
 </head>
-<body class="bg-green-100 flex items-center justify-center h-screen">
-  <h1 class="text-2xl font-bold text-green-700">¡Tu pago fue exitoso! 🎉</h1>
+<body class="bg-yellow-100 flex flex-col items-center justify-center h-screen">
+  <div class="text-center">
+    <h1 class="text-2xl font-bold text-green-700">¡Tu pago fue exitoso! 🎉</h1>
+    <div class="bg-white p-4 rounded-lg shadow-md">
+      <p class="text-gray-700">Serás redirigido a la página principal en <span id="countdown" class="font-bold text-green-600">10</span> segundos.</p>
+      <div class="mt-4 w-full bg-gray-200 rounded-full h-2.5">
+        <div id="progress-bar" class="bg-yellow-600 h-2.5 rounded-full" style="width: 100%"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/redirect.js"></script>
 </body>
 </html>

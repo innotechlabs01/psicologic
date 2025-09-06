@@ -30,31 +30,25 @@
       padding: 1rem;
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
-      /* Ocultar scrollbar pero mantener funcionalidad */
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
       max-width: 100%;
       margin-bottom: 1rem;
     }
-
     .cards-container::-webkit-scrollbar {
       height: 8px;
     }
-
     .cards-container::-webkit-scrollbar-track {
       background: #f1f1f1;
       border-radius: 4px;
     }
-
     .cards-container::-webkit-scrollbar-thumb {
       background: #888;
       border-radius: 4px;
     }
-
     .cards-container::-webkit-scrollbar-thumb:hover {
       background: #555;
     }
-
     .card {
       flex: 0 0 auto;
       width: 120px;
@@ -66,12 +60,9 @@
       perspective: 1000px;
       margin: 0;
     }
-    
     .card.flip {
       transform: rotateY(180deg);
     }
-
-    /* Contenedor de la primera carta */
     .first-card-container {
       position: sticky;
       left: 0;
@@ -81,14 +72,18 @@
       margin-right: 1rem;
       border-right: 2px solid rgba(59, 130, 246, 0.1);
     }
-
-    /* Contenedor de otras cartas */
     .other-cards-container {
       display: flex;
       gap: 1rem;
       flex-wrap: nowrap;
     }
-    
+    .card .back .card-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ff69b4;
+      z-index: 2;
+      position: relative;
+    }
     .card div {
       width: 100%;
       height: 100%;
@@ -104,7 +99,6 @@
       background-size: cover;
       background-position: center;
     }
-    
     .card .face {
       background: #ffffff;
       border: 2px solid #2563eb;
@@ -116,98 +110,47 @@
       padding: 1rem;
       text-align: center;
     }
-    
     .card .back {
       background-size: cover;
       background-position: center;
       border: 2px solid #2563eb;
       transform: rotateY(0deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ff69b4;
     }
-
-    /* Estilos específicos para cada tipo de juego */
     .card.besos .back {
-      background-image: url('/images/besos.jpeg');
+      background-color: white;
     }
-
     .card.fuego .back {
-      background-image: url('/images/fuego.jpeg');
+      background-color: white;
     }
-
     .card.rayo .back {
-      background-image: url('/images/rayo.jpeg');
+      background-color: white;
     }
-
-    /* Asegurarse de que las imágenes cubran completamente el fondo */
-    .card .back {
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-
-    .card.besos .back {
-      background-image: url('/images/besos.jpeg');
-    }
-
-    .card.fuego .back {
-      background-image: url('/images/fuego.jpeg');
-    }
-
-    .card.rayo .back {
-      background-image: url('/images/rayo.jpeg');
-    }
-    
-    /* Estilos para el contenedor de cartas */
-    .cards-container::-webkit-scrollbar {
-      height: 6px;
-    }
-    
-    .cards-container::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 3px;
-    }
-    
-    .cards-container::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 3px;
-    }
-    
-    .cards-container::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
-
-    /* Estilos para las cartas */
     .card.first-selected {
       box-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
       border: 2px solid #10b981;
     }
-    
     .card.other-selected {
       box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
       border: 2px solid #3b82f6;
     }
-    
     .card.matched .face {
       border-color: #10b981;
       background-color: #d1fae5;
     }
-
-    /* Estilo para la primera carta */
     .first-card-container .card {
       margin-right: 1rem;
     }
-
-    /* Contenedor de otras cartas */
-    .other-cards-container {
-      display: flex;
-      gap: 1rem;
-    }
-    
     .suit-img {
       font-size: 1.5rem;
       line-height: 1;
       margin-top: 0.25rem;
     }
-    
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -218,112 +161,118 @@
         transform: translateY(0);
       }
     }
-    
     .player-stats {
       background-color: #f3f4f6;
       padding: 0.5rem 1rem;
       border-radius: 0.5rem;
       font-size: 0.875rem;
     }
-
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #stats {
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: #ff69b4;
-        }
-        #mensaje {
-            color: red;
-            margin-bottom: 10px;
-            display: none;
-        }
-        #titulo {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #ff69b4;
-        }
-        .memory-game {
-            width: 600px;
-            height: 600px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-gap: 15px;
-            perspective: 1000px;
-            padding: 15px;
-        }
-        .card {
-            width: 100%;
-            height: 130px;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.5s;
-            cursor: pointer;
-            background: #ffd1dc;
-            border-radius: 5px;
-        }
-        .card:active {
-            transform: scale(0.97);
-            transition: transform 0.2s;
-        }
-        .card.flip {
-            transform: rotateY(180deg);
-        }
-        .card.matched {
-            opacity: 0.5;
-            cursor: default;
-        }
-        .face, .back {
-            width: 100%;
-            height: 100%;
-            padding: 10px;
-            position: absolute;
-            border-radius: 5px;
-            backface-visibility: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 14px;
-            color: #ff69b4;
-            box-sizing: border-box;
-        }
-        .face {
-            background: #f8e5e1;
-            transform: rotateY(180deg);
-        }
-        .back {
-            background: #ffd1dc;
-        }
-        .face::before {
-            content: "❤";
-            position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-        }
-        .face::after {
-            content: "💋";
-            position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-        }
-        .back::after {
-            content: "💋";
-            font-size: 40px;
-            color: #ff69b4;
-        }
+    #game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #stats {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #ff69b4;
+    }
+    #mensaje {
+      color: red;
+      margin-bottom: 10px;
+      display: none;
+    }
+    #titulo {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #ff69b4;
+    }
+    .memory-game {
+      width: 600px;
+      height: 600px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 15px;
+      perspective: 1000px;
+      padding: 15px;
+    }
+    .card {
+      width: 100%;
+      height: 130px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+      cursor: pointer;
+      background: #ffd1dc;
+      border-radius: 5px;
+    }
+    .card:active {
+      transform: scale(0.97);
+      transition: transform 0.2s;
+    }
+    .card.flip {
+      transform: rotateY(180deg);
+    }
+    .card.matched {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .face, .back {
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      position: absolute;
+      border-radius: 5px;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 14px;
+      color: #ff69b4;
+      box-sizing: border-box;
+    }
+    .face {
+      background: #f8e5e1;
+      transform: rotateY(180deg);
+    }
+    .back {
+      background: #ffd1dc;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ff69b4;
+    }
+    .face::before {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+    }
+    .face::after {
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20px;
+    }
+    .back::after {
+      font-size: 40px;
+      color: #ff69b4;
+    }
+    .card .face {
+      display: none;
+    }
+    .card.flip .face {
+      display: block;
+    }
+    .card.flip .back {
+      display: none;
+    }
   </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
   <div class="flex h-screen">
-    <!-- Menú lateral -->
     <div class="w-64 bg-blue-800 text-white flex flex-col shadow-lg">
       <div class="p-4 text-2xl font-bold border-b border-blue-700">Dashboard</div>
       <nav id="sidebar-menu" class="flex-1">
@@ -336,102 +285,48 @@
         </ul>
       </nav>
     </div>
-
-    <!-- Contenido principal -->
     <div class="flex-1 p-8 overflow-auto bg-gray-50">
       <h1 class="text-3xl font-bold mb-6 text-gray-800">Bienvenido, <span id="userEmail">Administrador</span></h1>
       <div id="userContent">
-        <!-- Sección Juego de Cartas -->
         <div id="cardGame" class="section active">
           <div id="error" class="text-red-600 mb-4"></div>
-          <!-- <div class="flex flex-col md:flex-row md:space-x-6 mb-6">
-            <div class="flex-1 bg-white p-6 rounded-lg shadow-sm">
-              <div class="input-group mb-4">
-                <label for="nombreUsuario1" class="mb-1">Nombre del Usuario 1:</label>
-                <input type="text" id="nombreUsuario1" placeholder="Ej: Jugador 1" class="w-full">
-              </div>
-              <div class="input-group">
-                <label for="enlaceGenerado1" class="mb-1">Enlace para Usuario 1:</label>
-                <input type="text" id="enlaceGenerado1" readonly class="w-full bg-gray-100">
-              </div>
-            </div>
-            <div class="flex-1 bg-white p-6 rounded-lg shadow-sm">
-              <div class="input-group mb-4">
-                <label for="nombreUsuario2" class="mb-1">Nombre del Usuario 2:</label>
-                <input type="text" id="nombreUsuario2" placeholder="Ej: Jugador 2" class="w-full">
-              </div>
-              <div class="input-group">
-                <label for="enlaceGenerado2" class="mb-1">Enlace para Usuario 2:</label>
-                <input type="text" id="enlaceGenerado2" readonly class="w-full bg-gray-100">
-              </div>
-            </div>
-            <div class="flex-1 bg-white p-6 rounded-lg shadow-sm">
-              <label for="nombreUsuario2" class="mb-1 px-2">Escoja el juego:</label>
-              <div class="input-group mb-4">
-                <div class="flex items-center">
-                  <input id="rdBesos" type="radio" name="juego" value="besos" class="mr-2" style="width: 8% !important;">
-                  <label for="rdBesos" class="mr-2">Besos</label>
-                </div>
-                <div class="flex items-center">
-                  <input id="rdFuego" type="radio" name="juego" value="fuego" class="mr-2" style="width: 8% !important;">
-                  <label for="rdFuego" class="mr-2">Fuego</label>
-                </div>
-                <div class="flex items-center">
-                  <input id="rdRayo" type="radio" name="juego" value="rayo" class="mr-2" style="width: 8% !important;">
-                  <label for="rdRayo" class="mr-2">Rayo</label>
-                </div>
-              </div>
-            </div>
-          </div>
-          <button id="generarBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200">Generar Enlaces</button>
-          <h3 class="mt-6 text-lg font-medium text-gray-700">Selecciones:</h3> -->
-          
           <div class="flex-1 bg-white p-6 rounded-lg shadow-sm">
             <label for="nombreUsuario2" class="mb-1 px-2">Escoja el juego:</label>
             <div class="input-group mb-4">
               <div class="flex items-center">
                 <input id="rdBesos" type="radio" name="juego" value="besos" class="mr-2" style="width: 8% !important;">
-                <label for="rdBesos" class="mr-2">Besos</label>
+                <label for="rdBesos" class="mr-2">Labio : conexión emocional </label>
               </div>
               <div class="flex items-center">
                 <input id="rdFuego" type="radio" name="juego" value="fuego" class="mr-2" style="width: 8% !important;">
-                <label for="rdFuego" class="mr-2">Fuego</label>
+                <label for="rdFuego" class="mr-2">Fuego : preguntas íntimas </label>
               </div>
               <div class="flex items-center">
                 <input id="rdRayo" type="radio" name="juego" value="rayo" class="mr-2" style="width: 8% !important;">
-                <label for="rdRayo" class="mr-2">Rayo</label>
+                <label for="rdRayo" class="mr-2">Rayo : retos </label>
               </div>
             </div>
           </div>
           <div id="listaSelecciones" class="mt-4">
-            <!-- Player sections will be dynamically added here -->
             <div id="game-container">
               <div id="mensaje" class="hidden"></div>
               <section class="memory-game" id="game"></section>
             </div>
           </div>
         </div>
-
-        <!-- Sección Trivia -->
         <div id="game2" class="section">
           <h2 class="text-2xl font-semibold mb-4 text-gray-800">Trivia</h2>
           <p class="text-gray-600 mb-4">Pon a prueba tus conocimientos con preguntas de cultura general.</p>
           <button id="playTrivia" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200">Jugar</button>
         </div>
-
-        <!-- Sección Memoria -->
         <div id="game3" class="section">
           <h2 class="text-2xl font-semibold mb-4 text-gray-800">Memoria</h2>
           <p class="text-gray-600 mb-4">Encuentra las parejas de cartas en el menor tiempo posible.</p>
           <button id="playMemoria" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-200">Jugar</button>
         </div>
-
-        <!-- Sección Métodos de Pago -->
         <div id="payment" class="section">
-          <div stellements-section"></div>
+          <div id="payments-section"></div>
         </div>
-
-        <!-- Sección Asistencia -->
         <div id="assistance" class="section">
           <h2 class="text-2xl font-semibold mb-4 text-gray-800">Asistencia</h2>
           <p class="text-gray-600 mb-4">Contacta con soporte para cualquier duda o problema.</p>
@@ -443,7 +338,6 @@
       </div>
     </div>
   </div>
-
   <script src="/js/user_page.js"></script>
 </body>
 </html>

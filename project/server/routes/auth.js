@@ -19,8 +19,8 @@ router.post('/register', async (req, res) => {
       amount: parseFloat(100000), 
       status: 'approved', 
       paymentDate: new Date(), 
-      nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 
-      blockedPaymentDate: new Date(Date.now() + (30 + 5) * 24 * 60 * 60 * 1000), 
+      nextPaymentDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 
+      blockedPaymentDate: new Date(Date.now() + (15 + 5) * 24 * 60 * 60 * 1000), 
       createdAt: new Date(), 
     });
     res.json({ message: 'Registrado con éxito', link: user.link });
@@ -32,7 +32,7 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ where: { email } });
+  const user = await User.findOne({ where: { email, suspended: false } });
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ message: 'Credenciales inválidas' });
   }
