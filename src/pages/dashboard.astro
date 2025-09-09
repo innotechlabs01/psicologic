@@ -1,0 +1,17 @@
+---
+import Header from '../components/Header/header.astro'
+import LayoutDashboard from '../layouts/LayoutDashboard.astro'
+import { SignedOut, SignedIn } from "@clerk/astro/components";
+---
+
+<LayoutDashboard title=" 🔒 Dashboard">
+	<SignedIn>
+		<main class="max-w-xl mx-auto py-12">
+			<h1 class="text-black text-3xl font-bold"> Tus retos personales</h1>
+			<p class="text-black text-lg">
+				En este modo, podrás desafiarte a ti mismo y 
+				a otros jugadores. El objetivo es acertar la mayor cantidad de preguntas posible.
+			</p>
+		</main>
+	</SignedIn>
+</LayoutDashboard>

@@ -13,8 +13,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# pnpm lock file
+pnpm-lock.yaml
+
+# astro lock file
+astro.lock
+
 # environment variables
 .env
+.env.local
 .env.production
 
 # macOS-specific files

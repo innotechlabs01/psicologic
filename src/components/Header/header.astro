@@ -1,0 +1,128 @@
+---
+import { SignOutButton, SignedIn } from "@clerk/astro/components";
+---
+<!-- Include this script tag or install `@tailwindplus/elements` via npm: -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script> -->
+<nav class="relative bg-blue-800 dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10">
+  <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+    <div class="relative flex h-16 items-center justify-between">
+      <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
+        <!-- Mobile menu button-->
+        <button id="mobile-toggle" type="button"
+          class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+          aria-controls="mobile-menu" aria-expanded="false">
+          <span class="sr-only">Abrir menú</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="size-6">
+            <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+        <div class="flex shrink-0 items-center">
+          <img src="../../../public/img/logo/logo_black.png" alt="Your Company" class="h-8 w-auto" />
+        </div>
+        <div class="hidden sm:ml-6 sm:block">
+          <div class="flex space-x-4">
+            <!-- Current: "bg-gray-900 dark:bg-gray-950/50 text-white", Default: "text-gray-300 hover:bg-white/5 hover:text-white" -->
+            <a href="/dashboard/settings" aria-current="page" class="menu-link">Configuraciones</a>
+            <a href="/dashboard/payments" class="menu-link">Metodos de Pago</a>
+            <a href="/dashboard/message" class="menu-link">Mensajes</a>
+          </div>
+        </div>
+      </div>
+      <div class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+        <div class="flex items-center space-x-4">
+          <SignOutButton redirectUrl="http://localhost:4321/" asChild>
+            <a class="mt-2 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+              Cerrar sesión
+            </a>
+          </SignOutButton>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <el-disclosure id="mobile-menu"
+    class="block sm:hidden transition-all duration-300 ease-in-out opacity-0 pointer-events-none absolute top-16 left-0 w-full bg-gray-800 z-50">
+    <div class="space-y-1 px-2 pt-2 pb-3">
+      <a href="/dashboard/settings" class="menu-link">Configuraciones</a>
+      <a href="/dashboard/payments" class="menu-link">Metodos de Pago</a>
+      <a href="/dashboard/message" class="menu-link">Mensajes</a>
+    </div>
+
+    <div class="px-2 pt-4 pb-3 border-t border-gray-700">
+      <SignedIn>
+        <SignOutButton redirectUrl="http://localhost:4321/index" asChild>
+          <a class="mt-2 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+            Cerrar sesión
+          </a>
+        </SignOutButton>
+      </SignedIn>
+    </div>
+  </el-disclosure>
+
+</nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleButton = document.getElementById('mobile-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    if (toggleButton && mobileMenu) {
+      toggleButton.addEventListener('click', () => {
+        const isVisible = mobileMenu.classList.contains('opacity-100');
+        mobileMenu.classList.toggle('opacity-0', isVisible);
+        mobileMenu.classList.toggle('pointer-events-none', isVisible);
+        mobileMenu.classList.toggle('opacity-100', !isVisible);
+        mobileMenu.classList.toggle('pointer-events-auto', !isVisible);
+      });
+
+      const links = mobileMenu.querySelectorAll('a');
+      links.forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+          mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+        });
+      });
+    }
+
+    const links = document.querySelectorAll('#menu .menu-link');
+
+    links.forEach(link => {
+      link.addEventListener('click', () => {
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+  });
+</script>
+
+
+<!-- <header class="bg-blue-600 text-white p-4">
+  <div class="container mx-auto flex justify-between items-center">
+    <div class="flex items-center space-x-4">
+      <a href="/" class="text-xl font-bold">Psicologic</a>
+      <nav>
+        <ul class="flex space-x-6">
+          <li>
+            <a href="/dashboard/settings" class="hover:underline">Configuraciones</a>
+          </li>
+          <li>
+            <a href="/dashboard/payments" class="hover:underline">Metodos de Pago</a>
+          </li>
+          <li>
+            <a href="/dashboard/message" class="hover:underline">Mensajes</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <div class="flex items-center space-x-4">
+      <UserButton afterSignOutUrl="http://localhost:4321/index"/>
+      <SignedIn>
+        <a href="/" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+          Cerrar sesión
+        </a>
+      </SignedIn>
+    </div>
+  </div>
+</header> -->

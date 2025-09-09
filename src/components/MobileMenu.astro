@@ -1,0 +1,45 @@
+---
+import { SignedIn, SignOutButton, UserButton } from "@clerk/astro/components";
+---
+
+<div id="mobile-menu" class="sm:hidden transition-all duration-300 ease-in-out opacity-0 pointer-events-none absolute top-16 left-0 w-full bg-gray-800 z-50">
+  <div class="space-y-1 px-4 pt-4 pb-6">
+    <a href="/dashboard/settings" class="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700">Configuraciones</a>
+    <a href="/dashboard/payments" class="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700">Métodos de Pago</a>
+    <a href="/dashboard/messages" class="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700">Mensajes</a>
+
+    <SignedIn>
+      <SignOutButton redirectUrl="http://localhost:4321/index" asChild>
+        <a class="mt-4 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+          Cerrar sesión
+        </a>
+      </SignOutButton>
+    </SignedIn>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleButton = document.getElementById('mobile-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    if (toggleButton && mobileMenu) {
+      toggleButton.addEventListener('click', () => {
+        const isVisible = mobileMenu.classList.contains('opacity-100');
+        mobileMenu.classList.toggle('opacity-0', isVisible);
+        mobileMenu.classList.toggle('pointer-events-none', isVisible);
+        mobileMenu.classList.toggle('opacity-100', !isVisible);
+        mobileMenu.classList.toggle('pointer-events-auto', !isVisible);
+      });
+
+      const links = mobileMenu.querySelectorAll('a');
+      links.forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+          mobileMenu.classList.remove('opacity-100', 'pointer-events-auto');
+        });
+      });
+    }
+  });
+</script>
+

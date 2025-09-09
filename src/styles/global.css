@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+
+.menu-link {
+@apply px-3 py-2 text-sm font-medium text-white hover:bg-gray-900 hover:text-white rounded-md transition-colors duration-200;
+}
+.menu-link.active {
+@apply bg-gray-900 text-white;
+}
