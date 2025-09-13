@@ -1,10 +1,19 @@
 ---
+import { SignedIn } from "@clerk/astro/components";
 import LayoutDashboard from "../../layouts/LayoutDashboard.astro";
+import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
 
 ---
 
-<LayoutDashboard title="Metodos de Pago">
-  <div class="container mx-auto">
-    <h1 class="text-3xl font-bold">Metodos de Pago</h1>
-  </div>
+<LayoutDashboard title="🔒 Dashboard - Metodos de Pago">
+  <SignedIn>
+      <DashboardWrapper 
+        title="Visualización de Pagos" 
+        subtitle="Visualiza todas las transacciones y facturación"
+      >
+        <div class="container mx-auto">
+          <h1 class="text-3xl font-bold">Visualización de Pagos</h1>
+        </div>
+    </DashboardWrapper>
+  </SignedIn>
 </LayoutDashboard>

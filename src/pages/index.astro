@@ -1,7 +1,7 @@
 ---
 import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-import { SignedOut } from '@clerk/astro/components';
+import { SignedOut, SignInButton, SignedIn, UserButton } from '@clerk/astro/components';
 
 // Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
@@ -18,7 +18,7 @@ import { SignedOut } from '@clerk/astro/components';
 <!-- <Layout title=" 🔓 Inicio">
 	<main class="max-w-xl mx-auto py-12">
 		<h1> Tus retos personales</h1>
-		<p class="text-white text-3xl font-bold">
+		<p class="text-black text-3xl font-bold">
 			En este modo, podrás desafiarte a ti mismo y 
 			a otros jugadores. El objetivo es acertar la mayor cantidad de preguntas posible.
 		</p>

@@ -1,11 +1,203 @@
 ---
-import LayoutDashboard from "../../layouts/LayoutDashboard.astro";
-
-
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
+import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
+import { SignedIn } from "@clerk/astro/components";
 ---
 
-<LayoutDashboard title="Configuraciones">
-  <div class="container mx-auto">
-    <h1 class="text-3xl font-bold">Configuraciones</h1>
-  </div>
+<LayoutDashboard title="🔒 Dashboard - ⚙️ Configuraciones">
+  <SignedIn>
+    <DashboardWrapper 
+      title="Configuraciones" 
+      subtitle="Personaliza tu experiencia en la plataforma"
+    >
+      <div class="space-y-6">
+        <!-- Formulario de configuraciones -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Menú de navegación lateral -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-fit">
+            <nav class="space-y-2">
+              <a href="#perfil" data-section="perfil" class="block px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium active-section">
+                👤 Perfil
+              </a>
+              <a href="#seguridad" data-section="seguridad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                🔒 Seguridad
+              </a>
+              <a href="#preferencias" data-section="preferencias" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                🔧 Preferencias
+              </a>
+              <a href="#notificaciones" data-section="notificaciones" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                🔔 Notificaciones
+              </a>
+              <a href="#privacidad" data-section="privacidad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                🛡️ Privacidad
+              </a>
+              <a href="#permisos" data-section="permisos" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                🛡️ Permisos
+              </a>
+            </nav>
+          </div>
+          
+          <!-- Contenido principal -->
+          <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Perfil -->
+            <div id="perfil" data-section="perfil" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Información del Perfil
+              </h2>
+              <form class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Nombre
+                    </label>
+                    <input 
+                      type="text" 
+                      value="Juan" 
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Apellido
+                    </label>
+                    <input 
+                      type="text" 
+                      value="Díaz" 
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    >
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email
+                  </label>
+                  <input 
+                    type="email" 
+                    value="juan@ejemplo.com" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Biografía
+                  </label>
+                  <textarea 
+                    rows="3" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Cuéntanos sobre ti..."
+                  ></textarea>
+                </div>
+                <div class="flex justify-end">
+                  <button 
+                    type="submit" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                  >
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- Seguridad -->
+            <div id="seguridad" data-section="seguridad" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Seguridad
+              </h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                Configura opciones de seguridad como contraseñas y autenticación de dos factores.
+              </p>
+            </div>
+            
+            <!-- Notificaciones -->
+            <div id="notificaciones" data-section="notificaciones" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Notificaciones
+              </h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                Personaliza tus preferencias de notificaciones.
+              </p>
+            </div>
+            
+            <!-- Privacidad -->
+            <div id="privacidad" data-section="privacidad" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Privacidad
+              </h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                Ajusta la configuración de privacidad de tu cuenta.
+              </p>
+            </div>
+            
+            <!-- Permisos -->
+            <div id="permisos" data-section="permisos" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Permisos
+              </h2>
+              <p class="text-gray-600 dark:text-gray-400">
+                Administra los permisos de acceso a tu cuenta.
+              </p>
+            </div>
+            
+            <!-- Preferencias -->
+            <div id="preferencias" data-section="preferencias" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Preferencias
+              </h2>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="font-medium text-gray-900 dark:text-white">Modo oscuro</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Cambiar el tema de la aplicación</p>
+                  </div>
+                  <button class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                  </button>
+                </div>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="font-medium text-gray-900 dark:text-white">Notificaciones por email</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Recibir actualizaciones por correo</p>
+                  </div>
+                  <button class="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const navLinks = document.querySelectorAll('nav a[data-section]');
+          const sections = document.querySelectorAll('div[data-section]');
+          
+          navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+              e.preventDefault(); // Prevent default anchor behavior
+              
+              // Remove active class from all links
+              navLinks.forEach(l => l.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400', 'active-section'));
+              
+              // Add active class to clicked link
+              link.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400', 'active-section');
+              
+              // Hide all sections
+              sections.forEach(section => section.classList.add('hidden'));
+              
+              // Show the selected section
+              const sectionId = link.getAttribute('data-section');
+              const targetSection = document.querySelector(`div[data-section="${sectionId}"]`);
+              if (targetSection) {
+                targetSection.classList.remove('hidden');
+              }
+            });
+          });
+        });
+      </script>
+    </DashboardWrapper>
+  </SignedIn>
 </LayoutDashboard>

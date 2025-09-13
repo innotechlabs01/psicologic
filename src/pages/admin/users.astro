@@ -1,0 +1,101 @@
+---
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
+import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
+---
+
+<LayoutDashboard title="Gestión de Usuarios">
+  <DashboardWrapper
+    title="Visualización de Usuarios"
+    subtitle="Permisos y Opciones de usuarios"
+  >
+    <div class="container mx-auto px-4 py-8">
+      <div id="user-list">
+        <!-- Aquí se inyectará el skeleton y luego los datos -->
+      </div>
+    </div>
+
+    <script type="module">
+        const container = document.getElementById('user-list');
+
+        // Mostrar skeleton inmediatamente
+        container.innerHTML = `
+            <div role="status" class="max-w-sm animate-pulse">
+            <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[360px] mb-2.5"></div>
+            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 mb-2.5"></div>
+            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[330px] mb-2.5"></div>
+            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[300px] mb-2.5"></div>
+            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[360px]"></div>
+            <span class="sr-only">Loading...</span>
+            </div>
+        `;
+
+        // Esperar 10 segundos y luego cargar datos
+        setTimeout(async () => {
+            try {
+            const response = await fetch('/api/users/pending');
+            if (!response.ok) throw new Error('Error al cargar usuarios');
+            const users = await response.json();
+
+            if (!users || users.length === 0) {
+                container.innerHTML = `
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-gray-500">No hay usuarios pendientes de aprobación.</p>
+                </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="grid gap-6">
+                ${users.map(user => `
+                    <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                        ${user.avatar_url ? `<img src="${user.avatar_url}" alt="Avatar" class="w-12 h-12 rounded-full" />` : ''}
+                        <div>
+                            <h3 class="font-semibold">${user.first_name} ${user.last_name}</h3>
+                            <p class="text-gray-600">${user.email}</p>
+                            <p class="text-sm text-gray-500">Registrado: ${new Date(user.created_at).toLocaleDateString()}</p>
+                        </div>
+                        </div>
+                        <div class="flex space-x-2">
+                        <button onclick="approveUserAction('${user.id}')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Aprobar</button>
+                        <button onclick="rejectUserAction('${user.id}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Rechazar</button>
+                        </div>
+                    </div>
+                    </div>
+                `).join('')}
+                </div>
+            `;
+            } catch (error) {
+            container.innerHTML = `<p class="text-red-500">Error al cargar usuarios.</p>`;
+            console.error(error);
+            }
+        }, 10000);
+
+        window.approveUserAction = async function(userId) {
+            if (!confirm('¿Aprobar este usuario?')) return;
+            const res = await fetch('/api/users/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+            });
+            if (res.ok) location.reload();
+            else alert('Error al aprobar usuario');
+        };
+
+        window.rejectUserAction = async function(userId) {
+            if (!confirm('¿Rechazar este usuario?')) return;
+            const res = await fetch('/api/users/reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+            });
+            if (res.ok) location.reload();
+            else alert('Error al rechazar usuario');
+        };
+    </script>
+
+  </DashboardWrapper>
+</LayoutDashboard>
