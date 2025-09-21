@@ -40,4 +40,3 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: ${{ github.event_name == 'push' && '--prod' || '' }} # Despliega a producción solo en push
           working-directory: ./ # Asegúrate de que sea el directorio correcto si tu proyecto no está en la raíz
-
