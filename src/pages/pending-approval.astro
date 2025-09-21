@@ -1,0 +1,194 @@
+<!-- src/pages/pending-approval.astro -->
+---
+// Página que se muestra cuando el usuario está pendiente de aprobación
+---
+
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Cuenta Pendiente de Aprobación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">
+            Cuenta Pendiente de Aprobación
+        </h1>
+        
+        <p class="text-gray-600 mb-6">
+            Tu cuenta ha sido creada exitosamente, pero está pendiente de aprobación por parte de nuestro equipo administrativo.
+        </p>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p class="text-blue-800 text-sm">
+                <strong>¿Qué sigue?</strong><br>
+                • Revisaremos tu solicitud en las próximas 24-48 horas<br>
+                • Recibirás un email una vez que tu cuenta sea aprobada<br>
+                • Podrás acceder a todas las funcionalidades después de la aprobación
+            </p>
+        </div>
+        
+        <div class="space-y-3">
+            <button onclick="location.reload()" 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                Verificar Estado
+            </button>
+            
+            <button onclick="signOut()" 
+                    class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition duration-200">
+                Cerrar Sesión
+            </button>
+        </div>
+        
+        <p class="text-xs text-gray-500 mt-6">
+            Si tienes preguntas, contáctanos a: soporte@tudominio.com
+        </p>
+    </div>
+
+    <script>
+        function signOut() {
+            // Implementar logout de Clerk
+            window.location.href = '/api/auth/signout';
+        }
+    </script>
+</body>
+</html>
+
+<!-- src/pages/account-rejected.astro -->
+---
+// Página que se muestra cuando el usuario ha sido rechazado
+---
+
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Solicitud de Cuenta Rechazada</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">
+            Solicitud de Cuenta Rechazada
+        </h1>
+        
+        <p class="text-gray-600 mb-6">
+            Lamentamos informarte que tu solicitud de cuenta no ha sido aprobada en este momento.
+        </p>
+        
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p class="text-red-800 text-sm">
+                <strong>¿Qué puedes hacer?</strong><br>
+                • Contacta a nuestro equipo de soporte para más información<br>
+                • Puedes enviar una nueva solicitud si cumples con los requisitos<br>
+                • Revisa nuestros términos y condiciones
+            </p>
+        </div>
+        
+        <div class="space-y-3">
+            <button onclick="contactSupport()" 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                Contactar Soporte
+            </button>
+            
+            <button onclick="signOut()" 
+                    class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition duration-200">
+                Cerrar Sesión
+            </button>
+        </div>
+        
+        <p class="text-xs text-gray-500 mt-6">
+            Email de soporte: soporte@tudominio.com
+        </p>
+    </div>
+
+    <script>
+        function contactSupport() {
+            window.open('mailto:soporte@tudominio.com?subject=Consulta sobre solicitud rechazada');
+        }
+        
+        function signOut() {
+            window.location.href = '/api/auth/signout';
+        }
+    </script>
+</body>
+</html>
+
+<!-- src/pages/account-suspended.astro -->
+---
+// Página que se muestra cuando el usuario ha sido suspendido
+---
+
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Cuenta Suspendida</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">
+            Cuenta Suspendida
+        </h1>
+        
+        <p class="text-gray-600 mb-6">
+            Tu cuenta ha sido suspendida temporalmente por nuestro equipo de administración.
+        </p>
+        
+        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <p class="text-orange-800 text-sm">
+                <strong>Para resolver esta situación:</strong><br>
+                • Contacta a nuestro equipo de soporte<br>
+                • Proporciona tu información de contacto<br>
+                • Espera instrucciones del equipo administrativo
+            </p>
+        </div>
+        
+        <div class="space-y-3">
+            <button onclick="contactSupport()" 
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
+                Contactar Soporte
+            </button>
+            
+            <button onclick="signOut()" 
+                    class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition duration-200">
+                Cerrar Sesión
+            </button>
+        </div>
+        
+        <p class="text-xs text-gray-500 mt-6">
+            Email de soporte: soporte@tudominio.com
+        </p>
+    </div>
+
+    <script>
+        function contactSupport() {
+            window.open('mailto:soporte@tudominio.com?subject=Consulta sobre cuenta suspendida');
+        }
+        
+        function signOut() {
+            window.location.href = '/api/auth/signout';
+        }
+    </script>
+</body>
+</html>

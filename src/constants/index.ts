@@ -4,3 +4,10 @@ export const Contanst = {
         "client"
     ]
 }
+
+export interface MenuClient {
+    id: number;
+    slug: string;
+    name: string;
+    status: boolean;
+}

@@ -1,0 +1,128 @@
+---
+// src/pages/client/payment.astro
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
+import LayoutClient from '../../layouts/LayoutClient.astro';
+import PaymentStats from '../../components/Payment/PaymentStats.astro';
+import PaymentHistory from '../../components/Payment/PaymentHistory.astro';
+import PaymentButton from '../../components/Payment/PaymentButton.astro';
+import { SignedIn } from "@clerk/astro/components";
+
+// Nota: En una implementación real, obtendrías estos datos del servidor
+// basándote en el usuario autenticado de Clerk
+const paymentData = {
+  paymentInfo: {
+    payment_count: 0,
+    last_payment_date: null,
+    next_payment_date: null,
+    subscription_status: 'inactive',
+    days_to_next_payment: 0,
+    is_subscription_active: false
+  },
+  paymentHistory: []
+};
+
+// En producción, esto se haría desde el servidor:
+// const { userId } = Astro.locals.auth();
+// const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
+// const paymentData = await response.json();
+---
+
+<LayoutClient title="💳 Payment">
+    <SignedIn>
+        <DashboardWrapper 
+            title="Centro de Pagos" 
+            subtitle="Gestiona tu suscripción y revisa el historial de pagos"
+        >
+
+            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+                <h3 class="text-lg font-medium">⚠️ Atención</h3>
+                <p class="mt-2 text-sm">
+                    Comming soon
+                </p>
+            </div>
+            <!-- Botón de Pago/Renovación
+            <PaymentButton 
+                userId="user_example_id"
+                userEmail="usuario@ejemplo.com"
+                userName="Usuario Ejemplo"
+                isSubscriptionActive={paymentData.paymentInfo.is_subscription_active}
+                daysToNext={paymentData.paymentInfo.days_to_next_payment}
+            /> -->
+
+            <!-- Estadísticas de Pago 
+            <PaymentStats 
+                paymentCount={paymentData.paymentInfo.payment_count}
+                lastPaymentDate={paymentData.paymentInfo.last_payment_date}
+                nextPaymentDate={paymentData.paymentInfo.next_payment_date}
+                subscriptionStatus={paymentData.paymentInfo.subscription_status}
+                daysToNext={paymentData.paymentInfo.days_to_next_payment}
+                isActive={paymentData.paymentInfo.is_subscription_active}
+            />-->
+
+            <!-- Historial de Transacciones
+            <PaymentHistory transactions={paymentData.paymentHistory} /> -->
+
+            <!-- Información Adicional
+            <div class="mt-8 bg-blue-50 rounded-lg p-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">
+                            Información sobre tu suscripción
+                        </h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <ul class="space-y-1">
+                                <li>• Los pagos se procesan de forma segura a través de MercadoPago</li>
+                                <li>• Tu suscripción se renueva automáticamente cada 30 días</li>
+                                <li>• Puedes cancelar tu suscripción en cualquier momento</li>
+                                <li>• El acceso premium se mantiene hasta la fecha de vencimiento</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+
+            <!-- Soporte
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">
+                    ¿Necesitas ayuda con tu suscripción? 
+                    <a href="mailto:soporte@tuapp.com" class="text-blue-600 hover:text-blue-500 font-medium">
+                        Contacta a nuestro equipo de soporte
+                    </a>
+                </p>
+            </div> -->
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutClient>
+
+<script>
+    // Script para cargar datos del usuario en tiempo real
+    // document.addEventListener('DOMContentLoaded', async function() {
+    //     try {
+    //         // En producción, obtienes el userId de Clerk
+    //         // const userId = await window.Clerk?.user?.id;
+            
+    //         // Por ahora usamos un ID de ejemplo
+    //         const userId = 'user_example_id';
+            
+    //         if (userId) {
+    //             const response = await fetch(`/api/payment/status/${userId}`);
+    //             const data = await response.json();
+                
+    //             if (data.success) {
+    //                 // Aquí actualizarías la UI con los datos reales
+    //                 console.log('Datos de pago cargados:', data);
+                    
+    //                 // En una implementación completa, actualizarías los componentes
+    //                 // con los datos reales del usuario
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.error('Error al cargar datos de pago:', error);
+    //     }
+    // });
+</script>

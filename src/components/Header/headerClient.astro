@@ -1,0 +1,97 @@
+---
+import { SignOutButton, SignedIn } from "@clerk/astro/components";
+
+---
+
+<!-- Botón toggle para móvil -->
+<button 
+  id="sidebar-toggle" 
+  type="button" 
+  class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+  aria-controls="separator-sidebar" 
+  aria-expanded="false"
+>
+  <span class="sr-only">Open sidebar</span>
+  <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
+  </svg>
+</button>
+
+<!-- Overlay para cerrar el sidebar en móvil -->
+<div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black bg-opacity-50 sm:hidden hidden"></div>
+
+<!-- Sidebar -->
+<aside 
+  id="separator-sidebar" 
+  class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 -translate-x-full sm:translate-x-0" 
+  aria-label="Sidebar"
+>
+  <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+    <!-- Botón cerrar en móvil -->
+    <div class="flex justify-end mb-4 sm:hidden">
+      <button 
+        id="sidebar-close" 
+        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <ul class="space-y-2 font-medium">
+      <li>
+         <a href="/client" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
+            <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
+               <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
+            </svg>
+            <span class="ms-3">Dashboard</span>
+         </a>
+      </li>
+      <li id="sidebar-menu-client"></li>
+      <!-- Menu items will be dynamically inserted here -->
+    </ul>
+
+    <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700">
+      <SignedIn>
+        <li>
+          <SignOutButton redirectUrl="/" asChild>
+            <a class="mt-2 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 sidebar-link">
+              Cerrar sesión
+            </a>
+          </SignOutButton>
+        </li>
+      </SignedIn>
+    </ul>
+  </div>
+</aside>
+
+<script type="module" src="/js/headerClient/headerClient.js"></script>
+
+<style>
+  /* Smooth transitions for sidebar */
+  #separator-sidebar {
+    transition: transform 0.3s ease-in-out;
+  }
+
+  /* Smooth overlay animation */
+  #sidebar-overlay {
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  /* Ensure sidebar is above other elements */
+  #separator-sidebar {
+    z-index: 50;
+  }
+
+  #sidebar-overlay {
+    z-index: 40;
+  }
+
+  /* Improve touch experience on mobile */
+  @media (max-width: 640px) {
+    #sidebar-toggle {
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+  }
+</style>
