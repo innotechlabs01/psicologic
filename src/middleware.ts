@@ -128,11 +128,10 @@ function redirectToRoute(route: string, message: string, status: number = 302) {
 }
 
 export const onRequest = clerkMiddleware((auth, context) => {
-  const { userId, sessionId } = auth();
+  const { userId, sessionId, orgRole } = auth();
   const currentPath = new URL(context.request.url).pathname;
 
-  // ✅ Evitar ciclo infinito - no procesar en rutas de destino
-  if ( currentPath === '/' || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
+  if ((!userId && currentPath === '/') || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
     currentPath === '/dashboard' || currentPath === '/client') {
     return; // Permitir acceso sin procesar
   }
@@ -164,24 +163,29 @@ export const onRequest = clerkMiddleware((auth, context) => {
   return (async () => {
     let newAssignedRole = "";
 
-    // ✅ safely use await
-    newAssignedRole = await getUserRole(userId);
+    if (!orgRole) {
+      // ✅ safely use await
+      newAssignedRole = await getUserRole(userId);
 
-    if (!newAssignedRole) {
-      newAssignedRole = await handleUserWithoutRole(context, userId);
+      if (!newAssignedRole) {
+        newAssignedRole = await handleUserWithoutRole(context, userId);
+      }
+
+      if (!newAssignedRole) {
+        logAccessEvent(
+          context,
+          userId,
+          newAssignedRole,
+          'denied',
+          currentPath,
+          { reason: 'role_assignment_failed' }
+        );
+        return redirectToRoute('/index', 'Error asignando rol, por favor intente de nuevo');
+      }
+    } else {
+      newAssignedRole = orgRole;
     }
 
-    if (!newAssignedRole) {
-      logAccessEvent(
-        context,
-        userId,
-        newAssignedRole,
-        'denied',
-        currentPath,
-        { reason: 'role_assignment_failed' }
-      );
-      return redirectToRoute('/index', 'Error asignando rol, por favor intente de nuevo');
-    }
 
     if(newAssignedRole === "org:admin") {
       logAccessEvent(
