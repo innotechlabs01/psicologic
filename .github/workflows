@@ -12,25 +12,38 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      DEPLOY_ENV: vercel # Asegura que el adaptador de Vercel se use
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }} # Clave secreta para Clerk
-      CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }} # Clave pública para Clerk
+      DEPLOY_ENV: vercel
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Create .nojekyll to disable Jekyll
+        run: touch .nojekyll  # Crea el archivo vacío para omitir Jekyll en Pages
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Usa la versión de Node compatible con tu proyecto (Astro recomienda Node 18 o superior)
-          cache: 'npm' # Habilita caché para acelerar la instalación de dependencias
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci # Usa npm ci para instalaciones más consistentes en CI
+        run: npm ci
 
       - name: Build Astro project
         run: npm run build
         env:
-          NODE_ENV: production # Asegura que el build se haga en modo producción
+          NODE_ENV: production
+
+      - name: Verify build output
+        run: |
+          ls -la dist/  # Verifica que dist tenga archivos (para debug)
+          if [ ! -f "dist/index.html" ]; then
+            echo "Build failed: No index.html in dist"
+            exit 1
+          fi
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
@@ -38,5 +51,4 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: ${{ github.event_name == 'push' && '--prod' || '' }} # Despliega a producción solo en push
-          working-directory: ./ # Asegúrate de que sea el directorio correcto si tu proyecto no está en la raíz
+          vercel-args: ${{ github.event_name == 'push' && '--prod' || '' }}
