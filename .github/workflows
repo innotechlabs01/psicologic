@@ -1,6 +1,9 @@
 name: Deploy to Vercel
 
 on:
+  push:
+    branches:
+      - productive
   pull_request:
     branches:
       - productive
@@ -8,20 +11,32 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_ENV: vercel # Asegura que el adaptador de Vercel se use
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }} # Clave secreta para Clerk
+      CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }} # Clave pública para Clerk
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Usa la versión de Node compatible con tu proyecto (Astro recomienda Node 18 o superior)
+          cache: 'npm' # Habilita caché para acelerar la instalación de dependencias
 
       - name: Install dependencies
-        run: npm install # Or yarn install, pnpm install
+        run: npm ci # Usa npm ci para instalaciones más consistentes en CI
 
       - name: Build Astro project
-        run: npm run build # Or your build command
+        run: npm run build
+        env:
+          NODE_ENV: production # Asegura que el build se haga en modo producción
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }} // 
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # Optional, if using a team 
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # Optional, if using a team
-          # Add other Vercel CLI options as needed, e.g., `vercel-args: '--prod'` for production deployments
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: ${{ github.event_name == 'push' && '--prod' || '' }} # Despliega a producción solo en push
+          working-directory: ./ # Asegúrate de que sea el directorio correcto si tu proyecto no está en la raíz
