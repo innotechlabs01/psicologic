@@ -13,6 +13,7 @@
   "dependencies": {
     "@astrojs/node": "^9.4.3",
     "@astrojs/preact": "^4.1.1",
+    "@astrojs/vercel": "^8.2.7",
     "@clerk/astro": "^2.11.11",
     "@clerk/backend": "^2.12.1",
     "@clerk/localizations": "^3.24.2",
