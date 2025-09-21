@@ -1,0 +1,27 @@
+name: Deploy to Vercel
+
+on:
+  pull_request:
+    branches:
+      - productive
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install # Or yarn install, pnpm install
+
+      - name: Build Astro project
+        run: npm run build # Or your build command
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }} // 
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }} # Optional, if using a team 
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }} # Optional, if using a team
+          # Add other Vercel CLI options as needed, e.g., `vercel-args: '--prod'` for production deployments
