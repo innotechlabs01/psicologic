@@ -15,11 +15,9 @@ jobs:
       DEPLOY_ENV: vercel # Asegura que el adaptador de Vercel se use
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }} # Clave secreta para Clerk
       CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }} # Clave pública para Clerk
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -42,3 +40,4 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: ${{ github.event_name == 'push' && '--prod' || '' }} # Despliega a producción solo en push
           working-directory: ./ # Asegúrate de que sea el directorio correcto si tu proyecto no está en la raíz
+
