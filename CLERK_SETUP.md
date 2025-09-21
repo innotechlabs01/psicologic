@@ -1,6 +1,6 @@
 # Configuración de Clerk para Asignación Automática de Roles
 
-Este documento explica cómo configurar Clerk para asignar automáticamente el rol de cliente (org:member) a los nuevos usuarios que se registren en la aplicación.
+Este documento explica cómo configurar Clerk para asignar automáticamente el rol de cliente (org:client) a los nuevos usuarios que se registren en la aplicación.
 
 ## Pasos para la Configuración
 
@@ -16,8 +16,8 @@ Este documento explica cómo configurar Clerk para asignar automáticamente el r
 1. En la sección de **Organizations**, ve a la pestaña **Roles & Permissions**.
 2. Verifica que existan los roles predeterminados:
    - `org:admin` (rol de administrador)
-   - `org:member` (rol de cliente)
-3. Asegúrate de que el rol `org:member` esté configurado como el rol predeterminado para nuevos miembros.
+   - `org:client` (rol de cliente)
+3. Asegúrate de que el rol `org:client` esté configurado como el rol predeterminado para nuevos miembros.
 
 ### 3. Configurar Webhook para Nuevos Usuarios
 
@@ -51,7 +51,7 @@ Si los usuarios no reciben automáticamente el rol de cliente:
 
 1. Verifica los logs del servidor para asegurarte de que el webhook se está recibiendo correctamente.
 2. Comprueba que la organización predeterminada esté configurada correctamente.
-3. Verifica que el rol predeterminado para nuevos miembros sea `org:member`.
+3. Verifica que el rol predeterminado para nuevos miembros sea `org:client`.
 
 ## Recursos Adicionales
 

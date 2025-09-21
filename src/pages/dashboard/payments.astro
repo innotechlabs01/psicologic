@@ -1,19 +1,105 @@
 ---
+import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import { SignedIn } from "@clerk/astro/components";
-import LayoutDashboard from "../../layouts/LayoutDashboard.astro";
-import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
-
 ---
 
-<LayoutDashboard title="🔒 Dashboard - Metodos de Pago">
+<LayoutDashboard title="💳 Pagos">
   <SignedIn>
-      <DashboardWrapper 
-        title="Visualización de Pagos" 
-        subtitle="Visualiza todas las transacciones y facturación"
-      >
-        <div class="container mx-auto">
-          <h1 class="text-3xl font-bold">Visualización de Pagos</h1>
+    <DashboardWrapper 
+      title="Gestión de Pagos" 
+      subtitle="Administra todas las transacciones y facturación"
+    >
+      
+      <!-- Tu contenido aquí - automáticamente alineado -->
+      <div class="dashboard-grid dashboard-grid-cols-3">
+        
+        <!-- Estadísticas de pagos -->
+        <div class="dashboard-card">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Ingresos Totales
+          </h3>
+          <p class="text-3xl font-bold text-green-600 dark:text-green-400">$45,231</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">+12% vs mes anterior</p>
         </div>
+        
+        <div class="dashboard-card">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Pagos Pendientes
+          </h3>
+          <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">$8,420</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">15 facturas pendientes</p>
+        </div>
+        
+        <div class="dashboard-card">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Transacciones
+          </h3>
+          <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">1,247</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Este mes</p>
+        </div>
+      </div>
+      
+      <!-- Tabla de transacciones recientes -->
+      <div class="dashboard-card">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            Transacciones Recientes
+          </h2>
+          <button class="dashboard-button-primary">
+            Ver Todas
+          </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200 dark:border-gray-700">
+                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">ID</th>
+                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Cliente</th>
+                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Monto</th>
+                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Estado</th>
+                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Fecha</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+              <tr>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">#12458</td>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">Juan Pérez</td>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">$250.00</td>
+                <td class="py-3 px-4">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    Completado
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">15 Dic 2024</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">#12457</td>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">María García</td>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">$180.50</td>
+                <td class="py-3 px-4">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                    Pendiente
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">14 Dic 2024</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">#12456</td>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">Carlos López</td>
+                <td class="py-3 px-4 text-gray-900 dark:text-white">$95.75</td>
+                <td class="py-3 px-4">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    Completado
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">13 Dic 2024</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </DashboardWrapper>
   </SignedIn>
 </LayoutDashboard>

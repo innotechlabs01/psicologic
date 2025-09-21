@@ -1,0 +1,76 @@
+---
+// src/pages/payment/pending.astro
+import LayoutClient from '../../layouts/LayoutClient.astro';
+import { SignedIn } from "@clerk/astro/components";
+---
+
+<LayoutClient title="⏳ Pago Pendiente">
+    <SignedIn>
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-md w-full space-y-8">
+                <div class="text-center">
+                    <div class="mx-auto h-24 w-24 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <svg class="w-12 h-12 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                        Pago Pendiente
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Tu pago está siendo procesado. Te notificaremos cuando se complete.
+                    </p>
+                </div>
+                
+                <div class="bg-white shadow rounded-lg p-6">
+                    <div class="space-y-4">
+                        <div class="text-sm text-gray-700">
+                            <p class="font-medium text-gray-900 mb-2">¿Qué sigue?</p>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <span class="flex-shrink-0 w-5 h-5 text-yellow-500 mr-2 mt-0.5">1.</span>
+                                    <span>Tu banco procesará la transacción</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="flex-shrink-0 w-5 h-5 text-yellow-500 mr-2 mt-0.5">2.</span>
+                                    <span>Recibirás una confirmación por email</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="flex-shrink-0 w-5 h-5 text-yellow-500 mr-2 mt-0.5">3.</span>
+                                    <span>Tu suscripción se activará automáticamente</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <div class="flex">
+                        <svg class="w-5 h-5 text-blue-600 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="text-sm text-blue-700">
+                            <p class="font-medium">Tiempo estimado de procesamiento:</p>
+                            <p>Entre 5 minutos y 24 horas dependiendo de tu método de pago.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <a 
+                        href="/client/payment" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Verificar Estado
+                    </a>
+                    <a 
+                        href="/client/dashboard" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Continuar Navegando
+                    </a>
+                </div>
+            </div>
+        </div>
+    </SignedIn>
+</LayoutClient>

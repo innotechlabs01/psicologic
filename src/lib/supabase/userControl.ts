@@ -27,7 +27,7 @@ export interface User {
 export async function getUserByClerkId(clerkUserId: string): Promise<User | null> {
   try {
     const { data, error } = await supabase
-      .from('users')
+      .from('usuarios')
       .select('*')
       .eq('clerk_user_id', clerkUserId)
       .single();
@@ -54,7 +54,7 @@ export async function isUserApproved(clerkUserId: string): Promise<boolean> {
 export async function approveUser(userId: string, approvedBy: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('users')
+      .from('usuarios')
       .update({
         status: 'approved',
         approved_by: approvedBy,
@@ -81,7 +81,7 @@ export async function approveUser(userId: string, approvedBy: string): Promise<b
 export async function rejectUser(userId: string, rejectedBy: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('users')
+      .from('usuarios')
       .update({
         status: 'rejected',
         approved_by: rejectedBy,
@@ -108,7 +108,7 @@ export async function rejectUser(userId: string, rejectedBy: string): Promise<bo
 export async function suspendUser(userId: string, suspendedBy: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('users')
+      .from('usuarios')
       .update({
         status: 'suspended',
         approved_by: suspendedBy,
@@ -139,7 +139,7 @@ export async function changeUserRole(
 ): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('users')
+      .from('usuarios')
       .update({
         role: newRole,
         updated_at: new Date().toISOString()
@@ -165,7 +165,7 @@ export async function changeUserRole(
 export async function getPendingUsers(): Promise<User[]> {
   try {
     const { data, error } = await supabase
-      .from('users')
+      .from('usuarios')
       .select('*')
       .eq('status', 'pending_approval')
       .order('created_at', { ascending: false });
@@ -189,7 +189,7 @@ export async function getUsers(filters?: {
   search?: string;
 }): Promise<User[]> {
   try {
-    let query = supabase.from('users').select('*');
+    let query = supabase.from('usuarios').select('*');
 
     if (filters?.status) {
       query = query.eq('status', filters.status);

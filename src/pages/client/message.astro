@@ -1,0 +1,21 @@
+---
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
+import LayoutClient from '../../layouts/LayoutClient.astro';
+import { SignedIn } from "@clerk/astro/components";
+---
+
+<LayoutClient title="💬 Chat">
+    <SignedIn>
+        <DashboardWrapper 
+        title="Chat" 
+        subtitle="Gestiona todas tus conversaciones desde aquí"
+        >
+            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+                <h3 class="text-lg font-medium">⚠️ Atención</h3>
+                <p class="mt-2 text-sm">
+                    Comming soon
+                </p>
+            </div>
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutClient>

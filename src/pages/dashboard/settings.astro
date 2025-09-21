@@ -20,6 +20,9 @@ import { SignedIn } from "@clerk/astro/components";
               <a href="#perfil" data-section="perfil" class="block px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium active-section">
                 👤 Perfil
               </a>
+              <a href="#juegos" data-section="juegos" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                🎮 Juegos
+              </a>
               <a href="#seguridad" data-section="seguridad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 🔒 Seguridad
               </a>
@@ -31,9 +34,6 @@ import { SignedIn } from "@clerk/astro/components";
               </a>
               <a href="#privacidad" data-section="privacidad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 🛡️ Privacidad
-              </a>
-              <a href="#permisos" data-section="permisos" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                🛡️ Permisos
               </a>
             </nav>
           </div>
@@ -130,14 +130,64 @@ import { SignedIn } from "@clerk/astro/components";
               </p>
             </div>
             
-            <!-- Permisos -->
-            <div id="permisos" data-section="permisos" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
+            <!-- Juegos -->
+            <div id="juegos" data-section="juegos" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Permisos
+                Juegos - Creación
               </h2>
-              <p class="text-gray-600 dark:text-gray-400">
-                Administra los permisos de acceso a tu cuenta.
-              </p>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Slug
+                  </label>
+                  <input 
+                    id="txtSlugGame"
+                    type="text" 
+                    placeholder="Ingresa el slug del juego" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nombre del juego
+                  </label>
+                  <input 
+                    id="txtNameGame"
+                    type="text" 
+                    placeholder="Ingresa el nombre del juego" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Descripción
+                  </label>
+                  <textarea 
+                    id="txtDescriptionGame"
+                    rows="3" 
+                    placeholder="Ingresa una descripción del juego" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  ></textarea>
+                </div>
+                <div>
+                  <button 
+                    id="btnIdGame"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                  >
+                    Crear Juego
+                  </button>
+                </div>
+                <!-- Spinner -->
+                <div class="flex justify-end">
+                  <div id="spinnerGame" class="mt-2 hidden">
+                    <svg class="animate-spin h-5 w-5 text-blue-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                  </div>
+                  <p class="text-sm text-blue-500 text-center mt-1">Creando juego...</p>
+                </div>
+              </div>
             </div>
             
             <!-- Preferencias -->
@@ -170,34 +220,8 @@ import { SignedIn } from "@clerk/astro/components";
         </div>
       </div>
       
-      <script>
-        document.addEventListener('DOMContentLoaded', () => {
-          const navLinks = document.querySelectorAll('nav a[data-section]');
-          const sections = document.querySelectorAll('div[data-section]');
-          
-          navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-              e.preventDefault(); // Prevent default anchor behavior
-              
-              // Remove active class from all links
-              navLinks.forEach(l => l.classList.remove('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400', 'active-section'));
-              
-              // Add active class to clicked link
-              link.classList.add('bg-blue-50', 'dark:bg-blue-900/30', 'text-blue-600', 'dark:text-blue-400', 'active-section');
-              
-              // Hide all sections
-              sections.forEach(section => section.classList.add('hidden'));
-              
-              // Show the selected section
-              const sectionId = link.getAttribute('data-section');
-              const targetSection = document.querySelector(`div[data-section="${sectionId}"]`);
-              if (targetSection) {
-                targetSection.classList.remove('hidden');
-              }
-            });
-          });
-        });
-      </script>
+    <script type="module" src="/js/settings"></script>
+    <script type="module" src="/src/utils/toast.js"></script>
     </DashboardWrapper>
   </SignedIn>
 </LayoutDashboard>

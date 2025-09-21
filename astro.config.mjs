@@ -10,11 +10,13 @@ import './src/utils/env'; // Esto carga y valida el .env automáticamente
 dotenv.config();
 import tailwindcss from '@tailwindcss/vite';
 
+import preact from '@astrojs/preact';
+
 // https://astro.build/config
 export default defineConfig({
   integrations: [clerk({
       localization: esES,
-    })],
+    }), preact()],
   adapter: node({ mode: "standalone" }),
   output: "server",
   vite: {

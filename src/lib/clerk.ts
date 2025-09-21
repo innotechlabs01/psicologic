@@ -10,7 +10,7 @@ export async function setupClerkDefaultRoles() {
   
   // Ejemplo (pseudocódigo):
   // 1. Habilitar organizaciones en el Dashboard de Clerk
-  // 2. Configurar el rol predeterminado como 'org:member' (cliente)
+  // 2. Configurar el rol predeterminado como 'org:client' (cliente)
   // 3. Asegurarse de que los nuevos usuarios sean asignados automáticamente a una organización
   
   console.log('Clerk configurado para asignar rol de cliente a nuevos usuarios');
@@ -22,7 +22,7 @@ export async function setupClerkDefaultRoles() {
  * @returns true si el usuario tiene el rol de cliente
  */
 export function isClientUser(auth: any) {
-  // Verificar si el usuario tiene el rol de cliente (org:member)
+  // Verificar si el usuario tiene el rol de cliente (org:client)
   // El objeto auth contiene la información de la sesión actual
   console.log('isClientUser - auth:', JSON.stringify(auth));
   
@@ -34,7 +34,7 @@ export function isClientUser(auth: any) {
     return auth.userId ? true : false;
   }
   
-  return auth.orgRole === 'org:member' || auth.orgRole === 'org:admin';
+  return auth.orgRole === 'org:client' || auth.orgRole === 'org:admin';
 }
 
 /**

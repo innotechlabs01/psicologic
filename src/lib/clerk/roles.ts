@@ -1,5 +1,5 @@
 // src/lib/clerk/roles.ts
-export function isAdminRole(orgRole: string | undefined): boolean {
+export async function isAdminRole(orgRole: string | undefined): Promise<boolean> {
   console.log(`🔍 Verificando rol admin: "${orgRole}"`);
   
   const adminRoles = ['org:admin', 'admin'];

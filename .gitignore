@@ -29,3 +29,5 @@ astro.lock
 
 # jetbrains setting folder
 .idea/
+
+*.txt

@@ -1,0 +1,127 @@
+---
+// src/components/Payment/PaymentButton.astro
+interface Props {
+  userId: string;
+  userEmail: string;
+  userName?: string;
+  isSubscriptionActive: boolean;
+  daysToNext: number;
+}
+
+const { userId, userEmail, userName, isSubscriptionActive, daysToNext } = Astro.props;
+---
+
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+  <div class="flex items-center justify-between">
+    <div class="flex-1">
+      <h3 class="text-lg font-medium text-gray-900">
+        {isSubscriptionActive ? 'Renovar Suscripción' : 'Activar Suscripción Premium'}
+      </h3>
+      <p class="mt-2 text-sm text-gray-600">
+        {isSubscriptionActive ? 
+          `Tu suscripción vence en ${daysToNext} días. Renueva ahora para mantener el acceso.` : 
+          'Accede a todas las funciones premium por solo $29.99 USD/mes'
+        }
+      </p>
+      <div class="mt-4">
+        <div class="flex items-center text-sm text-gray-500">
+          <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          Acceso completo a todas las funciones
+        </div>
+        <div class="flex items-center text-sm text-gray-500 mt-1">
+          <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          Soporte prioritario 24/7
+        </div>
+        <div class="flex items-center text-sm text-gray-500 mt-1">
+          <svg class="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          Sin anuncios
+        </div>
+      </div>
+    </div>
+    
+    <div class="ml-6">
+      <div class="text-right mb-4">
+        <span class="text-3xl font-bold text-gray-900">$29.99</span>
+        <span class="text-gray-500">/mes</span>
+      </div>
+      
+      <button 
+        id="payment-button"
+        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        data-user-id={userId}
+        data-user-email={userEmail}
+        data-user-name={userName}
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+        </svg>
+        {isSubscriptionActive ? 'Renovar Ahora' : 'Suscribirse Ahora'}
+      </button>
+      
+      <p class="mt-2 text-xs text-gray-500 text-right">
+        Pago seguro con MercadoPago
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const paymentButton = document.getElementById('payment-button');
+    
+    if (paymentButton) {
+      const btn = paymentButton as HTMLButtonElement;
+      btn.addEventListener('click', async function() {
+        // Deshabilitar el botón mientras se procesa
+        btn.disabled = true;
+        btn.textContent = 'Procesando...';
+        
+        try {
+          const userId = this.getAttribute('data-user-id');
+          const userEmail = this.getAttribute('data-user-email');
+          const userName = this.getAttribute('data-user-name');
+          
+          // Crear la preferencia de pago
+          const response = await fetch('/api/payment/create-preference', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId,
+              userEmail,
+              userName
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success && data.init_point) {
+            // Redirigir al checkout de MercadoPago
+            window.location.href = data.init_point;
+          } else {
+            throw new Error(data.error || 'Error al crear el pago');
+          }
+          
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Hubo un error al procesar el pago. Intenta nuevamente.');
+          // Rehabilitar el botón
+          btn.disabled = false;
+          btn.innerHTML = `
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+            </svg>
+            ${btn.getAttribute('data-user-id') ? 'Renovar Ahora' : 'Suscribirse Ahora'}
+          `;
+        }
+      });
+    }
+  });
+</script>
