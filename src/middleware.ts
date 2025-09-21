@@ -61,40 +61,6 @@ function logAccessEvent(
   });
 }
 
-// 🔗 FUNCIÓN MEJORADA PARA REGISTRAR EVENTOS DE ACCESO
-async function registerAccessEvent(
-  context: APIContext,
-  userId: string,
-  orgRole: string | undefined,
-  action: 'login' | 'logout' | 'access' | 'redirect' | 'denied',
-  route: string,
-  metadata?: Record<string, any>
-) {
-  try {
-    const user = await clerkClient(context).users.getUser(userId);
-
-    // Nuevo sistema robusto usando el webhook
-    await triggerUserAccessEvent({
-      userId,
-      email: user.emailAddresses[0].emailAddress || '',
-      action,
-      route,
-      role: orgRole,
-      ip: context.request.headers.get('x-forwarded-for')?.toString() || 
-          context.clientAddress,
-      userAgent: context.request.headers.get('user-agent')?.toString(),
-      metadata: {
-        timestamp: new Date().toISOString(),
-        source: 'middleware',
-        ...metadata
-      }
-    });
-  } catch (error) {
-    console.error('Error registrando evento de acceso:', error);
-    // No bloquear el flujo principal por errores de logging
-  }
-}
-
 // 🆕 FUNCIÓN PARA MANEJAR USUARIOS SIN ROL
 function handleUserWithoutRole(
   context: APIContext,
@@ -161,19 +127,12 @@ function redirectToRoute(route: string, message: string, status: number = 302) {
   });
 }
 
-function redirectTo(path: string) {
-  return new Response(null, {
-    status: 302,
-    headers: { Location: path },
-  });
-}
-
 export const onRequest = clerkMiddleware((auth, context) => {
   const { userId, sessionId } = auth();
   const currentPath = new URL(context.request.url).pathname;
 
   // ✅ Evitar ciclo infinito - no procesar en rutas de destino
-  if ( currentPath === '/index' || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
+  if ( currentPath === '/' || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
     currentPath === '/dashboard' || currentPath === '/client') {
     return; // Permitir acceso sin procesar
   }
@@ -188,7 +147,7 @@ export const onRequest = clerkMiddleware((auth, context) => {
   }
 
   if (!userId) {
-    return redirectToRoute('/index', 'Debes iniciar sesión');
+    return redirectToRoute('/', 'Debes iniciar sesión');
   }
 
   // 🔗 Registrar acceso de usuario autenticado
@@ -258,6 +217,6 @@ export const onRequest = clerkMiddleware((auth, context) => {
       currentPath,
       { reason: 'unrecognized_role', role: newAssignedRole }
     );
-    return redirectToRoute('/index?error=invalid_role', 'Rol de usuario no válido');
+    return redirectToRoute('/', 'Rol de usuario no válido');
   })();
 });
