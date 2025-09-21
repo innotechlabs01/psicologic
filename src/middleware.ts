@@ -131,7 +131,6 @@ export const onRequest = clerkMiddleware((auth, context) => {
   const { userId, sessionId, orgRole } = auth();
   const currentPath = new URL(context.request.url).pathname;
 
-  // ✅ Evitar ciclo infinito - no procesar en rutas de destino
   if ((!userId && currentPath === '/') || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
     currentPath === '/dashboard' || currentPath === '/client') {
     return; // Permitir acceso sin procesar
