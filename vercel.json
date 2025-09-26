@@ -1,0 +1,32 @@
+    {
+      "builds": [
+        {
+          "src": "package.json",
+          "use": "@vercel/static-build",
+          "config": {
+            "distDir": "out"
+          }
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/.*",
+          "destination": "/index.html"
+        }
+      ],
+      "routes": [
+        {
+          "src": "/api/(.*)",
+          "dest": "/.netlify/functions/$1"
+        }
+      ],
+      "functions": {
+        "api/**/*.js": {
+          "runtime": "nodejs20.x",
+          "regions": ["lhr"]
+        }
+      },
+      "git": {
+        "branches": ["productive"]
+      }
+    }
