@@ -1,0 +1,20 @@
+---
+import { SignedIn } from "@clerk/astro/components";
+import LayoutClient from "../../layouts/LayoutClient.astro";
+import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
+
+
+---
+
+<LayoutClient>
+    <SignedIn>
+        <DashboardWrapper title="💬 Feedback" subtitle="Gestiona todos los feedbacks desde aquí">
+            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
+                <h3 class="text-lg font-medium">⚠️ Atención</h3>
+                <p class="mt-2 text-sm">
+                    Comming soon
+                </p>
+            </div>
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutClient>

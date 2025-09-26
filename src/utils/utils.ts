@@ -4,7 +4,7 @@ import type { APIContext } from "astro";
 // Simple delay utility function
 import { delay } from "../lib/utils";
 
-export async function handleUserWithoutRole(context: any, userId: string): Promise<string | null> {
+export async function handleUserWithoutRole(context: any, userId: string): Promise<string> {
   try {
     console.log("🔄 Usuario sin rol - intentando crear/actualizar en base de datos...");
 
@@ -27,7 +27,7 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
 
     if (!clerkUser) {
       console.error("❌ No se pudo obtener usuario de Clerk");
-      return null;
+      return "null";
     }
 
     const userData = {
@@ -66,6 +66,7 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
           });
           console.log("✅ Rol 'org:client' asignado en Clerk");
           await handlerAddUserToOrg(context, userId);
+          // await handleUserPayment(context, userId);
           return 'org:client';
         } catch (roleError) {
           console.error("❌ Error asignando rol en Clerk:", roleError);
@@ -78,13 +79,13 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
         console.warn("⚠️ No rows returned, attempting to create new user...");
         // Add logic to create a new user record if it doesn't exist
       }
-      return null;
+      return "null";
     }
 
-    return null;
+    return "null";
   } catch (error) {
     console.error("❌ Error manejando usuario sin rol:", error);
-    return null;
+    return "null";
   }
 }
 
