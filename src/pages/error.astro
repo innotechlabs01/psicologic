@@ -1,0 +1,18 @@
+---
+import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
+import Layout from "../layouts/Layout.astro";
+import LayoutClient from "../layouts/LayoutClient.astro";
+
+
+---
+
+<LayoutClient>
+    <DashboardWrapper title="Error 404"
+    subtitle="Página no encontrada">
+    <main class="max-w-xl mx-auto py-12">
+        <h1 class="text-black text-3xl font-bold dark:text-black"> Error 404 - Página no encontrada</h1>
+        <p class="text-black dark:text-black mt-4">Lo sentimos, la página que buscas no existe. Por favor, verifica la URL o regresa al inicio.</p>
+    </main>
+    <a href="/client" class="inline-block mt-6 text-blue-600 hover:underline">Volver al área de cliente</a>
+    </DashboardWrapper>
+</LayoutClient>

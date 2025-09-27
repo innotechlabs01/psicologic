@@ -8,6 +8,14 @@
 @apply bg-gray-900 text-white;
 }
 
+.toast {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  color: white;
+}
+.toast-error { background-color: #ef4444; }
+.toast-warning { background-color: #f59e0b; }
+
     .section { display: none; }
     .section.active { display: block; }
     .input-group label { display: block; font-weight: 600; color: #374151; }
