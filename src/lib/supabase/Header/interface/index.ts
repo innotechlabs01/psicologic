@@ -9,4 +9,12 @@ export interface UserGameHeaderResponse {
     name: string;
     slug: string;
     status: string;
+    subItem?: UserGameHeaderResponse[] | null;
+}
+
+export interface GetUserGameHeaderParams {
+    id: string;
+    name: string;
+    slug: string;
+    status: string;
 }
