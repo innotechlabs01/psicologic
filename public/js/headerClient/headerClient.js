@@ -30,7 +30,6 @@ const SidebarManager = {
   },
 
   showSidebar() {
-    console.log('📱 Mostrando sidebar');
     const sidebar = this.getElement(SELECTORS.sidebar, 'Elementos del sidebar no encontrados');
     const overlay = this.getElement(SELECTORS.overlay, 'Elementos del sidebar no encontrados');
     const toggleButton = this.getElement(SELECTORS.toggleButton, 'Elementos del sidebar no encontrados');
@@ -44,7 +43,6 @@ const SidebarManager = {
   },
 
   hideSidebar() {
-    console.log('📱 Ocultando sidebar');
     const sidebar = this.getElement(SELECTORS.sidebar, 'Elementos del sidebar no encontrados');
     const overlay = this.getElement(SELECTORS.overlay, 'Elementos del sidebar no encontrados');
     const toggleButton = this.getElement(SELECTORS.toggleButton, 'Elementos del sidebar no encontrados');
@@ -58,10 +56,8 @@ const SidebarManager = {
   },
 
   async executeScripts(container, scripts) {
-    console.log('🔧 Ejecutando scripts dinámicos...');
     for (const script of scripts) {
       if (script.src && (script.src.includes('astro&type=style') || script.src.includes('@vite/client') || script.src.includes('entrypoint.js'))) {
-        console.log('⏭️ Ignorando script:', script.src);
         continue;
       }
 
@@ -71,7 +67,6 @@ const SidebarManager = {
         newScript.async = true;
         newScript.type = 'module';
         document.head.appendChild(newScript);
-        console.log('📜 Script externo cargado:', script.src);
       } else {
         const scriptContent = script.textContent.trim();
         if (scriptContent && !scriptContent.match(/^[{\[]/)) {
@@ -82,7 +77,6 @@ const SidebarManager = {
               });
             `);
             scriptFunction();
-            console.log('📜 Script inline ejecutado:', scriptContent.slice(0, 50));
           } catch (error) {
             console.error('🚨 Error al ejecutar script inline:', error, scriptContent.slice(0, 100));
           }
@@ -94,13 +88,11 @@ const SidebarManager = {
   },
 
   closeGamesSubmenu() {
-    console.log('🔄 Cerrando todos los submenús');
     const dropdownButtons = document.querySelectorAll('[data-collapse-toggle]');
     dropdownButtons.forEach(button => {
       const targetId = button.getAttribute('data-collapse-toggle');
       const target = document.getElementById(targetId);
       if (target && !target.classList.contains('hidden')) {
-        console.log(`🔄 Cerrando submenú: ${targetId}`);
         target.classList.add('hidden');
         button.setAttribute('aria-expanded', 'false');
         button.querySelector('svg:last-child')?.classList.remove('rotate-180');
@@ -109,7 +101,6 @@ const SidebarManager = {
   },
 
   async navigateTo(url) {
-    console.log('🚀 Navegando a:', url);
     history.pushState({}, '', url);
     // Cerrar submenú de /client/games si no estamos en esa ruta
     if (!url.includes('/client/games')) {
@@ -121,27 +112,18 @@ const SidebarManager = {
         credentials: 'include'
       });
 
-      console.log('📡 Respuesta fetch:', {
-        status: response.status,
-        statusText: response.statusText,
-        redirected: response.redirected,
-        url: response.url
-      });
-
       if (!response.ok) {
         const text = await response.text();
         throw new Error(`HTTP error! Status: ${response.status}, Response: ${text.slice(0, 100)}`);
       }
 
       if (response.redirected) {
-        console.warn('🚨 Redirección detectada:', response.url);
         this.showToast('Redirigido, por favor inicia sesión', 'warning');
         window.location.href = response.url;
         return;
       }
 
       const html = await response.text();
-      console.log('📄 Contenido HTML recibido:', html.slice(0, 100));
 
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
@@ -151,16 +133,13 @@ const SidebarManager = {
       const contentContainer = this.getElement(SELECTORS.mainContent, 'No se encontró el contenedor .main-content');
       if (contentContainer && contentFragment) {
         contentContainer.innerHTML = contentFragment.innerHTML;
-        console.log('✅ Contenido fragmento cargado en .main-content');
         await this.executeScripts(contentContainer, scripts);
 
         if (url.includes('/client/games/cartas')) {
-          console.log('🔄 Re-inicializando scripts para /client/cartas');
           try {
             const module = await import('/js/games/cartas.js');
             if (typeof module.initializeCartas === 'function') {
               module.initializeCartas();
-              console.log('✅ Función initializeCartas ejecutada');
             } else {
               console.warn('⚠️ initializeCartas no encontrada en cartas.js');
             }
@@ -178,10 +157,8 @@ const SidebarManager = {
 
   async initializeSidebar() {
     if (this.menuInitialized) {
-      console.log('🔧 Menú ya inicializado, omitiendo...');
       return;
     }
-    console.log('🔧 Inicializando Menu Dinámico...');
     const dynamicMenuHtml = this.getElement(SELECTORS.dynamicMenu, 'sidebar-menu-client-dynamic element not found');
     
     if (!dynamicMenuHtml) return;
@@ -213,7 +190,6 @@ const SidebarManager = {
 
       dynamicMenuHtml.innerHTML = this.renderMenu(uniqueMenuItems, true);
       this.menuInitialized = true;
-      console.log('✅ Menú dinámico inicializado correctamente');
       this.initializeDropdowns();
     } catch (error) {
       this.logError('Error procesando el menú:', error);
@@ -223,14 +199,12 @@ const SidebarManager = {
 
   renderMenu(menuItems, isDynamic) {
     if (!menuItems || !Array.isArray(menuItems)) {
-      console.warn('⚠️ No hay ítems de menú válidos para renderizar', { menuItems });
       return '';
     }
     return menuItems
       .filter(item => item.status !== false)
       .map(item => {
         const label = typeof item.name === 'string' ? item.name : item.toString();
-        console.log(`🔹 Renderizando ítem: ${label}, dinámico: ${isDynamic}`);
         if (isDynamic && Array.isArray(item.subItem) && item.subItem.length > 0) {
           return this.renderDynamicSubMenu(label, item.subItem, item.id || label);
         }
@@ -255,7 +229,6 @@ const SidebarManager = {
     // Convertir parentId a string y manejar valores no válidos
     const safeParentId = typeof parentId === 'string' ? parentId : String(parentId || label || 'submenu');
     const subMenuId = `dropdown-${safeParentId.replace(/[^a-zA-Z0-9]/g, '-')}`;
-    console.log(`🔸 Generando submenu con ID: ${subMenuId}`);
     return `
       <button type="button" class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" data-collapse-toggle="${subMenuId}">
         <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 21">
@@ -271,7 +244,6 @@ const SidebarManager = {
           .filter(nestedItem => nestedItem.status !== false)
           .map(nestedItem => {
             const nestedLabel = typeof nestedItem.name === 'string' ? nestedItem.name : nestedItem.toString();
-            console.log(`🔸 Renderizando subítem: ${nestedLabel}`);
             return `
               <li>
                 <a href="/client/games/${nestedLabel}" data-navigate class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 sidebar-link">
@@ -289,7 +261,6 @@ const SidebarManager = {
   },
 
   initializeDropdowns() {
-    console.log('🔧 Inicializando dropdowns...');
     const dropdownButtons = document.querySelectorAll('[data-collapse-toggle]');
     if (dropdownButtons.length === 0) {
       console.warn('⚠️ No se encontraron botones de dropdown');
@@ -303,7 +274,6 @@ const SidebarManager = {
         return;
       }
       button.addEventListener('click', () => {
-        console.log(`🔄 Toggling dropdown: ${targetId}`);
         target.classList.toggle('hidden');
         const isExpanded = !target.classList.contains('hidden');
         button.setAttribute('aria-expanded', isExpanded);
@@ -322,7 +292,6 @@ const SidebarManager = {
 
     toggleButton.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log('🔘 Toggle button clicked');
       sidebar.classList.contains('-translate-x-full') ? this.showSidebar() : this.hideSidebar();
     });
 
@@ -334,10 +303,8 @@ const SidebarManager = {
       if (link) {
         e.preventDefault();
         const href = link.getAttribute('href');
-        console.log('🔗 Link clicked:', href);
         this.navigateTo(href);
         if (window.innerWidth < 640) {
-          console.log('🔗 Link clicked on mobile - closing sidebar');
           this.hideSidebar();
         }
       }
@@ -345,26 +312,22 @@ const SidebarManager = {
 
     window.addEventListener('resize', () => {
       if (window.innerWidth >= 640) {
-        console.log('🖥️ Window resized to desktop - closing sidebar');
         this.hideSidebar();
       }
     });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) {
-        console.log('⌨️ ESC key pressed');
         this.hideSidebar();
       }
     });
 
     window.addEventListener('popstate', () => {
-      console.log('🔙 Popstate event:', window.location.pathname);
       this.navigateTo(window.location.pathname);
     });
   },
 
   async initialize() {
-    console.log('🔍 Inicializando sidebar...');
     this.setupEventListeners();
     await this.initializeSidebar();
   }
