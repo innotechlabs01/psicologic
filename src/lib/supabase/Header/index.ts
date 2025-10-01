@@ -71,16 +71,16 @@ export async function GetUserGameHeader({ userId }: { userId: string }) {
       throw new Error('User game header not found');
     }
 
-   // const menu = data.menu ? JSON.parse(data.menu as unknown as string) : null;
+   const menu = data.menu ? JSON.parse(data.menu as unknown as string) : null;
 
-    //if (!menu) {
-    //  throw new Error('Menu data is invalid');
-    //}
+    if (!menu) {
+     throw new Error('Menu data is invalid');
+    }
     
     // Transform data to match expected format
     const transformedData = {
       userId: data?.userId,
-      menu: data.menu,
+      menu: menu,
       status: data?.status
     };
 
