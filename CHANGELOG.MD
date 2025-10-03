@@ -1,5 +1,8 @@
 
-## 1.0.0 - [unreleased]
+## 1.0.3 - [2025-10-02]
+- view the card why not change
+
+## 1.0.2 - [2025-10-01]
 - review charge navbar
 
 ## 1.0.1 - [2025-09-20]
