@@ -299,9 +299,9 @@ function setupCards(gameType = 'besos') {
     if (gameType === 'fuego') {
       card.querySelector('.face').style.color = 'red';
     } else if (gameType === 'rayo') {
-      card.querySelector('.face').style.color = 'gold';
+      card.querySelector('.face').style.color = '#9EA115';
     } else {
-      card.querySelector('.face').style.color = 'pink';
+      card.querySelector('.face').style.color = '#000000';
     }
 
     card.addEventListener('click', (e) => activate(e));
