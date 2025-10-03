@@ -78,10 +78,10 @@ const SidebarManager = {
             `);
             scriptFunction();
           } catch (error) {
-            console.error('🚨 Error al ejecutar script inline:', error, scriptContent.slice(0, 100));
+            this.logError('Error ejecutando script inline:', error);
           }
         } else {
-          console.log('⏭️ Ignorando script inline no válido:', scriptContent.slice(0, 50));
+          
         }
       }
     }

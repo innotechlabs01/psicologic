@@ -1,7 +1,7 @@
 {
   "name": "astro-psicologic",
   "type": "module",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "scripts": {
     "dev": "NODE_ENV=development astro dev",
     "build": "NODE_ENV=production astro build",

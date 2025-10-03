@@ -8,37 +8,121 @@ const QuestionKiss = [
   "¿Cómo puedo animarte cuando te sientas triste?",
   "¿Hay algo que siempre has querido saber sobre mí pero nunca preguntado?",
   "¿Cómo describirías nuestra relación en tres palabras?",
-  "¿Qué hace que sientas más conmigo?",
+  "¿Qué te hace sentir mas conectado/a conmigo?",
   "¿Qué es lo que más te gusta hacer cuando estamos juntos?",
-  "¿Qué es lo que te atrajo de mí cuando nos conocimos?"
+  "¿Qué es lo que te atrajo de mí cuando nos conocimos?",
+  "¿Que es lo que más te gusta de nuestra vida sexual?",
+  "¿Hay algo en lo que te gustaria que trabajaramos como pareja?",
+  "Conectamos",
+  "¿Que es lo más te sorprende de mi?",
+  "¿Que es lo más importante que has aprendido de nuestra relación?",
+  "¿Para ti cúal ha sido el momento más dificil en nuestra relación?",
+  "¿Cuál es tu mayor temor en nuestra relación?",
+  "¿Qué te gustaría intentar o experimentar conmigo?",
 ];
 const QuestionFire = [
-  "¿Cómo te imaginas nuestro futuro juntos?",
-  "¿Hay alguna tradición o hábito que te gustaría que empecemos como pareja?",
-  "¿Cómo podemos hacer que nuestra relación sea aún más fuerte?",
-  "¿Cómo te gustaría que celebremos nuestro próximo aniversario?",
-  "¿Hay algo que te gustaría que hiciéramos más a menudo?",
-  "¿Hay algo que sientas que no hemos discutido lo suficiente?",
-  "¿Cómo puedo animarte cuando te sientas triste?",
-  "¿Hay algo que siempre has querido saber sobre mí pero nunca preguntado?",
-  "¿Cómo describirías nuestra relación en tres palabras?",
-  "¿Qué hace que sientas más conmigo?",
-  "¿Qué es lo que más te gusta hacer cuando estamos juntos?",
-  "¿Qué es lo que te atrajo de mí cuando nos conocimos?"
+  "¿Te gusta alguien del mismo sexo o te ha llamado la atención?",
+  "¿Qué te exita más?",
+  "Intimo",
+  "¿Te gusta hablar sucio durante el sexo?",
+  "¿Qué opinas del sexo tántrico?",
+  "¿Cuál es tu recuerdo sexual favorito de nosotros?",
+  "¿Te gusta experimentar con juguetes sexuales?",
+  "¿Qué es lo que más te gusta que te hagan para calentarte?",
+  "¿Qué parte de mi cuerpo te atrae más?",
+  "¿Hay algo que siempre hayas querido probrar en la cama pero no lo has mencionado?",
+  "¿Qué es lo más  disfrutas despues del sexo?",
+  "¿Prefieres ser dominante o sumiso/a en la cama?",
+  "¿Hay algo que te gustaría mejorar o cambiar en nuestra vida sexual?",
+  "¿Cuál es tu posición favorita?",
+  "¿Qué prefieres, sexo rapido y apasionado o lento y romantico?",
+  "¿Qué opinas del sexo en lugares publicos?",
+  "¿Comó te gusta que te toquen?",
+  "¿Tienes alguna fantasia relacionada con los roles o disfrases?",
+  "¿Te gusta probar nuevas técnicas o prefieres mantenerte con lo conocido?",
+  "¿Cuál es tu fantasia sexual más secreta?"
 ];
 const QuestionTruth = [
-  "¿Cómo te imaginas nuestro futuro juntos?",
-  "¿Hay alguna tradición o hábito que te gustaría que empecemos como pareja?",
-  "¿Cómo podemos hacer que nuestra relación sea aún más fuerte?",
-  "¿Cómo te gustaría que celebremos nuestro próximo aniversario?",
-  "¿Hay algo que te gustaría que hiciéramos más a menudo?",
-  "¿Hay algo que sientas que no hemos discutido lo suficiente?",
-  "¿Cómo puedo animarte cuando te sientas triste?",
-  "¿Hay algo que siempre has querido saber sobre mí pero nunca preguntado?",
-  "¿Cómo describirías nuestra relación en tres palabras?",
-  "¿Qué hace que sientas más conmigo?",
-  "¿Qué es lo que más te gusta hacer cuando estamos juntos?",
-  "¿Qué es lo que te atrajo de mí cuando nos conocimos?"
+  {
+    title: "Declaración",
+    question: "Hazle una declaración de amor improvisada a tu pareja.",
+  },
+  {
+    title: "Pregunta Intima",
+    question: "Responder  sinceramente a una pregunta intima de tu pareja.",
+  },
+  {
+    title: "Plan de fin de semana",
+    question: "Organiza un plan para el fin de semana. Tiene que ser algo que hemos hecho antes.",
+  },
+  {
+    title: "Lista de deseos",
+    question: "Crear juntos una lista de deseos sexuales para realizar a futuro.",
+  },
+  {
+    title: "Comodin",
+    question: "Esta carta te ayuda  a descartar una tarea del hogar que no te guste y no hacerla en toda la semana.",
+  },
+  {
+    title: "Striptease",
+    question: "Haz un striptease a tu pareja.",
+  },
+  {
+    title: "Ejercicio Juntos",
+    question: "Hacer una rutina de ejercicios juntos en ropa interior.",
+  },
+  {
+    title: "No Hablar",
+    question: "Comunicarse solo con el cuerpo durante 10 min.",
+  },
+  {
+    title: "Deseo Secreto",
+    question: "Cumplir un deseo secreto que tu pareja escriba en un papel.",
+  },
+  {
+    title: "Fotos Sensuales",
+    question: "Tomarse fotos sensuales mutuamente.",
+  },
+  {
+    title: "Juego de Roles",
+    question: "Intercambia roles durante 10 min y actua como tu pareja.",
+  },
+  {
+    title: "Aumenta el pulso",
+    question: "Dar besos por todo el cuerpo a tu pareja durante 5 min.",
+  },
+  {
+    title: "Frases de Amor",
+    question: "Describe en una frase lo que sientes por tu pareja y leela en voz alta.",
+  },
+  {
+    title: "Retos",
+    question: "",
+  },
+  {
+    title: "Los Ojos",
+    question: "Mirarse fijamente a los ojos durante 3 min sin hablar.",
+  },
+  {
+    title: "Juego de Disfraces",
+    question: "Disfrazarse y actuar una fantasia juntos.",
+  },
+  {
+    title: "Masaje Erótico",
+    question: "Dedicale un masaje de 20 min. a tu pareja usando aceites intimo.",
+  },
+  {
+    title: "Baila Sensual",
+    question: "Baila sensual para tu pareja.",
+  },
+  {
+    title: "Premio",
+    question: "Te haz ganado un desayuno en la cama.",
+  },
+  {
+    title: "Llamada Sexy",
+    question: "Hacer una llamada o enviar mensajes picantes con tu pareja estando en la misma casa.",
+  }
 ];
 
 const state = {
@@ -46,7 +130,7 @@ const state = {
   currentUserId: null,
   paymentScriptLoaded: false
 };
-const totalCards = 12;
+const totalCards = 20;
 const selecciones = [];
 let cards = [];
 let valuesUsed = [];
@@ -57,12 +141,14 @@ let currentAttempts = 0;
 let socket = null; // Debes inicializarlo, por ejemplo: import { io } from 'socket.io-client'; socket = io('http://localhost:4321');
 
 function createCardElement(cartaId, gameType, pregunta, cardNumber) {
-  console.log(`🃏 Creando carta: ${cartaId}, tipo: ${gameType}, número: ${cardNumber}`);
   const card = document.createElement('div');
   card.classList.add('card', 'w-24', 'h-36', 'rounded-lg', 'shadow-lg', 'cursor-pointer', 'transition-all', 'duration-300', 'ease-in-out', 'transform', 'hover:scale-105', 'flex', 'items-center', 'justify-center', 'bg-cover', 'bg-center', 'mb-4', 'other-selected');
   card.dataset.cartaId = cartaId;
   card.innerHTML = `
-    <div class="back">${cardNumber}</div>
+    <div class="back">
+      <img src="heart.svg" alt="${gameType}" class="w-12 h-12 mb-2">
+      ${cardNumber}
+    </div>
     <div class="face flex flex-col items-center justify-center bg-white p-4">
       <span class="text-sm text-gray-800 text-center">${pregunta}</span>
     </div>
@@ -73,15 +159,12 @@ function createCardElement(cartaId, gameType, pregunta, cardNumber) {
 
 function setupSocketListeners() {
   if (!socket) {
-    console.warn('⚠️ Socket no inicializado. Asegúrate de configurar el WebSocket.');
     return;
   }
   const playerStates = new Map();
   function handleCardUpdate(user, cartaId, pregunta, flipped, gameType, timestamp) {
-    console.log(`📡 Actualización de carta: user=${user}, cartaId=${cartaId}, flipped=${flipped}`);
     let playerSection = document.getElementById(`player-${user}`);
     if (!playerSection) {
-      console.log(`Creando nueva sección para jugador ${user}`);
       playerSection = initializePlayerSection(user, gameType || 'besos');
     }
     const playerCards = document.getElementById(`cards-${user}`);
@@ -102,7 +185,6 @@ function setupSocketListeners() {
     userState.lastUpdate = timestamp || Date.now();
     let card = playerCards.querySelector(`.card[data-carta-id="${cartaId}"]`);
     if (!card) {
-      console.log('Creando nueva carta:', cartaId);
       const currentGameType = playerCards.dataset.gameType || gameType || 'besos';
       const cardNumber = Math.floor(Math.random() * totalCards) + 1;
       card = createCardElement(cartaId, currentGameType, pregunta, cardNumber);
@@ -160,7 +242,6 @@ function setupSocketListeners() {
 }
 
 function initializePlayerSection(user, gameType) {
-  console.log(`🔧 Inicializando sección para jugador ${user}`);
   const playerSection = document.createElement('div');
   playerSection.id = `player-${user}`;
   playerSection.innerHTML = `
@@ -183,68 +264,84 @@ function updatePlayerStats(playerSection, userState) {
 }
 
 function setupCards(gameType = 'besos') {
-  console.log(`🎮 Configurando cartas para tipo: ${gameType}`);
   const gameDiv = document.getElementById('game');
   if (!gameDiv) {
-    console.error('Error: No se encontró el contenedor del juego (#game).');
     showError('Error: No se encontró el contenedor del juego.');
     return;
   }
   gameDiv.innerHTML = '';
   cards = [];
   valuesUsed = [];
+
   const cardValues = generateCardValues(gameType);
-  cardValues.forEach((cardData, index) => {
-    console.log(`🃏 Generando carta ${index + 1}: ${cardData.question}`);
+
+  cardValues.forEach((cardData) => {
+    const { question, number } = cardData;
+
     const div = document.createElement('div');
-    div.innerHTML = `<div class="card ${gameType}"><div class="back">${cardData.number}</div><div class="face"></div></div>`;
+    div.innerHTML = `
+      <div class="card ${gameType}">
+        <div class="back">
+          <img src="/img/${gameType}.svg" alt="${gameType}" class="w-12 h-12 mb-2">
+          ${number}
+        </div>
+        <div class="face flex flex-col items-center justify-center p-2 text-center">
+          ${question.title ? `<h3 class="text-md font-bold mb-2 text-yellow-600">${question.title}</h3>` : ""}
+          <p class="text-sm">${question.question}</p>
+        </div>
+      </div>
+    `;
+
     const card = div.querySelector('.card');
-    card.dataset.cartaId = cardData.question;
-    const face = div.querySelector('.face');
-    face.innerText = cardData.question;
+    card.dataset.cartaId = question.question;
+
+    // Color según el tipo de juego
     if (gameType === 'fuego') {
-      face.style.color = 'red';
-      face.style.borderColor = 'red';
+      card.querySelector('.face').style.color = 'red';
     } else if (gameType === 'rayo') {
-      face.style.color = 'gold';
-      face.style.borderColor = 'gold';
+      card.querySelector('.face').style.color = 'gold';
     } else {
-      face.style.color = 'pink';
-      face.style.borderColor = 'pink';
+      card.querySelector('.face').style.color = 'pink';
     }
+
     card.addEventListener('click', (e) => activate(e));
     cards.push(div);
     gameDiv.appendChild(div);
   });
-  console.log(`✅ ${cards.length} cartas generadas`);
+
 }
 
 function generateCardValues(gameType) {
-  console.log(`🔢 Generando valores para tipo: ${gameType}`);
   const values = [];
-  const maxPairs = totalCards / 2;
   let availableQuestions = [];
+
+  // Obtener todas las preguntas según el tipo
   if (gameType === 'besos') {
-    availableQuestions = QuestionKiss.slice(0, maxPairs);
+    availableQuestions = QuestionKiss.map(q => ({ title: null, question: q }));
   } else if (gameType === 'fuego') {
-    availableQuestions = QuestionFire.slice(0, maxPairs);
+    availableQuestions = QuestionFire.map(q => ({ title: null, question: q }));
   } else if (gameType === 'rayo') {
-    availableQuestions = QuestionTruth.slice(0, maxPairs);
+    availableQuestions = [...QuestionTruth]; // ya vienen con {title, question}
   }
-  for (let i = 0; i < maxPairs; i++) {
-    values.push({ question: availableQuestions[i], number: (i * 2) + 1 });
-    values.push({ question: availableQuestions[i], number: (i * 2) + 2 });
-  }
-  for (let i = values.length - 1; i > 0; i--) {
+
+  // 🔀 Barajar preguntas con Fisher–Yates
+  for (let i = availableQuestions.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [values[i], values[j]] = [values[j], values[i]];
+    [availableQuestions[i], availableQuestions[j]] = [availableQuestions[j], availableQuestions[i]];
   }
-  console.log(`🔢 ${values.length} valores generados`);
+
+  // ✅ Seleccionar 20 preguntas únicas
+  const selected = availableQuestions.slice(0, totalCards);
+
+  // Generar 20 cartas únicas
+  selected.forEach((question, i) => {
+    values.push({ question, number: i + 1 });
+  });
+
   return values;
 }
 
 function activate(e) {
-  console.log('🃏 Carta clicada:', e.currentTarget.dataset.cartaId);
   const card = e.currentTarget;
   const isFlipped = card.classList.toggle('flip');
   const cartaName = card.dataset.cartaId;
@@ -275,7 +372,6 @@ function activate(e) {
           const index2 = selecciones.indexOf(card2.dataset.cartaId);
           if (index1 !== -1) selecciones.splice(index1, 1);
           if (index2 !== -1) selecciones.splice(index2, 1);
-          console.log('Selecciones actuales:', selecciones);
           // socket.emit('cardFlipped', { ... });
           currentMove = 0;
           updateEnviarButton();
@@ -290,7 +386,6 @@ function updateEnviarButton() {
   const enviarBtn = document.getElementById('enviarBtn');
   if (enviarBtn) {
     enviarBtn.disabled = selecciones.length === 0;
-    console.log(`🔘 Botón enviar: ${enviarBtn.disabled ? 'deshabilitado' : 'habilitado'}`);
   } else {
     console.warn('⚠️ No se encontró #enviarBtn');
   }
@@ -301,12 +396,10 @@ function setupClickRadioButton() {
   if (radioButtons.length === 0) {
     console.warn('⚠️ No se encontraron radio buttons con name="list-radio"');
   } else {
-    console.log(`🔧 Encontrados ${radioButtons.length} radio buttons`);
   }
   radioButtons.forEach(radio => {
     radio.addEventListener('change', async (e) => {
       const gameType = e.target.value;
-      console.log(`🎮 Cambiando tipo de juego a: ${gameType}`);
       setupCards(gameType);
     });
   });
@@ -321,23 +414,19 @@ function showError(message) {
 }
 
 export function initializeCartas() {
-  console.log('🔍 Inicializando juego de cartas...');
   // Limpiar el contenedor #game para asegurar que esté vacío
   const gameDiv = document.getElementById('game');
   if (gameDiv) {
     gameDiv.innerHTML = '';
-    console.log('🧹 Contenedor #game limpiado');
   } else {
     console.error('Error: No se encontró el contenedor del juego (#game).');
     showError('Error: No se encontró el contenedor del juego.');
   }
   // Asegurar que el DOM esté listo antes de inicializar
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    console.log('🔄 DOM listo, ejecutando inicialización');
     setupClickRadioButton();
     setupSocketListeners();
   } else {
-    console.log('⏳ Esperando DOMContentLoaded para inicializar');
     document.addEventListener('DOMContentLoaded', () => {
       setupClickRadioButton();
       setupSocketListeners();
