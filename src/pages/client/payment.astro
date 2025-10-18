@@ -1,4 +1,37 @@
 ---
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
+import LayoutClient from '../../layouts/LayoutClient.astro';
+import { SignedIn } from "@clerk/astro/components";
+// import MercadoPagoCheckoutPro from '../../components/Payment/MercadoPagoCheckoutPro.tsx';
+
+const mercadoPagoCredentials = {
+  public_key: process.env.MERCADO_PAGO_PUBLIC_KEY || '',
+};
+
+const productData = {
+  name: "Example Product",
+  price: 100,
+  quantity: 1,
+  discount: null,
+};
+---
+<LayoutClient title="💳 Payment">
+    <SignedIn>
+        <DashboardWrapper 
+            title="Centro de Pagos" 
+            subtitle="Gestiona tu suscripción y revisa el historial de pagos"
+        >
+        <!-- <MercadoPagoCheckoutPro 
+            client:load
+            mercado_pago_credentials={mercadoPagoCredentials}
+            product_data={productData}
+            /> -->
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutClient>
+
+
+<!-- ---
 // src/pages/client/payment.astro
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
@@ -6,25 +39,26 @@ import PaymentStats from '../../components/Payment/PaymentStats.astro';
 import PaymentHistory from '../../components/Payment/PaymentHistory.astro';
 import PaymentButton from '../../components/Payment/PaymentButton.astro';
 import { SignedIn } from "@clerk/astro/components";
+import { getAuth } from "@clerk/astro/server";
+import { clerkClient } from "@clerk/clerk-sdk-node";
 
-// Nota: En una implementación real, obtendrías estos datos del servidor
-// basándote en el usuario autenticado de Clerk
-const paymentData = {
-  paymentInfo: {
-    payment_count: 0,
-    last_payment_date: null,
-    next_payment_date: null,
-    subscription_status: 'inactive',
-    days_to_next_payment: 0,
-    is_subscription_active: false
-  },
-  paymentHistory: []
+// Obtener usuario actual usando getAuth
+const { userId } = await getAuth();
+if (!userId) {
+  return Astro.redirect('/login');
+}
+
+// Obtener datos de usuario de Clerk
+const user = await clerkClient.users.getUser(userId);
+const userData = {
+  emailAddress: user.emailAddresses[0].emailAddress,
+  firstName: user.firstName || '',
+  lastName: user.lastName || ''
 };
 
-// En producción, esto se haría desde el servidor:
-// const { userId } = Astro.locals.auth();
-// const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
-// const paymentData = await response.json();
+// Obtener datos de pago
+const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
+const paymentData = await response.json();
 ---
 
 <LayoutClient title="💳 Payment">
@@ -33,37 +67,27 @@ const paymentData = {
             title="Centro de Pagos" 
             subtitle="Gestiona tu suscripción y revisa el historial de pagos"
         >
-
-            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
-                <h3 class="text-lg font-medium">⚠️ Atención</h3>
-                <p class="mt-2 text-sm">
-                    Comming soon
-                </p>
-            </div>
-            <!-- Botón de Pago/Renovación
+            <!-- Botón de Pago/Renovación 
             <PaymentButton 
-                userId="user_example_id"
-                userEmail="usuario@ejemplo.com"
-                userName="Usuario Ejemplo"
+                userId={userId}
+                userEmail={userData.emailAddress}
+                userName={`${userData.firstName} ${userData.lastName}`}
                 isSubscriptionActive={paymentData.paymentInfo.is_subscription_active}
                 daysToNext={paymentData.paymentInfo.days_to_next_payment}
-            /> -->
+            />
 
-            <!-- Estadísticas de Pago 
+            <!-- Estadísticas de Pago
             <PaymentStats 
-                paymentCount={paymentData.paymentInfo.payment_count}
-                lastPaymentDate={paymentData.paymentInfo.last_payment_date}
-                nextPaymentDate={paymentData.paymentInfo.next_payment_date}
-                subscriptionStatus={paymentData.paymentInfo.subscription_status}
-                daysToNext={paymentData.paymentInfo.days_to_next_payment}
-                isActive={paymentData.paymentInfo.is_subscription_active}
-            />-->
+                {...paymentData.paymentInfo}
+            />
 
             <!-- Historial de Transacciones
-            <PaymentHistory transactions={paymentData.paymentHistory} /> -->
+            <PaymentHistory 
+                transactions={paymentData.paymentHistory} 
+            />
 
-            <!-- Información Adicional
-            <div class="mt-8 bg-blue-50 rounded-lg p-6">
+            <!-- Información Adicional -->
+            <!-- <div class="mt-8 bg-blue-50 rounded-lg p-6">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,9 +108,9 @@ const paymentData = {
                         </div>
                     </div>
                 </div>
-            </div> -->
+            </div>
 
-            <!-- Soporte
+            <!-- Soporte 
             <div class="mt-6 text-center">
                 <p class="text-sm text-gray-500">
                     ¿Necesitas ayuda con tu suscripción? 
@@ -94,7 +118,7 @@ const paymentData = {
                         Contacta a nuestro equipo de soporte
                     </a>
                 </p>
-            </div> -->
+            </div>
         </DashboardWrapper>
     </SignedIn>
 </LayoutClient>
@@ -125,4 +149,4 @@ const paymentData = {
     //         console.error('Error al cargar datos de pago:', error);
     //     }
     // });
-</script>
+</script> -->

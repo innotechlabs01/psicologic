@@ -1,8 +1,16 @@
 import { clerkClient } from "@clerk/astro/server";
 import { createUserFromClerk } from "../pages/api/webhooks/clerk";
 import type { APIContext } from "astro";
+import { createClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 // Simple delay utility function
 import { delay } from "../lib/utils";
+// Initialize Supabase client with service role key
+const supabase = createClient(
+  import.meta.env.SUPABASE_URL,
+  import.meta.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 
 export async function handleUserWithoutRole(context: any, userId: string): Promise<string> {
   try {
@@ -66,6 +74,7 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
           });
           console.log("✅ Rol 'org:client' asignado en Clerk");
           await handlerAddUserToOrg(context, userId);
+          await handlerAddUserToPaymentActive(context, userId)
           // await handleUserPayment(context, userId);
           return 'org:client';
         } catch (roleError) {
@@ -117,5 +126,58 @@ const handlerAddUserToOrg = async (context: APIContext, userId: string): Promise
   } catch (error) {
     console.error("❌ Error asociando usuario a organización:", error);
     return false;
+  }
+}
+
+const handlerAddUserToPaymentActive = async (context: APIContext, userId: string): Promise<void> => {
+  try {
+    const validateAuht = context.locals.auth
+
+    if(!validateAuht) {
+      throw new Error(`Debe iniciar sesión`)
+    }
+
+    const now = new Date();
+    const nextPaymentDate = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000)
+    const blockedPaymentDate = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000)
+
+
+    await supabase
+      .from('payments')
+      .insert({
+        paymentId: uuidv4(),
+        userId,
+        amount: parseFloat('100.000'),
+        status: 'approved',
+        paymentDate: now,
+        nextPaymentDate,
+        blockedPaymentDate,
+        createed_at: now
+      })
+
+    const {data: getUser, error: errorUser} = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('id', userId)
+      .single()
+
+    if (errorUser && errorUser.code !== 'PGRST116') {
+      console.error('Error buscando usuario:', errorUser);
+      throw new Error('Error al consultar el usuario');
+    }
+
+    if(getUser?.id !== undefined) {
+      throw new Error(`No se encuentra el usuario`)
+    } 
+
+    await supabase
+      .from('usuarios')
+      .update({
+        status: 'approved'
+      })
+      .eq('id', userId)
+
+  } catch(error) {
+    throw new Error(`Se evidencia un error: ${error}`)
   }
 }

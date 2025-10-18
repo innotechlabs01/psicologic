@@ -1,3 +1,5 @@
+## 1.0.4 - [unreleased]
+- Active module payment by user
 
 ## 1.0.3 - [2025-10-02]
 - view the card why not change

@@ -4,21 +4,25 @@ import { PaymentService } from '../../../lib/services/paymentService';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
+    const paymentData = await request.json();
     
-    // Verificar que sea una notificación de pago
-    if (body.type === 'payment') {
-      const paymentData = {
-        id: body.data.id
-      };
-
-      await PaymentService.processWebhook(paymentData);
+    if (paymentData.type === 'payment') {
+      const result = await PaymentService.processWebhook(paymentData.data);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
     }
 
-    return new Response('OK', { status: 200 });
-    
+    return new Response(JSON.stringify({ message: 'Evento ignorado' }), { 
+      status: 200 
+    });
   } catch (error) {
     console.error('Error en webhook:', error);
-    return new Response('Error', { status: 500 });
+    return new Response(JSON.stringify({ error: 'Error interno del servidor' }), { 
+      status: 500 
+    });
   }
 };

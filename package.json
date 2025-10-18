@@ -3,8 +3,8 @@
   "type": "module",
   "version": "1.0.3",
   "scripts": {
-    "dev": "NODE_ENV=development astro dev",
-    "build": "NODE_ENV=production astro build",
+    "dev": "NODE_ENV=development DEPLOY_ENV=local astro dev",
+    "build": "NODE_ENV=production DEPLOY_ENV=vercel astro build",
     "preview": "NODE_ENV=production astro preview",
     "astro": "astro",
     "build:style": "pnpx @tailwindcss/cli -i ./src/styles/global.css -o ./public/css/main.css",
@@ -28,11 +28,13 @@
     "pg": "^8.16.3",
     "preact": "^10.27.2",
     "svix": "^1.76.1",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.1.13",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
     "@types/alpinejs": "^3.13.10",
+    "@types/uuid": "^11.0.0",
     "standard": "^17.1.2"
   },
   "eslintConfig": {
