@@ -3,30 +3,29 @@ import { isAdminRole, isClientRole } from "./lib/clerk/roles";
 import { createUserFromClerk, triggerUserAccessEvent } from "./pages/api/webhooks/clerk";
 import type { APIContext } from "astro";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@libsql/client";
 import { handleUserWithoutRole } from "./utils/utils";
+import { checkUserPaymentAccess } from "./utils/chechUserPaymentAccess";
 
-// ⚡️ Initialize Supabase
-const supabase = createClient(
-  import.meta.env.SUPABASE_URL,
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// ⚡️ Initialize Turso
+const client = createClient({
+  url: import.meta.env.TURSO_DATABASE_URL,
+  authToken: import.meta.env.TURSO_AUTH_TOKEN
+});
 
 // Function to get role by userId
 async function getUserRole(userId: string): Promise<string> {
   try {
-    const { data, error } = await supabase
-      .from("usuarios")
-      .select("role")          // only fetch the role field
-      .eq("clerk_user_id", userId)        // filter by userId
-      .single();
+    const result = await client.execute(
+      ` select role from usuarios where clerk_user_id = ?
+      `, [userId]
+    );
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error buscando usuario:', error);
-      throw new Error('Error al consultar el usuario');
+    if (!result.rows || result.rows.length === 0) {
+      return Promise.resolve(""); // fallback role
     }
 
-    return Promise.resolve(data?.role || "");
+    return Promise.resolve(String(result.rows[0].role || ""));
   } catch (err) {
     console.error("❌ Exception getting role:", err);
     return Promise.reject(""); // fallback role
@@ -78,8 +77,13 @@ export const onRequest = clerkMiddleware((auth, context) => {
   const { userId, sessionId, orgRole } = auth();
   const currentPath = new URL(context.request.url).pathname;
 
+  if (!userId && currentPath !== '/client' && currentPath !== '/index' && currentPath.startsWith('/client/') && currentPath === '/dashboard/' && currentPath.startsWith('/dashboard/')) {
+    return redirectToRoute('/', 'Debes iniciar sesión');
+  }
+
   if ((!userId && currentPath === '/') || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
-    currentPath === '/dashboard' || currentPath === '/client' || currentPath === '/error') {
+    currentPath === '/dashboard' || currentPath === '/client' || currentPath === '/error' ||
+    currentPath === '/client/chat' || currentPath.startsWith('/client/chat/')) {
     return; // Permitir acceso sin procesar
   }
 
@@ -96,10 +100,6 @@ export const onRequest = clerkMiddleware((auth, context) => {
     return;
   }
 
-  if (!userId && currentPath !== '/client' && currentPath !== '/index' && currentPath.startsWith('/client/') && currentPath === '/dashboard/') {
-    return redirectToRoute('/', 'Debes iniciar sesión');
-  }
-
   // 🔗 Registrar acceso de usuario autenticado
   logAccessEvent(
     context,
@@ -113,6 +113,23 @@ export const onRequest = clerkMiddleware((auth, context) => {
   // ✅ Usar la lógica async original pero retornando la promesa
   return (async () => {
     let newAssignedRole = "";
+
+    // ----------------------------------------------------
+    // 🚩 VALIDACIÓN DE PAGO (Acceso Restringido)
+    // ----------------------------------------------------
+    const { canAccess, daysRemaining } = await checkUserPaymentAccess(userId ?? "");
+
+    if (!canAccess) {
+      logAccessEvent(
+        context,
+        userId ?? 'anonymous',
+        orgRole ?? 'SIN_ROL',
+        'denied',
+        currentPath,
+        { reason: 'payment_required', daysRemaining }
+      );
+      return redirectToRoute('/', `Acceso restringido - por favor complete su pago (${daysRemaining} días restantes)`);
+    }
 
     if (!orgRole) {
       // ✅ safely use await

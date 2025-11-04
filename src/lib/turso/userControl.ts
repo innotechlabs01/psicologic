@@ -1,10 +1,10 @@
 // src/lib/supabase/userControl.ts
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@libsql/client';
 
-const supabase = createClient(
-  import.meta.env.SUPABASE_URL,
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const client = createClient({
+  url: import.meta.env.TURSO_DATABASE_URL,
+  authToken: import.meta.env.TURSO_AUTH_TOKEN
+});
 
 export interface User {
   id: string;
@@ -26,18 +26,19 @@ export interface User {
 // Obtener usuario por Clerk ID
 export async function getUserByClerkId(clerkUserId: string): Promise<User | null> {
   try {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('clerk_user_id', clerkUserId)
-      .single();
+    const result = await client.execute(
+      `
+        select * from usuarios where clerk_user_id = ?
+      `,
+      [clerkUserId]
+    )
 
-    if (error) {
-      console.error('Error obteniendo usuario:', error);
+    if (!result || result.rows.length === 0) {
+      console.error('Error obteniendo usuario:', result);
       return null;
     }
 
-    return data;
+    return result.rows[0] as unknown as User;  
   } catch (error) {
     console.error('Error en getUserByClerkId:', error);
     return null;
@@ -53,17 +54,19 @@ export async function isUserApproved(clerkUserId: string): Promise<boolean> {
 // Aprobar un usuario
 export async function approveUser(userId: string, approvedBy: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('usuarios')
-      .update({
-        status: 'approved',
-        approved_by: approvedBy,
-        approved_at: new Date().toISOString()
-      })
-      .eq('id', userId);
+    const result = await client.execute(
+      `
+        update usuarios set
+          status = 'approved',
+          approved_by = ?,
+          approved_at = ?
+        where id = ?
+      `,
+      [approvedBy, new Date().toISOString(), userId]
+    );
 
-    if (error) {
-      console.error('Error aprobando usuario:', error);
+    if (!result || result.rowsAffected === 0) {
+      console.error('Error aprobando usuario:', result);
       return false;
     }
 
@@ -80,17 +83,19 @@ export async function approveUser(userId: string, approvedBy: string): Promise<b
 // Rechazar un usuario
 export async function rejectUser(userId: string, rejectedBy: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('usuarios')
-      .update({
-        status: 'rejected',
-        approved_by: rejectedBy,
-        approved_at: new Date().toISOString()
-      })
-      .eq('id', userId);
+    const result = await client.execute(
+      `
+        update usuarios set
+          status = 'rejected',
+          approved_by = ?,
+          approved_at = ?
+        where id = ?
+      `,
+      [rejectedBy, new Date().toISOString(), userId]
+    );
 
-    if (error) {
-      console.error('Error rechazando usuario:', error);
+    if (!result || result.rowsAffected === 0) {
+      console.error('Error rechazando usuario:', result);
       return false;
     }
 
@@ -102,22 +107,25 @@ export async function rejectUser(userId: string, rejectedBy: string): Promise<bo
     console.error('Error en rejectUser:', error);
     return false;
   }
+
 }
 
 // Suspender un usuario
 export async function suspendUser(userId: string, suspendedBy: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('usuarios')
-      .update({
-        status: 'suspended',
-        approved_by: suspendedBy,
-        approved_at: new Date().toISOString()
-      })
-      .eq('id', userId);
+    const result = await client.execute(
+      `
+        update usuarios set
+          status = 'suspended',
+          approved_by = ?,
+          approved_at = ?
+        where id = ?
+      `,
+      [suspendedBy, new Date().toISOString(), userId]
+    );
 
-    if (error) {
-      console.error('Error suspendiendo usuario:', error);
+    if (!result || result.rowsAffected === 0) {
+      console.error('Error suspendiendo usuario:', result);
       return false;
     }
 
@@ -138,16 +146,18 @@ export async function changeUserRole(
   changedBy: string
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from('usuarios')
-      .update({
-        role: newRole,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
+    const result = await client.execute(
+      `
+        update usuarios set
+          role = ?,
+          updated_at = ?
+        where id = ?
+      `,
+      [newRole, new Date().toISOString(), userId]
+    );
 
-    if (error) {
-      console.error('Error cambiando rol:', error);
+    if (!result || result.rowsAffected === 0) {
+      console.error('Error cambiando rol:', result);
       return false;
     }
 
@@ -164,55 +174,20 @@ export async function changeUserRole(
 // Obtener usuarios pendientes de aprobación
 export async function getPendingUsers(): Promise<User[]> {
   try {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .select('*')
-      .eq('status', 'pending_approval')
-      .order('created_at', { ascending: false });
+    const result = await client.execute(
+      `
+        select * from usuarios where status = 'pending_approval' order by created_at desc
+      `
+    );
 
-    if (error) {
-      console.error('Error obteniendo usuarios pendientes:', error);
+    if (!result || result.rows.length === 0) {
+      console.error('Error obteniendo usuarios pendientes:', result);
       return [];
     }
 
-    return data || [];
+    return result.rows as unknown as User[];
   } catch (error) {
     console.error('Error en getPendingUsers:', error);
-    return [];
-  }
-}
-
-// Obtener todos los usuarios con filtros
-export async function getUsers(filters?: {
-  status?: string;
-  role?: string;
-  search?: string;
-}): Promise<User[]> {
-  try {
-    let query = supabase.from('usuarios').select('*');
-
-    if (filters?.status) {
-      query = query.eq('status', filters.status);
-    }
-
-    if (filters?.role) {
-      query = query.eq('role', filters.role);
-    }
-
-    if (filters?.search) {
-      query = query.or(`email.ilike.%${filters.search}%,first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`);
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error obteniendo usuarios:', error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error en getUsers:', error);
     return [];
   }
 }
@@ -220,13 +195,13 @@ export async function getUsers(filters?: {
 // Crear notificación
 async function createNotification(userId: string, type: string, message: string) {
   try {
-    await supabase
-      .from('admin_notifications')
-      .insert({
-        user_id: userId,
-        type,
-        message
-      });
+    await client.execute(
+      `
+        insert into admin_notifications (user_id, type, message)
+        values (?, ?, ?)
+      `,
+      [userId, type, message]
+    );
   } catch (error) {
     console.error('Error creando notificación:', error);
   }

@@ -1,6 +1,6 @@
 // src/pages/api/users/suspend.ts
 import type { APIRoute } from 'astro';
-import { suspendUser } from '../../../lib/supabase/userControl';
+import { suspendUser } from '../../../lib/turso/userControl';
 
 export const POST: APIRoute = async ({ request }) => {
   try {

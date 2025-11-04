@@ -1,6 +1,6 @@
 // src/pages/api/users/reject.ts
 import type { APIRoute } from 'astro';
-import { rejectUser } from '../../../lib/supabase/userControl';
+import { rejectUser } from '../../../lib/turso/userControl';
 
 export const POST: APIRoute = async ({ request }) => {
   try {

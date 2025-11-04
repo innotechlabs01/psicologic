@@ -1,6 +1,6 @@
 // src/pages/api/game/menu.ts
 import type { APIRoute } from 'astro';
-import { GetUserGameHeader } from '../../../../lib/supabase/Header/index';
+import { GetUserGameHeader } from '../../../../lib/turso/Header/index';
 
 export const GET: APIRoute = async (context) => {
   const { locals } = context;

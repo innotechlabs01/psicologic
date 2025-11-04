@@ -17,10 +17,11 @@ interface Props {
 const { transactions } = Astro.props;
 
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+  const newDate = new Date(date);
+  return newDate.toLocaleDateString('en-US', {
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric' 
   });
 };
 
@@ -108,7 +109,7 @@ const getPaymentMethodText = (method: string) => {
           {transactions.map((transaction) => (
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {formatDate(transaction.transaction_date)}
+                {formatDate(transaction.transaction_date).toLocaleString()}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 {formatAmount(transaction.amount)}

@@ -46,5 +46,5 @@ export interface PreferenceData {
 }
 
 // Constantes
-export const SUBSCRIPTION_PRICE = 120.000; // Precio de la suscripción mensual
+export const SUBSCRIPTION_PRICE = 100.000; // Precio de la suscripción mensual
 export const SUBSCRIPTION_DAYS = 30; // Duración en días

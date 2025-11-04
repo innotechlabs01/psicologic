@@ -15,7 +15,7 @@ if (existsSync(envPath)) {
 }
 
 // Validar claves esenciales
-const requiredVars = ['PUBLIC_CLERK_PUBLISHABLE_KEY', 'CLERK_SECRET_KEY', 'CLERK_AFTER_SIGN_OUT_URL'];
+const requiredVars = ['CLERK_PUBLISHABLE_KEY', 'CLERK_SECRET_KEY', 'CLERK_AFTER_SIGN_OUT_URL'];
 
 const missingVars = requiredVars.filter((key) => !process.env[key]);
 

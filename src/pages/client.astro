@@ -1,7 +1,6 @@
 ---
 import LayoutClient from '../layouts/LayoutClient.astro'
 import { SignedIn } from "@clerk/astro/components";
-import Dashboard from './dashboard.astro';
 import DashboardWrapper from '../components/Dashboard/DashboardWrapper.astro';
 ---
 
@@ -9,6 +8,7 @@ import DashboardWrapper from '../components/Dashboard/DashboardWrapper.astro';
 	<SignedIn>
 		<DashboardWrapper title="Área de Cliente"
 	subtitle="Bienvenido a tu área de cliente">
+
 
 		<main class="max-w-xl mx-auto py-12">
 			<h1 class="text-black text-3xl font-bold dark:text-black"> Tus retos Client</h1>

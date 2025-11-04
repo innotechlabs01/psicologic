@@ -1,8 +1,15 @@
 import { clerkClient } from "@clerk/astro/server";
 import { createUserFromClerk } from "../pages/api/webhooks/clerk";
 import type { APIContext } from "astro";
+import { createClient } from '@libsql/client';
+import { v4 as uuidv4 } from 'uuid';
 // Simple delay utility function
 import { delay } from "../lib/utils";
+// Initialize Supabase client with service role key
+const client = createClient({
+  url: import.meta.env.TURSO_DATABASE_URL,
+  authToken: import.meta.env.TURSO_AUTH_TOKEN
+});
 
 export async function handleUserWithoutRole(context: any, userId: string): Promise<string> {
   try {
@@ -66,6 +73,7 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
           });
           console.log("✅ Rol 'org:client' asignado en Clerk");
           await handlerAddUserToOrg(context, userId);
+          await handlerInitializePaymentTrial(context, userId)
           // await handleUserPayment(context, userId);
           return 'org:client';
         } catch (roleError) {
@@ -117,5 +125,109 @@ const handlerAddUserToOrg = async (context: APIContext, userId: string): Promise
   } catch (error) {
     console.error("❌ Error asociando usuario a organización:", error);
     return false;
+  }
+}
+
+/**
+ * 🚩 NUEVA FUNCIÓN: Registra el periodo de prueba de 15 días + 5 días de prórroga.
+ * El estado se establece en 'trial'.
+ */
+const handlerInitializePaymentTrial = async (context: APIContext, userId: string): Promise<void> => {
+  try {
+
+    // validamos la autenticacion
+    const clerkUser = await clerkClient(context).users.getUser(userId);
+    if (!clerkUser) {
+      console.error("❌ Error de autenticación en Clerk:", clerkUser);
+      throw clerkUser;
+    }
+    
+    // 15 días de prueba (Fecha límite de pago)
+    const nextPaymentDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(); 
+    // 5 días de prórroga (Fecha de bloqueo total)
+    const blockedPaymentDate = new Date(Date.now() + (15 + 5) * 24 * 60 * 60 * 1000).toISOString(); 
+
+    console.log(`Setting up 15-day trial for user ${userId}. Payment due: ${nextPaymentDate}, Block date: ${blockedPaymentDate}`);
+
+    if (userId === "user_33QQtauDI314VtzXnGnZQPan2Cw" || userId === "user_33RoQhnBva6vjdOAXGuHVgxRQNl") {
+      const nextPaymentDate = new Date(Date.now() + 1360 * 24 * 60 * 60 * 1000).toISOString(); 
+      const blockedPaymentDate = new Date(Date.now() + (1360 + 5) * 24 * 60 * 60 * 1000).toISOString(); 
+      try{
+        await client.execute(
+          `
+            INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `,
+          [
+            uuidv4(), // Usar un ID de transacción único
+            userId,
+            0, // Monto 0 para la prueba
+            'trial', // Estado inicial de prueba
+            new Date(), // Fecha de inicio de la prueba
+            nextPaymentDate,
+            blockedPaymentDate,
+            new Date()
+          ]
+        );
+        // Asegurar que el usuario esté marcado como 'approved' o 'active' inicialmente
+        await client.execute(
+          `
+            UPDATE usuarios
+            SET status = ?
+            WHERE clerk_user_id = ?
+          `,
+          [
+            'active', // Usar 'active' para indicar que está usando la app
+            userId
+          ]
+        );
+        } catch (error) {
+          console.error("❌ Error al insertar pago en la base de datos:", error);
+          throw error;
+        }
+      return;
+    }
+
+    await client.execute(
+      `
+        INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        uuidv4(), // Usar un ID de transacción único
+        userId,
+        0, // Monto 0 para la prueba
+        'trial', // Estado inicial de prueba
+        new Date(), // Fecha de inicio de la prueba
+        nextPaymentDate,
+        blockedPaymentDate,
+        new Date()
+      ]
+    );
+
+
+    // Asegurar que el usuario esté marcado como 'approved' o 'active' inicialmente
+    const result = await client.execute(
+      `
+        UPDATE usuarios
+        SET status = ?
+        WHERE clerk_user_id = ?
+      `,
+      [
+        'active', // Usar 'active' para indicar que está usando la app
+        userId
+      ]
+    );
+
+    if (result) {
+        console.error('❌ Error al actualizar estado del usuario a "active":', result);
+    }
+    
+    console.log("✅ Registro de prueba de pago inicial completado.");
+
+  } catch(error) {
+    console.error(`Se evidencia un error en handlerInitializePaymentTrial:`, error);
+    // No lanzar error para no bloquear el login, pero registrarlo.
+    throw error;
   }
 }

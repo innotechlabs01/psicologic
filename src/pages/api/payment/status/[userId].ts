@@ -3,45 +3,29 @@ import { PaymentService } from '../../../../lib/services/paymentService';
 
 export const GET: APIRoute = async ({ params }) => {
   try {
-    const { userId } = params;
-
+    const userId = params.userId;
     if (!userId) {
-      return new Response(JSON.stringify({
-        error: 'ID de usuario requerido'
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
+      return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), { 
+        status: 400 
       });
     }
 
     const paymentInfo = await PaymentService.getUserPaymentInfo(userId);
     const paymentHistory = await PaymentService.getPaymentHistory(userId);
-    
-    const daysToNext = PaymentService.calculateDaysToNextPayment(paymentInfo.next_payment_date);
-    const isActive = PaymentService.isSubscriptionActive(paymentInfo.next_payment_date);
 
     return new Response(JSON.stringify({
-      success: true,
-      data: {
-        paymentInfo: {
-          ...paymentInfo,
-          days_to_next_payment: daysToNext,
-          is_subscription_active: isActive
-        },
-        paymentHistory
-      }
+      paymentInfo,
+      paymentHistory
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
-
   } catch (error) {
-    console.error('Error al obtener estado:', error);
-    return new Response(JSON.stringify({
-      error: 'Error interno del servidor'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
+    console.error('Error en status endpoint:', error);
+    return new Response(JSON.stringify({ error: 'Error interno del servidor' }), { 
+      status: 500 
     });
   }
 };
