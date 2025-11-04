@@ -1,26 +1,31 @@
 import { defineConfig } from 'astro/config';
 import clerk from '@clerk/astro';
-import preact from '@astrojs/preact';
-import vercel from '@astrojs/vercel/serverless'; // Para Vercel serverless
+import react from '@astrojs/react';
 import node from '@astrojs/node'; // Para Node standalone
 import tailwindcss from '@tailwindcss/vite';
 import { esES } from '@clerk/localizations';
+import dotenv from 'dotenv';
 
-// Seleccionar adaptador según variable de entorno
-const adapter = process.env.DEPLOY_ENV === 'vercel' 
-  ? vercel() 
-  : node({ mode: 'standalone' });
+dotenv.config();
 
 export default defineConfig({
   integrations: [
     clerk({
       localization: esES,
+      publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+      secretKey: process.env.CLERK_SECRET_KEY
     }),
-    preact(),
+    react(),
   ],
-  adapter, // Usar el adaptador seleccionado
+  adapter: node({ mode: 'standalone' }),
   output: 'server',
   vite: {
     plugins: [tailwindcss()],
+  },
+  server: {
+    allowedHosts: ['74c839f3adfd.ngrok-free.app'], // ✅ permite el host de ngrok
+  },
+  hmr: {
+    clientPort: 443,
   },
 });

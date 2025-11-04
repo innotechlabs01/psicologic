@@ -1,41 +1,95 @@
 // src/lib/services/paymentService.ts
-import { SUBSCRIPTION_PRICE, SUBSCRIPTION_DAYS } from '../mercadopago';
-import type { PaymentData, CustomerData, PreferenceData } from '../mercadopago';
+import { createClient, type Value } from '@libsql/client';
+import type { paymentHistory, PaymentInfo } from 'src/constants/interfaces';
 
-import { createClient } from '@supabase/supabase-js';
+// Initialize Supabase client with service role key
+const client = createClient({
+  url: import.meta.env.TURSO_DATABASE_URL,
+  authToken: import.meta.env.TURSO_AUTH_TOKEN
+});
 
-// Simulación de base de datos (reemplazar con acceso real a DB)
-const supabase = createClient(
-  import.meta.env.SUPABASE_URL,
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// 🇪🇸 Formato dd/mm/yyyy
+const formattedDate = (date: number) => {
+    const newDate = new Date(date);
+    return newDate.toLocaleDateString('en-US', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+    });
+};
+
+const statusHistory = (status: string) => {
+    switch (status) {
+        case 'trial':
+            return 'trial';
+        case 'approved':
+            return 'approved';
+        case 'pending':
+            return 'pending';
+        case 'denied':
+            return 'denied';
+        default:
+            return 'unknown';
+    }
+}
 
 export class PaymentService {
   
   // Obtener información de pagos de un usuario
   static async getUserPaymentInfo(userId: string) {
     try {
-        const { data: user, error: userError } = await supabase
-        .from('usuarios')
-        .select('id')
-        .eq('clerk_user_id', userId)
-        .single();
+      const result = await client.execute(
+        `
+        SELECT id, clerk_user_id FROM usuarios WHERE clerk_user_id = ?
+        `,
+        [userId]
+      )
 
-        if (userError || !user) {
-            throw new Error('Usuario no encontrado');
-        }
+      if (!result) {
+        throw new Error('Usuario no encontrado');
+      }
 
-      const { data: userPayment, error: paymentError } = await supabase
-      .from('payments')
-      .select('*')
-      .eq('userId', user?.id)
-      .single();
+      const paymentResult = await client.execute(
+        `
+        select * from payments where userId = ? order by paymentDate desc
+        `,
+        [result.rows[0].clerk_user_id]
+      )
 
-        if (paymentError) {
-            throw new Error('Error obteniendo información de pagos');
-        }
+      if (!paymentResult) {
+        console.error('Error buscando usuario:', paymentResult);
+        throw new Error('Error al consultar el usuario');
+      }
 
-      return userPayment.rows;
+      if (!paymentResult.rows[0]) {
+        return {
+          payment_count: 0,
+          last_payment_date: null,
+          next_payment_date: null,
+          subscription_status: 'inactive',
+          days_to_next_payment: 0,
+          is_subscription_active: false
+        };
+      }
+
+    const paymentDate = formattedDate(parseInt(paymentResult.rows[0].paymentDate?.toString() || '0'));
+    const nextPaymentDate = formattedDate(parseInt(paymentResult.rows[0].nextPaymentDate?.toString() || '0'));
+    const blockedPaymentDate = formattedDate(parseInt(paymentResult.rows[0].blockedPaymentDate?.toString() || '0'));
+    const subscriptionStatus = this.isSubscriptionActive(nextPaymentDate);
+    const daysToNextPayment = this.calculateDaysToNextPayment(nextPaymentDate);
+
+    return {
+        paymentId: paymentResult.rows[0].paymentId as string,
+        userId: paymentResult.rows[0].userId as string,
+        paymentDate: paymentDate,
+        paymentCount: paymentResult.rows.length as number,
+        nextPaymentDate: nextPaymentDate,
+        lastPaymentDate: blockedPaymentDate,
+        daysToNext: daysToNextPayment,
+        subscriptionStatus: paymentResult.rows[0].status as string,
+        isActive: subscriptionStatus
+    }
+      
     } catch (error) {
       console.error('Error al obtener información de pagos:', error);
       throw error;
@@ -45,93 +99,58 @@ export class PaymentService {
   // Obtener historial de transacciones
   static async getPaymentHistory(userId: string) {
     try {
+      const result = await client.execute(
+        `
+        SELECT id, clerk_user_id FROM usuarios WHERE clerk_user_id = ?
+        `,
+        [userId]
+      )
 
-        const { data: user, error: userError } = await supabase
-      .from('usuarios')
-      .select('id')
-      .eq('clerk_user_id', userId)
-      .single();
-
-        if (userError || !user) {
-            throw new Error('Usuario no encontrado');
-        }
+      if (!result) {
+        throw new Error('Usuario no encontrado');
+      }
         
-      const { data: history} = await supabase
-      .from('payments')
-      .select('*')
-      .eq('userId', user?.id)
-      .single();
+      const historyResult = await client.execute(
+        `
+        select * from payments where userId = ? order by paymentDate desc
+        `,
+        [result.rows[0].clerk_user_id]
+      )
 
-        if (history.error || !history) {
-            throw new Error('Historial no encontrado');
-        }
-      return history.rows;
+      if (!historyResult) {
+        console.error('Error buscando usuario:', historyResult);
+        throw new Error('Error al consultar el usuario');
+      }
+
+      if (!historyResult.rows[0]) {
+        return [];
+      }
+      
+      const newPaymentHistory: paymentHistory[] = [];
+
+      historyResult.rows.forEach((item) => {
+        const paymentDate = formattedDate(parseInt(item.paymentDate?.toString() || '0'));
+        const nextPaymentDate = formattedDate(parseInt(item.nextPaymentDate?.toString() || '0'));
+        const status = statusHistory(item.status as string);
+
+        newPaymentHistory.push({
+          id: item.id as number,
+          transaction_date: paymentDate,
+          amount: item.amount as string,
+          status: status,
+          payment_method: 'epayCO',
+          subscription_period_start: paymentDate,
+          subscription_period_end: nextPaymentDate,
+        })
+      })
+
+      return newPaymentHistory.sort(
+        (a, b) => 
+            new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+    );
 
     } catch (error) {
       console.error('Error al obtener historial:', error);
-      throw error;
-    }
-  }
-
-  // Crear preferencia de pago (para Checkout Pro)
-  static async createPaymentPreference(userId: string, userEmail: string, userName?: string) {
-    try {
-      const preferenceData: PreferenceData = {
-        items: [{
-          id: 'subscription',
-          title: 'Suscripción Mensual Premium',
-          quantity: 1,
-          unit_price: SUBSCRIPTION_PRICE
-        }],
-        payer: {
-          email: userEmail,
-          name: userName?.split(' ')[0],
-          surname: userName?.split(' ').slice(1).join(' ')
-        },
-        back_urls: {
-          success: `${import.meta.env.PUBLIC_BASE_URL}/payment/success`,
-          failure: `${import.meta.env.PUBLIC_BASE_URL}/payment/failure`,
-          pending: `${import.meta.env.PUBLIC_BASE_URL}/payment/pending`
-        },
-        auto_return: 'approved',
-        notification_url: `${import.meta.env.PUBLIC_BASE_URL}/api/payment/webhook`,
-        external_reference: userId
-      };
-
-      const response = await preference.create({ body: preferenceData });
-      return response;
-    } catch (error) {
-      console.error('Error al crear preferencia:', error);
-      throw error;
-    }
-  }
-
-  // Procesar webhook de MercadoPago
-  static async processWebhook(paymentData: any) {
-    try {
-      const paymentInfo = await payment.get({ id: paymentData.id });
-      const userId = paymentInfo.external_reference;
-
-      if (!userId) {
-        throw new Error('No se encontró referencia de usuario');
-      }
-
-      await supabase
-        .from('payments')
-        .insert({
-            paymentId: uuidv4(), 
-            userId: userId, 
-            amount: '120.000', 
-            status: 'approved', 
-            paymentDate: new Date(), 
-            nextPaymentDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 
-            blockedPaymentDate: new Date(Date.now() + (15 + 5) * 24 * 60 * 60 * 1000), 
-            createdAt: new Date(), 
-        });
-
-      return paymentInfo;
-    } catch (error) {
-      console.error('Error al procesar webhook:', error);
       throw error;
     }
   }
@@ -156,11 +175,11 @@ export class PaymentService {
 }
 
 function uuidv4(): string {
-    // Generates a RFC4122 version 4 UUID
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
+  // Generates a RFC4122 version 4 UUID
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 

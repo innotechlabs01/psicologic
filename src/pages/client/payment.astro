@@ -1,4 +1,125 @@
 ---
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
+import LayoutClient from '../../layouts/LayoutClient.astro';
+import { SignedIn } from "@clerk/astro/components";
+import PaymentStatus from '../../components/Payment/js/PaymentStatus.jsx';
+import PaymentHistory from '@components/Payment/PaymentHistory.astro';
+const refPayco = Astro.url.searchParams.get('ref_payco');
+
+import PaymentStats from '@components/Payment/PaymentStats.astro';
+
+// Obtener usuario actual usando getAuth
+const { userId } = Astro.locals.auth();
+if (!userId) {
+  return Astro.redirect('/login');
+}
+
+// Obtener datos de usuario de Clerk
+const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
+const paymentData = await response.json();
+
+---
+<LayoutClient title="💳 Payment">
+    <SignedIn>
+        <DashboardWrapper 
+            title="Centro de Pagos" 
+            subtitle="Gestiona tu suscripción y revisa el historial de pagos"
+        >
+        <!-- Información Adicional -->
+        <div class="mt-8 bg-blue-50 rounded-lg p-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        Información sobre tu suscripción
+                    </h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="space-y-1">
+                            <li>• Los pagos se procesan de forma segura a través de EpayCO</li>
+                            <li>• Tu suscripción se renueva cada 30 días</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {
+            paymentData.paymentInfo.daysToNext > 7
+            ? (<div>
+                <p class="mover-p">Suscripción esta activa. Te quedan {paymentData.paymentInfo.daysToNext} días para renovar.</p> 
+               </div>)
+            : (
+                <button id="payment-button" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    Pagar con EpayCo
+                </button>
+                <PaymentStatus client:load refPayco={refPayco} userId={userId} />
+            )
+        }
+        
+
+        <!-- Estadísticas de Pago -->
+        <PaymentStats 
+            {...paymentData.paymentInfo}
+        />
+
+        <!-- Historial de Transacciones -->
+        <PaymentHistory 
+            transactions={paymentData.paymentHistory} 
+        />
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutClient>
+
+<script type="text/javascript" src="https://checkout.epayco.co/checkout.js" />
+
+<script type="module">
+  const button = document.getElementById('payment-button');
+
+  button?.addEventListener('click', async () => {
+    try {
+      const response = await fetch('/api/epayCO/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Producto ejemplo',
+          description: 'Descripción del producto',
+          invoice: `test-${Date.now()}`,
+          currency: 'cop',
+          amount: '140000',
+          tax_base: '0',
+          tax: '0',
+          country: 'co',
+          lang: 'es',
+          external: 'false',
+          email_billing: 'cliente@correo.com',
+          confirm: '/api/epayCO/confirmacion',
+          response: '/client/payment', // ← tu página controlada
+        }),
+      });
+
+      const { checkoutData, publicKey, isTest } = await response.json();
+
+      const handler = ePayco.checkout.configure({
+        key: publicKey,
+        test: isTest,
+      });
+
+      handler.open(checkoutData);
+    } catch (error) {
+      console.error('Error al iniciar pago:', error);
+      alert('No se pudo iniciar el pago.');
+    }
+  });
+</script>
+
+
+
+
+
+<!-- ---
 // src/pages/client/payment.astro
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
@@ -6,25 +127,26 @@ import PaymentStats from '../../components/Payment/PaymentStats.astro';
 import PaymentHistory from '../../components/Payment/PaymentHistory.astro';
 import PaymentButton from '../../components/Payment/PaymentButton.astro';
 import { SignedIn } from "@clerk/astro/components";
+import { getAuth } from "@clerk/astro/server";
+import { clerkClient } from "@clerk/clerk-sdk-node";
 
-// Nota: En una implementación real, obtendrías estos datos del servidor
-// basándote en el usuario autenticado de Clerk
-const paymentData = {
-  paymentInfo: {
-    payment_count: 0,
-    last_payment_date: null,
-    next_payment_date: null,
-    subscription_status: 'inactive',
-    days_to_next_payment: 0,
-    is_subscription_active: false
-  },
-  paymentHistory: []
+// Obtener usuario actual usando getAuth
+const { userId } = await getAuth();
+if (!userId) {
+  return Astro.redirect('/login');
+}
+
+// Obtener datos de usuario de Clerk
+const user = await clerkClient.users.getUser(userId);
+const userData = {
+  emailAddress: user.emailAddresses[0].emailAddress,
+  firstName: user.firstName || '',
+  lastName: user.lastName || ''
 };
 
-// En producción, esto se haría desde el servidor:
-// const { userId } = Astro.locals.auth();
-// const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
-// const paymentData = await response.json();
+// Obtener datos de pago
+const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
+const paymentData = await response.json();
 ---
 
 <LayoutClient title="💳 Payment">
@@ -33,37 +155,27 @@ const paymentData = {
             title="Centro de Pagos" 
             subtitle="Gestiona tu suscripción y revisa el historial de pagos"
         >
-
-            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
-                <h3 class="text-lg font-medium">⚠️ Atención</h3>
-                <p class="mt-2 text-sm">
-                    Comming soon
-                </p>
-            </div>
-            <!-- Botón de Pago/Renovación
+            <!-- Botón de Pago/Renovación 
             <PaymentButton 
-                userId="user_example_id"
-                userEmail="usuario@ejemplo.com"
-                userName="Usuario Ejemplo"
+                userId={userId}
+                userEmail={userData.emailAddress}
+                userName={`${userData.firstName} ${userData.lastName}`}
                 isSubscriptionActive={paymentData.paymentInfo.is_subscription_active}
                 daysToNext={paymentData.paymentInfo.days_to_next_payment}
-            /> -->
+            />
 
-            <!-- Estadísticas de Pago 
+            <!-- Estadísticas de Pago
             <PaymentStats 
-                paymentCount={paymentData.paymentInfo.payment_count}
-                lastPaymentDate={paymentData.paymentInfo.last_payment_date}
-                nextPaymentDate={paymentData.paymentInfo.next_payment_date}
-                subscriptionStatus={paymentData.paymentInfo.subscription_status}
-                daysToNext={paymentData.paymentInfo.days_to_next_payment}
-                isActive={paymentData.paymentInfo.is_subscription_active}
-            />-->
+                {...paymentData.paymentInfo}
+            />
 
             <!-- Historial de Transacciones
-            <PaymentHistory transactions={paymentData.paymentHistory} /> -->
+            <PaymentHistory 
+                transactions={paymentData.paymentHistory} 
+            />
 
-            <!-- Información Adicional
-            <div class="mt-8 bg-blue-50 rounded-lg p-6">
+            <!-- Información Adicional -->
+            <!-- <div class="mt-8 bg-blue-50 rounded-lg p-6">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
                         <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,9 +196,9 @@ const paymentData = {
                         </div>
                     </div>
                 </div>
-            </div> -->
+            </div>
 
-            <!-- Soporte
+            <!-- Soporte 
             <div class="mt-6 text-center">
                 <p class="text-sm text-gray-500">
                     ¿Necesitas ayuda con tu suscripción? 
@@ -94,7 +206,7 @@ const paymentData = {
                         Contacta a nuestro equipo de soporte
                     </a>
                 </p>
-            </div> -->
+            </div>
         </DashboardWrapper>
     </SignedIn>
 </LayoutClient>
@@ -125,4 +237,4 @@ const paymentData = {
     //         console.error('Error al cargar datos de pago:', error);
     //     }
     // });
-</script>
+</script> -->

@@ -1,0 +1,85 @@
+---
+// Importaciones y Configuración
+import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
+import LayoutClient from '../../../layouts/LayoutClient.astro';
+import { SignedIn } from "@clerk/astro/components";
+import ChatInterface from '@components/Chat/ChatInterface.jsx'; 
+import { createClient } from '@libsql/client';
+
+// Configuración de la conexión a Turso
+const db = createClient({
+    url: import.meta.env.TURSO_DATABASE_URL,
+    authToken: import.meta.env.TURSO_AUTH_TOKEN,
+});
+
+// --- LÓGICA SSR: Cargar Ticket y Permisos ---
+const { userId: clerkUserId } = Astro.locals.auth();
+
+const urlTicketId = Astro.params.ticketId as string; 
+let currentUserId = null;
+let currentUserRole = 'usuario_final';
+let isAuthorized = false;
+
+if (clerkUserId && urlTicketId) {
+    try {
+        // 1. Obtener ID interno y Rol
+        const userResult = await db.execute({
+            sql: "SELECT id, role FROM Usuarios WHERE clerk_user_id = ?",
+            args: [clerkUserId]
+        });
+
+        if (userResult.rows.length > 0) {
+            const userRecord = userResult.rows[0];
+            currentUserId = userRecord.id;
+            currentUserRole = String(userRecord.role ?? 'usuario_final');
+            
+            // 2. Verificar que el usuario sea el creador O un agente asignado
+            const ticketCheck = await db.execute({
+                sql: `SELECT user_id, cliente_id 
+                      FROM Tickets 
+                      WHERE ticket_id = ? 
+                      AND (user_id = ? OR cliente_id = ?)`,
+                args: [urlTicketId, currentUserId, currentUserId]
+            });
+            
+            const isAgentOrAdmin = currentUserRole === 'agente_soporte' || currentUserRole === 'org:admin';
+            
+            // Si el usuario es participante O es un agente/admin (que puede ver todos los tickets)
+            if (ticketCheck.rows.length > 0 || isAgentOrAdmin) {
+                isAuthorized = true;
+            }
+        }
+    } catch (error) {
+        console.error("Error al consultar la BD en SSR:", error);
+    }
+}
+
+// 🎯 REDIRECCIÓN DE SEGURIDAD: Si no está autorizado (no es participante/agente) o no está logueado
+if (!isAuthorized) {
+    // Redirigir a la vista de inicio del chat o a un error 403
+    return Astro.redirect('/client/chat'); 
+}
+
+const titleText = `Conversación: ${urlTicketId.substring(0, 8)}...`;
+---
+
+<LayoutClient title="💬 Chat">
+    <SignedIn>
+        <DashboardWrapper 
+        title={titleText} 
+        subtitle="Conversación activa de soporte"
+        >
+            <div class="h-[75vh]">
+                {/* 🎯 Solo muestra la interfaz si la autorización fue exitosa */}
+                {isAuthorized && currentUserId && (
+                    <ChatInterface 
+                        ticketId={urlTicketId}
+                        currentUserId={currentUserId}
+                        currentUserRole={currentUserRole}
+                        client:only="react" 
+                     />
+                )}
+            </div>
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutClient>

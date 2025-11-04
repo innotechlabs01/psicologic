@@ -2,19 +2,110 @@
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
 import { SignedIn } from "@clerk/astro/components";
+import { createClient } from '@libsql/client';
+
+// Configuración de la conexión a Turso
+const db = createClient({
+    url: import.meta.env.TURSO_DATABASE_URL,
+    authToken: import.meta.env.TURSO_AUTH_TOKEN,
+});
+
+// --- LÓGICA SSR (SERVER-SIDE RENDERING) PARA VERIFICAR EL TICKET ACTIVO ---
+
+const { userId: clerkUserId } = Astro.locals.auth();
+
+let currentUserId = null;
+let currentUserRole = 'usuario_final'; // Valor por defecto
+let activeTicketId = null;
+
+// Obtener el ID del ticket de la URL, si está presente (para /chat/TICKET_ID)
+const urlTicketId = Astro.params.ticketId; 
+let ticketToShowId = urlTicketId;
+
+if (clerkUserId) {
+    try {
+        // 1. Obtener ID interno (Turso) y Rol del usuario autenticado
+        const userResult = await db.execute({
+            sql: "SELECT id, role FROM Usuarios WHERE clerk_user_id = ?",
+            args: [clerkUserId]
+        });
+        
+        if (userResult.rows.length > 0) {
+            const userRecord = userResult.rows[0];
+            currentUserId = userRecord.id;
+            currentUserRole = String(userRecord.role ?? 'usuario_final');
+
+            // 2. Buscar un ticket 'Abierto' iniciado por este usuario
+            const ticketCheck = await db.execute({
+                sql: "SELECT ticket_id FROM Tickets WHERE user_id = ? AND estado = 'Abierto'",
+                args: [currentUserId]
+            });
+            
+            if (ticketCheck.rows.length > 0) {
+                activeTicketId = ticketCheck.rows[0].ticket_id;
+            }
+        }
+    } catch (error) {
+        console.error("Error al consultar la BD en SSR:", error);
+        // En caso de error, dejamos currentUserId=null para mostrar el botón o pedir iniciar sesión.
+    }
+}
+
+// 3. Lógica de Redirección y Decisión:
+
+// Si no se proporcionó un ticket ID en la URL, pero el usuario tiene uno activo, redirigir al activo.
+if (!urlTicketId && activeTicketId) {
+    return Astro.redirect(`/client/chat/${activeTicketId}`);
+}
+
+// Determinar el ID final a mostrar: si hay uno en la URL, se usa ese (puede ser cerrado), 
+// si no hay URL ID, pero hay activo, se usa el activo.
+if (!ticketToShowId && activeTicketId) {
+    ticketToShowId = String(activeTicketId);
+}
+
+const titleText = ticketToShowId ? `Conversación: ${ticketToShowId.substring(0, 8)}...` : "Iniciar Chat";
 ---
 
 <LayoutClient title="💬 Chat">
     <SignedIn>
         <DashboardWrapper 
-        title="Chat" 
+        title={titleText} 
         subtitle="Gestiona todas tus conversaciones desde aquí"
         >
-            <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700">
-                <h3 class="text-lg font-medium">⚠️ Atención</h3>
-                <p class="mt-2 text-sm">
-                    Comming soon
-                </p>
+            <div class="h-[75vh]">
+                {/* * Si hay un ticket para mostrar Y el usuario está autenticado, 
+                * se carga la interfaz interactiva.
+                */}
+                <div class="p-6 text-center">
+                    <h3 class="text-xl font-semibold mb-4 dark:text-white">¿Tienes un nuevo problema o pregunta?</h3>
+                    <button 
+                        id="iniciar-chat-btn"
+                        class="px-8 py-3 bg-indigo-600 text-white bg-blue-500 font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-150"
+                        onclick="initiateNewChat()"
+                    >
+                        Iniciar Nuevo Chat
+                    </button>
+                    <script is:inline>
+                        async function initiateNewChat() {
+                            const btn = document.getElementById('iniciar-chat-btn');
+                            btn.disabled = true;
+                            btn.textContent = 'Iniciando...';
+                            
+                            const response = await fetch('/api/tickets/create', { method: 'POST' });
+                            const data = await response.json();
+                            
+                            if (response.ok || response.status === 409) {
+                                // Redirigir al chat recién creado o al activo existente
+                                window.location.href = `/client/chat/${data.ticket_id}`;
+                            } else {
+                                alert(data.error || 'Hubo un error al iniciar el chat.');
+                                btn.disabled = false;
+                                btn.textContent = 'Iniciar Nuevo Chat';
+                            }
+                        }
+                    </script>
+                </div>
             </div>
         </DashboardWrapper>
     </SignedIn>

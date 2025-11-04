@@ -1,0 +1,64 @@
+---
+import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
+import LayoutClient from '../../../layouts/LayoutClient.astro';
+import { SignedIn } from '@clerk/astro/components';
+export const prerender = false; // Renderizado del lado del cliente
+---
+
+<LayoutClient title="🃏 Miedos">
+  <SignedIn>
+    <DashboardWrapper 
+      title="🃏 Jugamos" 
+      subtitle="Supera tus miedos"
+    >
+      <div class="flex-1 overflow-y-auto bg-gray-50">
+        <div id="userContent">
+          <div id="cardGame" class="section active">
+            <div id="error" class="text-red-600 mb-4"></div>
+            <div class="flex-1 bg-white p-6 rounded-lg shadow-sm">
+              <ul class="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <li class="w-full border-b border-gray-200 sm:border-b-0 sm:border-r dark:border-gray-600">
+                  <div class="flex items-center ps-3">
+                    <input id="horizontal-list-radio-id" type="radio" value="identificar_miedo" name="list-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                    <label for="horizontal-list-radio-id" class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Identificar el miedo</label>
+                  </div>
+                </li>
+                <li class="w-full border-b border-gray-200 sm:border-b-0 sm:border-r dark:border-gray-600">
+                  <div class="flex items-center ps-3">
+                    <input id="horizontal-list-radio-military" type="radio" value="cuestionando_miedo" name="list-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                    <label for="horizontal-list-radio-military" class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Cuestionando el miedo</label>
+                  </div>
+                </li>
+                <li class="w-full dark:border-gray-600">
+                  <div class="flex items-center ps-3">
+                    <input id="horizontal-list-radio-passport" type="radio" value="reencuadre" name="list-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                    <label for="horizontal-list-radio-passport" class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Reencuadre</label>
+                  </div>
+                </li>
+                <li class="w-full dark:border-gray-600">
+                  <div class="flex items-center ps-3">
+                    <input id="horizontal-list-radio-passport" type="radio" value="accion_confrontacion" name="list-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                    <label for="horizontal-list-radio-passport" class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Acción y confrontación</label>
+                  </div>
+                </li>
+                <li class="w-full dark:border-gray-600">
+                  <div class="flex items-center ps-3">
+                    <input id="horizontal-list-radio-passport" type="radio" value="liberacion_reconexion" name="list-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                    <label for="horizontal-list-radio-passport" class="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Liberación y reconexión interna</label>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div id="listaSelecciones" class="mt-4">
+              <div id="game-container">
+                <div id="mensaje" class="hidden"></div>
+                <section class="memory-game" id="game"></section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script type="module" src="/js/games/overcome_fears.js"></script>
+    </DashboardWrapper>
+  </SignedIn>
+</LayoutClient>

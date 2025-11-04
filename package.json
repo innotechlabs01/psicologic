@@ -3,8 +3,8 @@
   "type": "module",
   "version": "1.0.3",
   "scripts": {
-    "dev": "NODE_ENV=development astro dev",
-    "build": "NODE_ENV=production astro build",
+    "dev": "NODE_ENV=development DEPLOY_ENV=local astro dev",
+    "build": "NODE_ENV=production DEPLOY_ENV=vercel astro build",
     "preview": "NODE_ENV=production astro preview",
     "astro": "astro",
     "build:style": "pnpx @tailwindcss/cli -i ./src/styles/global.css -o ./public/css/main.css",
@@ -13,10 +13,14 @@
   "dependencies": {
     "@astrojs/node": "^9.4.3",
     "@astrojs/preact": "^4.1.1",
+    "@astrojs/react": "^4.4.0",
     "@astrojs/vercel": "^8.2.7",
     "@clerk/astro": "^2.11.11",
     "@clerk/backend": "^2.12.1",
+    "@clerk/express": "^1.7.43",
     "@clerk/localizations": "^3.24.2",
+    "@libsql/client": "^0.15.15",
+    "@mercadopago/sdk-react": "^1.0.6",
     "@supabase/supabase-js": "^2.57.2",
     "@tailwindcss/cli": "^4.1.13",
     "@tailwindcss/vite": "^4.1.13",
@@ -27,12 +31,19 @@
     "mercadopago": "2.0.0",
     "pg": "^8.16.3",
     "preact": "^10.27.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-toastify": "^11.0.5",
+    "sqlite3": "^5.1.6",
     "svix": "^1.76.1",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.1.13",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
     "@types/alpinejs": "^3.13.10",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
     "standard": "^17.1.2"
   },
   "eslintConfig": {

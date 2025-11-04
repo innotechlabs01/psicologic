@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createGame } from '../../../../lib/supabase/Settings/index';
+import { createGame } from '../../../../lib/turso/Settings/index';
 
 export const POST:APIRoute = async ({request}) => {
     try {
