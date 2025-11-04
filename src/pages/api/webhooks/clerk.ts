@@ -1,13 +1,13 @@
 // src/pages/api/webhooks/clerk.ts
 import type { APIContext, APIRoute } from 'astro';
 import { Webhook } from 'svix';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@libsql/client';
 import type { ClerkUserEvent } from './interface';
 
-const supabase = createClient(
-  import.meta.env.SUPABASE_URL,
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const client = createClient({
+  url: import.meta.env.TURSO_DATABASE_URL,
+  authToken: import.meta.env.TURSO_AUTH_TOKEN
+});
 
 // 🆕 FUNCIÓN PARA CREAR USUARIO DESDE CLERK (LLAMADA DESDE MIDDLEWARE)
 export async function createUserFromClerk(userData: ClerkUserEvent['data']): Promise<any> {
@@ -17,59 +17,77 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data']): Pro
 
   try {
     // Primero verificar si el usuario ya existe
-    const { data: existingUser } = await supabase
-      .from('usuarios')
-      .select('id, status, role')
-      .eq('clerk_user_id', userData.id)
-      .single();
+    const result = await client.execute(
+      `select id, status, role from usuarios where clerk_user_id=? limit 1`, [userData.id]
+    )
 
-    if (existingUser) {
+    if (result.rows[0] || result.rows.length > 0) {
       // Usuario existe, actualizar información
-      const { data, error } = await supabase
-        .from('usuarios')
-        .update({
-          email: primaryEmail,
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          username: userData.username,
-          avatar_url: userData.image_url,
-          updated_at: new Date(userData.updated_at || Date.now()).toISOString(),
-          metadata: userData.public_metadata
-        })
-        .eq('clerk_user_id', userData.id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
+      const result = await client.execute(
+        `update usuarios set 
+          email=?,
+          first_name=?,
+          last_name=?,
+          username=?,
+          avatar_url=?,
+          updated_at=?
+          where clerk_user_id=?`,
+        [
+          primaryEmail,
+          userData.first_name,
+          userData.last_name,
+          userData.username,
+          userData.image_url,
+          new Date(userData.updated_at || Date.now()).toISOString(),
+          userData.id
+        ]
+      )
+      if (!result || result.rows.length === 0) {
+        throw result;
       }
 
-      return data;
+      return result.rows[0];
     } else {
       
       // Usuario no existe, crear nuevo
-      const { data, error } = await supabase
-        .from('usuarios')
-        .insert({
-          clerk_user_id: userData.id,
-          email: primaryEmail,
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          username: userData.username,
-          avatar_url: userData.image_url,
-          status: 'pending_approval', // Estado inicial
-          role: 'org:client', // Rol por defecto
-          login_count: 0,
-          created_at: new Date(userData.created_at || Date.now()).toISOString(),
-          updated_at: new Date(userData.updated_at || Date.now()).toISOString(),
-          metadata: userData.public_metadata
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
+      await client.execute(  
+        `
+          insert into usuarios (
+            clerk_user_id,
+            email,
+            first_name,
+            last_name,
+            username,
+            avatar_url,
+            status,
+            role,
+            login_count,
+            created_at,
+            updated_at,
+            metadata
+          ) values (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          )
+        `,
+        [
+          userData.id,
+          primaryEmail,
+          userData.first_name,
+          userData.last_name,
+          userData.username,
+          userData.image_url,
+          'active', // Estado inicial
+          'org:client', // Rol por defecto
+          0, // login_count
+          new Date(userData.created_at || Date.now()).toISOString(),
+          new Date(userData.updated_at || Date.now()).toISOString(),
+          JSON.stringify({
+            event: 'user_created_from_middleware',
+            source: 'middleware_role_assignment',
+            role: 'org:client'
+          })
+        ]
+      )
       
       // 📊 Registrar evento de creación
       await triggerUserAccessEvent({
@@ -84,11 +102,15 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data']): Pro
           userAgent: 'middleware'
         }
       });
+
+      const result = await client.execute(
+        `select * from usuarios where clerk_user_id=? limit 1`, [userData.id]
+      )
       
       // Notificar a admins de nuevo usuario
-      await notifyAdminsOfNewUser(data);
+      await notifyAdminsOfNewUser(result.rows[0]);
       
-      return data;
+      return result.rows[0];
     }
   } catch (error) {
     console.error('Error en createUserFromClerk:', error);
@@ -115,41 +137,60 @@ export async function triggerUserAccessEvent(payload: {
     }
 
     // 1. Registrar en tabla de access_logs
-    const { data: accessLog, error: accessError } = await supabase
-      .from('access_logs')
-      .insert({
-        clerk_user_id: payload.userId,
-        email: payload.email,
-        action: payload.action,
-        route: payload.route,
-        role: payload.role,
-        ip_address: payload.ip,
-        user_agent: payload.userAgent,
-        metadata: payload.metadata,
-        timestamp: new Date().toISOString()
-      })
-      .select()
-      .single();
+    const result = await client.execute(
+      `
+      insert into access_logs (
+        clerk_user_id,
+        email,
+        action,
+        route,
+        role,
+        ip_address,
+        user_agent,
+        metadata,
+        timestamp
+      ) values (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?
+      )
+      `,
+      [
+        payload.userId,
+        payload.email ?? null,
+        payload.action,
+        payload.route,
+        payload.role ?? null,
+        payload.ip ?? null,
+        payload.userAgent ?? null,
+        JSON.stringify(payload.metadata),
+        new Date().toISOString()
+      ]
+    )
 
-    if (accessError) {
-      console.error('Error registrando access_log:', accessError);
+    if (!result) {
+      console.error('Error registrando access_log:', result);
     } else {
       console.log('✅ Access log registrado correctamente');
     }
 
     // 2. Actualizar última actividad del usuario
     if (payload.action === 'access' || payload.action === 'login') {      
-      const { error: userError } = await supabase
-        .from('usuarios')
-        .update({
-          last_login: new Date().toISOString(),
-          last_ip: payload.ip,
-          login_count: supabase.rpc('increment_login_count', { user_id: payload.userId })
-        })
-        .eq('clerk_user_id', payload.userId);
+      const result = await client.execute(
+        `
+        update usuarios set 
+          last_login = ?,
+          last_ip = ?,
+          login_count = login_count + 1
+          where clerk_user_id = ?
+        `,
+        [
+          new Date().toISOString(),
+          payload.ip ?? null,
+          payload.userId
+        ]
+      )
 
-      if (userError) {
-        console.error('Error actualizando última actividad:', userError);
+      if (!result) {
+        console.error('Error actualizando última actividad:', result);
       } else {
         console.log('✅ Última actividad actualizada');
       }
@@ -160,7 +201,7 @@ export async function triggerUserAccessEvent(payload: {
       await detectSuspiciousActivity(payload);
     }
 
-    return accessLog;
+    return result;
   } catch (error) {
     console.error('Error en triggerUserAccessEvent:', error);
     return null;
@@ -177,14 +218,19 @@ async function detectSuspiciousActivity(payload: {
   try {
     // Verificar múltiples IPs en corto tiempo
     if (payload.ip && payload.userId !== 'anonymous') {
-      const { data: recentIPs } = await supabase
-        .from('access_logs')
-        .select('ip_address')
-        .eq('clerk_user_id', payload.userId)
-        .gte('timestamp', new Date(Date.now() - 30 * 60 * 1000).toISOString()) // Últimos 30 min
-        .limit(10);
+      const result = await client.execute(
+        `
+        select ip_address from access_logs
+        where clerk_user_id = ? and timestamp >= ?
+        limit 10
+        `,
+        [
+          payload.userId,
+          new Date(Date.now() - 30 * 60 * 1000).toISOString()
+        ]
+      )
 
-      const uniqueIPs = [...new Set(recentIPs?.map(log => log.ip_address).filter(Boolean))];
+      const uniqueIPs = [...new Set(result.rows?.map(log => log.ip_address).filter(Boolean))];
       
       if (uniqueIPs.length > 3) {
         await createSecurityAlert({
@@ -198,24 +244,28 @@ async function detectSuspiciousActivity(payload: {
 
     // Verificar intentos de acceso denegado repetidos
     if (payload.action === 'denied' && payload.userId !== 'anonymous') {
-      const { data: deniedAttempts } = await supabase
-        .from('access_logs')
-        .select('id, route, timestamp')
-        .eq('clerk_user_id', payload.userId)
-        .eq('action', 'denied')
-        .gte('timestamp', new Date(Date.now() - 15 * 60 * 1000).toISOString()) // Últimos 15 min
-        .limit(5);
+      const result = await client.execute(
+        `
+        select id, route, timestamp from access_logs
+        where clerk_user_id = ? and action = 'denied' and timestamp >= ?
+        limit 5
+        `,
+        [
+          payload.userId,
+          new Date(Date.now() - 15 * 60 * 1000).toISOString()
+        ]
+      )
 
-      if (deniedAttempts && deniedAttempts.length >= 3) {
+      if (result && result.rows.length >= 3) {
         await createSecurityAlert({
           userId: payload.userId,
           alertType: 'repeated_denied_access',
           severity: 'high',
           details: { 
-            attempts: deniedAttempts.length, 
+            attempts: result.rows.length, 
             route: payload.route,
             timeframe: '15_minutes',
-            attemptedRoutes: deniedAttempts.map(a => a.route)
+            attemptedRoutes: result.rows.map(a => a.route)
           }
         });
       }
@@ -251,19 +301,23 @@ async function createSecurityAlert(alert: {
 }) {
   try {
 
-    const { error } = await supabase
-      .from('security_alerts')
-      .insert({
-        clerk_user_id: alert.userId,
-        alert_type: alert.alertType,
-        severity: alert.severity,
-        details: alert.details,
-        status: 'active',
-        created_at: new Date().toISOString()
-      });
+    const result = await client.execute(
+      `
+      insert into security_alerts (clerk_user_id, alert_type, severity, details, status, created_at)
+      values (?, ?, ?, ?, 'active', ?)
+      returning *
+      `,
+      [
+        alert.userId,
+        alert.alertType,
+        alert.severity,
+        JSON.stringify(alert.details),
+        new Date().toISOString()
+      ]
+    )
 
-    if (error) {
-      console.error('Error creando alerta de seguridad:', error);
+    if (!result) {
+      throw new Error('Error creando alerta de seguridad');
     } else {      
       // Notificar a admins si es crítica o alta
       if (['critical', 'high'].includes(alert.severity)) {
@@ -306,20 +360,22 @@ async function handleUserUpdated(userData: ClerkUserEvent['data']) {
 
 async function handleUserDeleted(userId: string) {
   try {
+    const result = await client.execute(
+      `
+      update usuarios
+      set status = 'deleted',
+        deleted_at = ?
+      where clerk_user_id = ?
+      returning *
+      `,
+      [
+        new Date().toISOString(),
+        userId
+      ]
+    )
 
-    
-    const { data, error } = await supabase
-      .from('usuarios')
-      .update({ 
-        status: 'deleted',
-        deleted_at: new Date().toISOString()
-      })
-      .eq('clerk_user_id', userId)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
+    if (!result) {
+      throw new Error('Error actualizando usuario en la base de datos');
     }
 
     // 📊 Registrar evento de eliminación
@@ -330,7 +386,7 @@ async function handleUserDeleted(userId: string) {
       metadata: { event: 'user_deleted', source: 'webhook' }
     });
 
-    return data;
+    return result;
   } catch (error) {
     console.error('Error en handleUserDeleted:', error);
     throw error;
@@ -339,20 +395,35 @@ async function handleUserDeleted(userId: string) {
 
 async function notifyAdminsOfNewUser(user: any) {
   try {    
-    const { error } = await supabase
-      .from('admin_notifications')
-      .insert({
-        type: 'new_user',
-        title: 'Nuevo usuario registrado',
-        message: `El usuario ${user.email} se ha registrado y está pendiente de aprobación.`,
-        data: { userId: user.clerk_user_id, email: user.email },
-        priority: 'medium',
-        status: 'unread',
-        created_at: new Date().toISOString()
-      });
+    const result = await client.execute(
+      `
+      insert into admin_notifications (
+        type,
+        title,
+        message,
+        data,
+        priority,
+        status,
+        created_at
+      ) values (
+        'new_user',
+        'Nuevo usuario registrado',
+        ?,
+        ?,
+        'medium',
+        'unread',
+        ?
+      )
+      `,
+      [
+        `El usuario ${user.email} se ha registrado y está activo.`,
+        JSON.stringify({ userId: user.clerk_user_id, email: user.email }),
+        new Date().toISOString()
+      ]
+    )
 
-    if (error) {
-      console.error('Error creando notificación admin:', error);
+    if (!result) {
+      console.error('Error creando notificación admin:', result);
     } else {
       console.log('✅ Notificación a admins creada correctamente');
     }
@@ -364,20 +435,34 @@ async function notifyAdminsOfNewUser(user: any) {
 async function notifyAdminsSecurityAlert(alert: any) {
   try {
     
-    const { error } = await supabase
-      .from('admin_notifications')
-      .insert({
-        type: 'security_alert',
-        title: `Alerta de Seguridad: ${alert.alertType}`,
-        message: `Se detectó actividad sospechosa para el usuario ${alert.userId}`,
-        data: alert,
-        priority: alert.severity === 'critical' ? 'urgent' : 'high',
-        status: 'unread',
-        created_at: new Date().toISOString()
-      });
+    const result = await client.execute(
+      `
+      insert into admin_notifications (
+        type,
+        title,
+        message,
+        data,
+        priority,
+        status,
+        created_at
+      ) values (
+        'security_alert',
+        'Alerta de Seguridad: ${alert.alertType}',
+        'Se detectó actividad sospechosa para el usuario ${alert.userId}',
+        ?,
+        ${alert.severity === 'critical' ? 'urgent' : 'high'},
+        'unread',
+        ?
+      )
+      `,
+      [
+        JSON.stringify(alert),
+        new Date().toISOString()
+      ]
+    )
 
-    if (error) {
-      console.error('Error creando notificación de seguridad:', error);
+    if (!result) {
+      console.error('Error creando notificación de seguridad:', result);
     } else {
       console.log('✅ Notificación de alerta de seguridad creada');
     }

@@ -1,22 +1,22 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@libsql/client";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_KEY!
-);
+const client = createClient({
+  url: import.meta.env.TURSO_DATABASE_URL,
+  authToken: import.meta.env.TURSO_AUTH_TOKEN
+});
 
 export function getUserRole(userId: string): Promise<string> {
-  return Promise.resolve(supabase
-    .from("usuarios")
-    .select("role")
-    .eq("clerk_user_id", userId)
-    .single()
-    .then(({ data, error }) => {
-      if (error || !data || !data.role) {
-        console.warn("⚠️ Usuario no encontrado en Supabase o sin rol:", error);
+  return Promise.resolve(client
+    .execute(
+      `select role from usuarios where clerk_user_id = ?`,
+      [userId]
+    )
+    .then(({ rows }) => {
+      if (!rows || rows.length === 0) {
+        console.warn("⚠️ Usuario no encontrado en la base de datos o sin rol");
         return ""; // siempre devolver string
       }
-      return data.role as string;
+      return rows[0].role as string;
     })
 );
 }

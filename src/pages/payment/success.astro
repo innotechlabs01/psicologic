@@ -2,6 +2,9 @@
 // src/pages/payment/success.astro
 import LayoutClient from '../../layouts/LayoutClient.astro';
 import { SignedIn } from "@clerk/astro/components";
+const { searchParams } = Astro.url;
+const paymentId = searchParams.get('payment_id');
+const status = searchParams.get('status');
 ---
 
 <LayoutClient title="✅ Pago Exitoso">

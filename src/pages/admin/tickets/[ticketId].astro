@@ -1,0 +1,92 @@
+---
+import LayoutClient from '../../../layouts/LayoutClient.astro'; // Usamos el mismo layout por simplicidad
+import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
+import { SignedIn } from "@clerk/astro/components";
+import ChatInterface from '@components/Chat/ChatInterface.jsx'; 
+import { createClient } from '@libsql/client';
+import getAuth from "@clerk/astro"; 
+import LayoutDashboard from '@layouts/LayoutDashboard.astro';
+
+// Configuración de la conexión a Turso
+const db = createClient({
+    url: import.meta.env.TURSO_DATABASE_URL,
+    authToken: import.meta.env.TURSO_AUTH_TOKEN,
+});
+
+// --- LÓGICA SSR: Cargar Ticket y Permisos ---
+const { userId: clerkUserId } = Astro.locals.auth();
+const urlTicketId = Astro.params.ticketId as string; 
+
+let currentUserId = null;
+let currentUserRole = null;
+let isAgentAuthorized = false; // Flag para el Agente
+
+if (clerkUserId && urlTicketId) {
+    try {
+        // 1. Obtener ID interno (Turso) y Rol del usuario autenticado
+        const userResult = await db.execute({
+            sql: "SELECT id, role FROM Usuarios WHERE clerk_user_id = ?",
+            args: [clerkUserId]
+        });
+
+        if (userResult.rows.length > 0) {
+            const userRecord = userResult.rows[0];
+            currentUserId = userRecord.id;
+            currentUserRole = String(userRecord.role ?? 'usuario_final');
+
+            // 2. Comprobación de Rol: Solo permite agentes o administradores
+            if (currentUserRole === 'agente_soporte' || currentUserRole === 'org:admin') {
+                isAgentAuthorized = true;
+            } else {
+                // Si el usuario está logueado pero NO es agente/admin, denegar acceso
+                isAgentAuthorized = false; 
+            }
+
+            // Opcional: Si el ticket existe, se asume que el agente puede verlo.
+            // Si quieres verificar que el ticket exista antes de mostrar, descomenta:
+            /*
+            const ticketCheck = await db.execute({
+                sql: `SELECT ticket_id FROM Tickets WHERE ticket_id = ?`,
+                args: [urlTicketId]
+            });
+            if (ticketCheck.rows.length === 0) {
+                 return Astro.redirect('/admin/tickets'); // Redirigir si no existe
+            }
+            */
+        }
+    } catch (error) {
+        console.error("Error al consultar la BD en SSR:", error);
+    }
+}
+
+// 🎯 REDIRECCIÓN DE SEGURIDAD: Si no está autorizado
+if (!isAgentAuthorized) {
+    // Si no está logueado o no tiene el rol de agente, se redirige.
+    // Asume que la ruta /admin/login existe para usuarios no autorizados.
+    return Astro.redirect('/admin/login'); 
+}
+
+const titleText = `AGENTE: Conversación ${urlTicketId.substring(0, 8)}...`;
+---
+
+<LayoutDashboard title="💼 Admin Chat">
+    <SignedIn>
+        <DashboardWrapper 
+        title={titleText} 
+        subtitle="Modo Agente: Visualiza, responde y cierra el ticket"
+        >
+            <div class="h-[75vh]">
+                {/* 🎯 Se carga la interfaz de Chat, que ya sabe que currentRole es Agente */}
+                {/* Es crucial que currentUserId no sea null */}
+                {isAgentAuthorized && currentUserId && (
+                    <ChatInterface 
+                        ticketId={urlTicketId}
+                        currentUserId={currentUserId}
+                        currentUserRole={currentUserRole}
+                        client:only="react" 
+                     />
+                )}
+            </div>
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutDashboard>

@@ -1,6 +1,6 @@
 // src/pages/api/users/change-role.ts
 import type { APIRoute } from 'astro';
-import { changeUserRole } from '../../../lib/supabase/userControl';
+import { changeUserRole } from '../../../lib/turso/userControl';
 
 export const POST: APIRoute = async ({ request }) => {
   try {

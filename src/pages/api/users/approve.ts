@@ -1,6 +1,6 @@
 // src/pages/api/users/approve.ts
 import type { APIRoute } from 'astro';
-import { approveUser } from '../../../lib/supabase/userControl';
+import { approveUser } from '../../../lib/turso/userControl';
 
 export const POST: APIRoute = async ({ request }) => {
   try {

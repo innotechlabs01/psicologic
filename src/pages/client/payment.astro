@@ -2,18 +2,22 @@
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
 import { SignedIn } from "@clerk/astro/components";
-// import MercadoPagoCheckoutPro from '../../components/Payment/MercadoPagoCheckoutPro.tsx';
+import PaymentStatus from '../../components/Payment/js/PaymentStatus.jsx';
+import PaymentHistory from '@components/Payment/PaymentHistory.astro';
+const refPayco = Astro.url.searchParams.get('ref_payco');
 
-const mercadoPagoCredentials = {
-  public_key: process.env.MERCADO_PAGO_PUBLIC_KEY || '',
-};
+import PaymentStats from '@components/Payment/PaymentStats.astro';
 
-const productData = {
-  name: "Example Product",
-  price: 100,
-  quantity: 1,
-  discount: null,
-};
+// Obtener usuario actual usando getAuth
+const { userId } = Astro.locals.auth();
+if (!userId) {
+  return Astro.redirect('/login');
+}
+
+// Obtener datos de usuario de Clerk
+const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
+const paymentData = await response.json();
+
 ---
 <LayoutClient title="💳 Payment">
     <SignedIn>
@@ -21,14 +25,98 @@ const productData = {
             title="Centro de Pagos" 
             subtitle="Gestiona tu suscripción y revisa el historial de pagos"
         >
-        <!-- <MercadoPagoCheckoutPro 
-            client:load
-            mercado_pago_credentials={mercadoPagoCredentials}
-            product_data={productData}
-            /> -->
+        <!-- Información Adicional -->
+        <div class="mt-8 bg-blue-50 rounded-lg p-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        Información sobre tu suscripción
+                    </h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="space-y-1">
+                            <li>• Los pagos se procesan de forma segura a través de EpayCO</li>
+                            <li>• Tu suscripción se renueva cada 30 días</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {
+            paymentData.paymentInfo.daysToNext > 7
+            ? (<div>
+                <p class="mover-p">Suscripción esta activa. Te quedan {paymentData.paymentInfo.daysToNext} días para renovar.</p> 
+               </div>)
+            : (
+                <button id="payment-button" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    Pagar con EpayCo
+                </button>
+                <PaymentStatus client:load refPayco={refPayco} userId={userId} />
+            )
+        }
+        
+
+        <!-- Estadísticas de Pago -->
+        <PaymentStats 
+            {...paymentData.paymentInfo}
+        />
+
+        <!-- Historial de Transacciones -->
+        <PaymentHistory 
+            transactions={paymentData.paymentHistory} 
+        />
         </DashboardWrapper>
     </SignedIn>
 </LayoutClient>
+
+<script type="text/javascript" src="https://checkout.epayco.co/checkout.js" />
+
+<script type="module">
+  const button = document.getElementById('payment-button');
+
+  button?.addEventListener('click', async () => {
+    try {
+      const response = await fetch('/api/epayCO/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Producto ejemplo',
+          description: 'Descripción del producto',
+          invoice: `test-${Date.now()}`,
+          currency: 'cop',
+          amount: '140000',
+          tax_base: '0',
+          tax: '0',
+          country: 'co',
+          lang: 'es',
+          external: 'false',
+          email_billing: 'cliente@correo.com',
+          confirm: '/api/epayCO/confirmacion',
+          response: '/client/payment', // ← tu página controlada
+        }),
+      });
+
+      const { checkoutData, publicKey, isTest } = await response.json();
+
+      const handler = ePayco.checkout.configure({
+        key: publicKey,
+        test: isTest,
+      });
+
+      handler.open(checkoutData);
+    } catch (error) {
+      console.error('Error al iniciar pago:', error);
+      alert('No se pudo iniciar el pago.');
+    }
+  });
+</script>
+
+
+
 
 
 <!-- ---
