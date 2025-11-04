@@ -1,24 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+  "functions": {
+    "dist/server/entry.mjs": {
+      "runtime": "nodejs18.x"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/"
+      "dest": "/dist/server/entry.mjs"
     }
-  ],
-  "env": {
-    "TURSO_DATABASE_URL": "@turso_database_url",
-    "TURSO_AUTH_TOKEN": "@turso_auth_token",
-    "CLERK_SECRET_KEY": "@clerk_secret_key",
-    "PUBLIC_CLERK_PUBLISHABLE_KEY": "@public_clerk_publishable_key"
-  }
+  ]
 }
