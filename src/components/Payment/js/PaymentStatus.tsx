@@ -10,6 +10,23 @@ const client = createClient({
   authToken: import.meta.env.PUBLIC_TURSO_AUTH_TOKEN,
 });
 
+const getPaymentStatus = (status: number): string => {
+  const normalizedStatus = Math.trunc(status); // Convierte 1.0 → 1, 2.0 → 2, etc.
+
+  switch (normalizedStatus) {
+    case 1:
+      return 'approved';
+    case 2:
+      return 'rejected';
+    case 3:
+      return 'pending';
+    case 4:
+      return 'canceled';
+    default:
+      return 'unknown';
+  }
+};
+
 const saveStatusPayment = async (userId: string, paymentId: string, amount: number, status: number) => {
   try {
 
@@ -21,28 +38,7 @@ const saveStatusPayment = async (userId: string, paymentId: string, amount: numb
       blockedPaymentDate = new Date(Date.now() + (1360 + 5) * 24 * 60 * 60 * 1000); 
     }
 
-    let statusPayment;
-    switch(status) {
-      case 1.0:
-      case 1:
-        statusPayment = 'approved';
-        break;
-      case 2.0:
-      case 2:
-        statusPayment = 'rejected';
-        break;
-      case 3.0:
-      case 3:
-        statusPayment = 'pending';
-        break;
-      case 4.0:
-      case 4:
-        statusPayment = 'canceled';
-        break;
-      default:
-        statusPayment = 'unknow';
-        break;
-    }
+    const statusPayment = getPaymentStatus(status);
 
     await client.execute(
       `
@@ -61,7 +57,7 @@ const saveStatusPayment = async (userId: string, paymentId: string, amount: numb
       ]
     );
 
-    if(status === 1 || status === 1.0) {
+    if(statusPayment === 'approved') {
       await client.execute(
         `
           update usuarios set status = ? where userId = ?
