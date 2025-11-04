@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 import clerk from '@clerk/astro';
 import react from '@astrojs/react';
-import node from '@astrojs/node'; // Para Node standalone
+import vercel from '@astrojs/vercel/serverless'; // Para Vercel
 import tailwindcss from '@tailwindcss/vite';
 import { esES } from '@clerk/localizations';
 import dotenv from 'dotenv';
@@ -17,15 +17,9 @@ export default defineConfig({
     }),
     react(),
   ],
-  adapter: node({ mode: 'standalone' }),
+  adapter: vercel(),
   output: 'server',
   vite: {
     plugins: [tailwindcss()],
-  },
-  server: {
-    allowedHosts: ['74c839f3adfd.ngrok-free.app'], // ✅ permite el host de ngrok
-  },
-  hmr: {
-    clientPort: 443,
   },
 });
