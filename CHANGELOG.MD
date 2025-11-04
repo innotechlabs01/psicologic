@@ -1,4 +1,4 @@
-## 1.0.4 - [unreleased]
+## 1.0.4 - [2025-11-03]
 - Active module payment by user
 - Create API for tickets
 - Create API for messages
