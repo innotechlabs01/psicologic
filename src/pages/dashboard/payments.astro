@@ -2,6 +2,108 @@
 import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import { SignedIn } from "@clerk/astro/components";
+
+// 1. Llamada a la API para obtener los datos
+const response = await fetch(`${Astro.url.origin}/api/dashboard/payment`);
+
+// Definición de tipos para mayor claridad
+interface Payment {
+  username: string,
+  email: string,
+  id: string;
+  paymentId: string;
+  userId: string;
+  amount: number;
+  status: 'trial' | 'approved' | 'blocked'; // Ajustar según tus estados reales
+  paymentDate: number; // Unix timestamp
+  nextPaymentDate: number;
+  blockedPaymentDate: number;
+  created_at: number;
+}
+
+// 2. Procesar los datos para las estadísticas y la tabla
+let payments: Payment[] = [];
+
+if (response.ok) {
+  // Asegúrate de que el formato de los datos de la DB coincida con tu interfaz Payment
+  payments = (await response.json()) as Payment[]; 
+} else {
+  console.error("No se pudieron cargar los pagos desde la API.");
+}
+
+// --- Lógica de Cálculo de Estadísticas ---
+
+// Función de formateo de moneda (para claridad en el dashboard)
+const formatCurrency = (value: number) => {
+  // Asume que la cantidad está en centavos o la unidad base, por eso la división por 100
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP', // Cambia a tu moneda
+    minimumFractionDigits: 0 // Si tu `amount` es en pesos/dólares completos
+  }).format(value); 
+  // Si amount ya viene en la unidad correcta (ej: 1400.00), elimina / 100
+};
+
+// 1. Ingresos Totales (Solo Approved, ya que Trial es 0)
+const totalRevenue = payments
+  .filter(p => p.status === 'approved')
+  .reduce((sum, p) => sum + p.amount, 0);
+
+// 2. Pagos en Prueba (trial)
+const trialPayments = payments
+  .filter(p => p.status === 'trial')
+  .length;
+  
+// 3. Transacciones Aprobadas
+const approvedTransactions = payments
+  .filter(p => p.status === 'approved')
+  .length;
+
+// --- Lógica de la Tabla ---
+
+// Formatear la fecha para la tabla (e.g., "01 Nov 2025")
+const formatDate = (timestamp: number) => {
+  return new Date(timestamp).toLocaleDateString('es-CO', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+// Obtener las últimas transacciones para la tabla (ej. las 5 más recientes)
+const recentTransactions = payments
+  .sort((a, b) => b.paymentDate - a.paymentDate) // Ordenar por fecha más reciente
+  .slice(0, 5); // Tomar solo las 5 primeras
+
+// Función para obtener el estilo de estado
+const getStatusClasses = (status: Payment['status']) => {
+  switch (status) {
+    case 'approved':
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+    case 'trial':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+    case 'blocked':
+      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+  }
+};
+
+// Función para obtener el texto del estado
+const getStatusText = (status: Payment['status']) => {
+  switch (status) {
+    case 'approved':
+      return 'Aprobado';
+    case 'trial':
+      return 'Prueba';
+    case 'blocked':
+      return 'Bloqueado';
+    default:
+      return 'Desconocido';
+  }
+};
+
+
 ---
 
 <LayoutDashboard title="💳 Pagos">
@@ -11,43 +113,52 @@ import { SignedIn } from "@clerk/astro/components";
       subtitle="Administra todas las transacciones y facturación"
     >
       
-      <!-- Tu contenido aquí - automáticamente alineado -->
       <div class="dashboard-grid dashboard-grid-cols-3">
         
-        <!-- Estadísticas de pagos -->
         <div class="dashboard-card">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Ingresos Totales
+            Ingresos Totales (Aprobados)
           </h3>
-          <p class="text-3xl font-bold text-green-600 dark:text-green-400">$45,231</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">+12% vs mes anterior</p>
+          <p class="text-3xl font-bold text-green-600 dark:text-green-400">
+            {formatCurrency(totalRevenue)}
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Basado en {approvedTransactions} transacciones aprobadas.
+          </p>
         </div>
         
         <div class="dashboard-card">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Pagos Pendientes
+            Cuentas en Prueba
           </h3>
-          <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">$8,420</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">15 facturas pendientes</p>
+          <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            {trialPayments}
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Usuarios en periodo de prueba (status: trial).
+          </p>
         </div>
         
         <div class="dashboard-card">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Transacciones
+            Transacciones Totales
           </h3>
-          <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">1,247</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Este mes</p>
+          <p class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+            {payments.length}
+          </p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Total de registros de pagos.
+          </p>
         </div>
       </div>
       
-      <!-- Tabla de transacciones recientes -->
       <div class="dashboard-card">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
             Transacciones Recientes
           </h2>
           <button class="dashboard-button-primary">
-            Ver Todas
+            Ver Todas ({payments.length})
           </button>
         </div>
         
@@ -55,49 +166,43 @@ import { SignedIn } from "@clerk/astro/components";
           <table class="w-full">
             <thead>
               <tr class="border-b border-gray-200 dark:border-gray-700">
-                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">ID</th>
-                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Cliente</th>
+                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">ID de Pago</th>
+                <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">ID de Usuario</th>
                 <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Monto</th>
                 <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Estado</th>
                 <th class="text-left py-3 px-4 font-medium text-gray-900 dark:text-white">Fecha</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-              <tr>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">#12458</td>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">Juan Pérez</td>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">$250.00</td>
-                <td class="py-3 px-4">
-                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                    Completado
-                  </span>
-                </td>
-                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">15 Dic 2024</td>
-              </tr>
-              <tr>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">#12457</td>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">María García</td>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">$180.50</td>
-                <td class="py-3 px-4">
-                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                    Pendiente
-                  </span>
-                </td>
-                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">14 Dic 2024</td>
-              </tr>
-              <tr>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">#12456</td>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">Carlos López</td>
-                <td class="py-3 px-4 text-gray-900 dark:text-white">$95.75</td>
-                <td class="py-3 px-4">
-                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                    Completado
-                  </span>
-                </td>
-                <td class="py-3 px-4 text-gray-500 dark:text-gray-400">13 Dic 2024</td>
-              </tr>
+              {recentTransactions.map((payment) => (
+                <tr key={payment.id}>
+                  <td class="py-3 px-4 text-gray-900 dark:text-white font-medium">
+                    {payment.paymentId}
+                  </td>
+                  <td class="py-3 px-4 text-gray-500 dark:text-gray-400">
+                    {`${payment.username}`}
+                  </td>
+                  <td class="py-3 px-4 text-gray-900 dark:text-white">
+                    {formatCurrency(payment.amount)}
+                  </td>
+                  <td class="py-3 px-4">
+                    <span class={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(payment.status)}`}>
+                      {getStatusText(payment.status)}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-gray-500 dark:text-gray-400">
+                    {formatDate(payment.paymentDate)}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+          
+          {recentTransactions.length === 0 && (
+            <div class="p-6 text-center text-gray-500 dark:text-gray-400">
+              No hay transacciones recientes para mostrar.
+            </div>
+          )}
         </div>
       </div>
     </DashboardWrapper>

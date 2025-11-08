@@ -1,7 +1,9 @@
 ---
 import DashboardWrapper from '../components/Dashboard/DashboardWrapper.astro';
 import LayoutDashboard from '../layouts/LayoutDashboard.astro';
-import { SignedOut, SignedIn } from "@clerk/astro/components";
+import { SignedIn } from "@clerk/astro/components";
+import { MyLine } from '../components/Chartjs/chart.tsx';
+
 ---
 
 <LayoutDashboard title="🔒 Dashboard">
@@ -16,8 +18,8 @@ import { SignedOut, SignedIn } from "@clerk/astro/components";
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Usuarios Activos</p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white">2,543</p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Usuarios Nuevos</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-white" id="newUsersCount"></p>
             </div>
             <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
               <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,22 +32,8 @@ import { SignedOut, SignedIn } from "@clerk/astro/components";
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Usuarios Desconectados</p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white">$12,543</p>
-            </div>
-            <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-              <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-        
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between">
-            <div>
               <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Mensajes Pendientes</p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white">5</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-white" id="ticketsCount"></p>
             </div>
             <div class="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
               <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,12 +42,13 @@ import { SignedOut, SignedIn } from "@clerk/astro/components";
             </div>
           </div>
         </div>
+
         
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Comming</p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white"></p>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Chats Activos</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-white" id="chatActiveCount"></p>
             </div>
             <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
               <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,80 +57,38 @@ import { SignedOut, SignedIn } from "@clerk/astro/components";
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Contenido en dos columnas -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Columna principal -->
-        <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Actividades Recientes
-            </h2>
-            <div class="space-y-4">
-              <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                  <span class="text-blue-600 dark:text-blue-400 font-semibold">JD</span>
-                </div>
-                <div class="flex-1">
-                  <p class="font-medium text-gray-900 dark:text-white">Juan Díaz completó su perfil</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">hace 2 minutos</p>
-                </div>
-              </div>
-              
-              <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                  <span class="text-green-600 dark:text-green-400 font-semibold">MR</span>
-                </div>
-                <div class="flex-1">
-                  <p class="font-medium text-gray-900 dark:text-white">María Rodríguez realizó una compra</p>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">hace 15 minutos</p>
-                </div>
-              </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Chats Cerrados</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-white" id="chatCloseCount"></p>
+            </div>
+            <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
+              <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
             </div>
           </div>
         </div>
-        
-        <!-- Sidebar derecho -->
-        <div class="space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Tareas Pendientes
-            </h3>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-            Progreso de la Semana
-          </h2>
-          
-          <div class="space-y-3">
-            {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day, index) => {
-              const progress = [85, 100, 65, 90, 75, 40, 20][index];
-              const completed = Math.floor(progress / 20);
-              const total = 5;
-              
-              return (
-                <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-gray-600 dark:text-gray-400 w-20">
-                    {day}
-                  </span>
-                  <div class="flex-1 mx-4 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={`width: ${progress}%`}
-                    ></div>
-                  </div>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white w-12 text-right">
-                    {completed}/{total}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          </div>
-        </div>
-
       </div>
+
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+      <MyLine client:only />
     </div>
   </SignedIn>
   </DashboardWrapper>
 </LayoutDashboard>
+
+<script type="module">
+  document.addEventListener('DOMContentLoaded', async () => {
+    const response = await fetch('/api/dashboard');
+    const data = await response.json();
+    document.getElementById('newUsersCount').textContent = data.countUser;
+    document.getElementById('ticketsCount').textContent = data.countTicket;
+    document.getElementById('chatActiveCount').textContent = data.countChatActive;
+    document.getElementById('chatCloseCount').textContent = data.countChatClose;
+
+  });
+</script>

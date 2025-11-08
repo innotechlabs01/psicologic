@@ -40,9 +40,9 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             { status: 400 }
         );
     }
-
     // 2. OBTENER ID INTERNO DEL REMITENTE Y ESTADO DEL TICKET
     try {
+        
         // Buscar el ID interno del usuario en tu tabla Usuarios
         const userResult = await db.execute({
             sql: "SELECT id FROM Usuarios WHERE clerk_user_id = ?",
@@ -56,6 +56,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
                 { status: 404 }
             );
         }
+        
         
         // Verificar el estado del ticket: NO SE PUEDE ENVIAR MENSAJES A TICKETS CERRADOS
         const ticketResult = await db.execute({

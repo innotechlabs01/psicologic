@@ -100,9 +100,9 @@ const ChatInterface = ({ ticketId, currentUserId, currentUserRole }) => {
     // --- RENDERIZADO DEL CHAT ---
     return (
         <div className="flex flex-col h-[70vh] bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-            {/* Header del Chat y Botón de Cierre (Ajustado para Dark Mode) */}
+            {/* Header del Chat y Botón de Cierre (sin cambios) */}
             <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700">
-                {/* <h2 className="text-xl font-bold text-indigo-700 dark:text-indigo-400">Conversación #{ticketId.substring(0, 8)}...</h2> */}
+                {/* ... (código sin cambios) ... */}
                 {isAgent && !isTicketClosed && (
                     <button 
                         onClick={handleCloseChat} 
@@ -118,41 +118,57 @@ const ChatInterface = ({ ticketId, currentUserId, currentUserRole }) => {
 
             {/* Área de Mensajes */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg) => (
-                    <div 
-                        key={msg.message_id} 
-                        className={`flex ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-                    >
+                {messages.map((msg) => {
+                    // Determinar si el mensaje fue enviado por el usuario actual (el cliente)
+                    const isSenderClient = msg.sender_id === currentUserId;
+                    
+                    // Si NO es el cliente, asumimos que es el Agente/Soporte
+                    const senderLabel = isSenderClient ? 'Tú (Cliente)' : 'Soporte Técnico';
+                    const labelClass = isSenderClient ? 
+                        'text-blue-100 font-bold' : 
+                        'text-gray-900 dark:text-white font-bold'; // Etiqueta del agente
+
+                    return (
                         <div 
-                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-xl shadow 
-                                ${msg.sender_id === currentUserId 
-                                    // Mensajes del Usuario (azul/índigo)
-                                    ? 'bg-blue-600 text-white rounded-br-none dark:bg-indigo-600' 
-                                    // Mensajes del Agente/Soporte (claro/oscuro)
-                                    : 'bg-gray-200 text-gray-800 rounded-tl-none dark:bg-gray-600 dark:text-gray-100'}`
-                            }
+                            key={msg.message_id} 
+                            className={`flex ${isSenderClient ? 'justify-end' : 'justify-start'}`}
                         >
-                            {/* Mostrar Contenido o Imagen */}
-                            {msg.tipo === 'imagen' && msg.url_adjunto ? (
-                                <a href={msg.url_adjunto} target="_blank" rel="noopener noreferrer">
-                                    <img 
-                                        src={msg.url_adjunto} 
-                                        alt={msg.contenido} 
-                                        className="max-h-48 w-auto rounded object-cover cursor-pointer"
-                                    />
-                                    <p className="mt-1 text-sm italic">{msg.contenido || 'Imagen Adjunta'}</p>
-                                </a>
-                            ) : (
-                                <p>{msg.contenido}</p>
-                            )}
-                            
-                            {/* Timestamp */}
-                            <p className={`text-xs mt-1 ${msg.sender_id === currentUserId ? 'text-blue-200 dark:text-indigo-300' : 'text-gray-500 dark:text-gray-300'} text-right`}>
-                                {new Date(msg.fecha_envio).toLocaleTimeString()}
-                            </p>
+                            <div 
+                                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-xl shadow 
+                                    ${isSenderClient 
+                                        // Mensajes del Cliente (azul/índigo)
+                                        ? 'bg-blue-600 text-white rounded-br-none dark:bg-indigo-600' 
+                                        // Mensajes del Agente/Soporte (claro/oscuro)
+                                        : 'bg-gray-200 text-gray-800 rounded-tl-none dark:bg-gray-600 dark:text-gray-100'}`
+                                }
+                            >
+                                {/* 💡 NUEVA CABECERA DEL REMITENTE */}
+                                <p className={`text-xs mb-1 ${labelClass}`}>
+                                    {senderLabel}
+                                </p>
+                                
+                                {/* Mostrar Contenido o Imagen */}
+                                {msg.tipo === 'imagen' && msg.url_adjunto ? (
+                                    <a href={msg.url_adjunto} target="_blank" rel="noopener noreferrer">
+                                        <img 
+                                            src={msg.url_adjunto} 
+                                            alt={msg.contenido} 
+                                            className="max-h-48 w-auto rounded object-cover cursor-pointer"
+                                        />
+                                        <p className="mt-1 text-sm italic">{msg.contenido || 'Imagen Adjunta'}</p>
+                                    </a>
+                                ) : (
+                                    <p>{msg.contenido}</p>
+                                )}
+                                
+                                {/* Timestamp */}
+                                <p className={`text-xs mt-1 ${isSenderClient ? 'text-blue-200 dark:text-indigo-300' : 'text-gray-500 dark:text-gray-300'} text-right`}>
+                                    {new Date(msg.fecha_envio).toLocaleTimeString()}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
                 <div ref={chatEndRef} />
             </div>
 
