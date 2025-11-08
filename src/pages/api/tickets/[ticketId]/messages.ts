@@ -19,9 +19,13 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
         );
     }
 
+    let userRecord, currentUserId;
+    let userResult, currentUserRole;
+
     try {
+        
         // 2. Obtener ID interno y Rol del usuario
-        const userResult = await db.execute({
+        userResult = await db.execute({
             sql: "SELECT id, role FROM Usuarios WHERE clerk_user_id = ?",
             args: [clerkUserId]
         });
@@ -32,10 +36,10 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
                 { status: 403 }
             );
         }
-        
-        const userRecord = userResult.rows[0];
-        const currentUserId = userRecord.id;
-        const currentUserRole = String(userRecord.role ?? 'usuario_final');
+        userRecord = userResult.rows[0];
+        currentUserId = userRecord.id;
+        currentUserRole = String(userRecord.role ?? 'usuario_final');
+    
         const isAgent = currentUserRole === 'agente_soporte' || currentUserRole === 'org:admin';
 
         // 3. Verificar Autorización (Cliente O Agente)

@@ -7,6 +7,7 @@ import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import { SignedIn } from "@clerk/astro/components";
 import { createClient } from '@libsql/client';
+import ChatInterface from '../../components/Chat/ChatInterfaceAdmin.jsx';
 
 // Configuración de la conexión a Turso
 const db = createClient({
@@ -14,10 +15,21 @@ const db = createClient({
     authToken: import.meta.env.TURSO_AUTH_TOKEN,
 });
 
+// 🇪🇸 Formato dd/mm/yyyy
+const formattedDate = (date: number) => {
+    const newDate = new Date(date);
+    return newDate.toLocaleDateString('en-US', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+    });
+};
+
 // --- LÓGICA SSR: Autenticación, Autorización y Carga de Datos ---
 const { userId: clerkUserId } = Astro.locals.auth();
 
 let currentUserRole = null;
+let currentUserId = null;
 let activeTickets: any[] = [];
 
 if (clerkUserId) {
@@ -31,8 +43,10 @@ if (clerkUserId) {
         if (userResult.rows.length > 0) {
             const userRecord = userResult.rows[0];
             currentUserRole = String(userRecord.role ?? 'usuario_final');
+            currentUserId = userRecord.id;
         }
 
+        
         // 2. Comprobación de Rol: Solo Agentes/Admin pueden acceder
         const isAgentAuthorized = currentUserRole === 'agente_soporte' || currentUserRole === 'org:admin';
 
@@ -47,8 +61,7 @@ if (clerkUserId) {
                 SELECT 
                     T.ticket_id, 
                     T.fecha_creacion, 
-                    U.name AS user_name,
-                    T.last_message_preview -- Asumiendo que esta columna existe
+                    U.username AS user_name
                 FROM Tickets T 
                 JOIN Usuarios U ON T.user_id = U.id 
                 WHERE T.estado = 'Abierto' 
@@ -57,11 +70,13 @@ if (clerkUserId) {
             args: []
         });
 
+        
+
         // Mapear los resultados a un formato usable
         activeTickets = ticketsResult.rows.map(row => ({
             id: row.ticket_id,
             userName: row.user_name,
-            fecha: row.fecha_creacion ? new Date(String(row.fecha_creacion)).toLocaleString() : '',
+            fecha: row.fecha_creacion ? formattedDate(parseInt(row.fecha_creacion?.toString() || '0')) : '',
             preview: row.last_message_preview || "Inició un nuevo chat",
         }));
         
@@ -96,8 +111,10 @@ if (clerkUserId) {
                     ) : (
                         activeTickets.map(ticket => (
                             <a 
-                                href={`/admin/tickets/${ticket.id}`} 
-                                class="flex items-center p-4 border-b dark:border-gray-700 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition duration-150 cursor-pointer"
+                                href="#" 
+                                data-ticket-id={ticket.id}
+                                data-user-name={ticket.userName}
+                                class="ticket-link ticket-item flex items-center p-4 border-b dark:border-gray-700 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition duration-150 cursor-pointer"
                                 aria-label={`Abrir chat con ${ticket.userName}`}
                             >
                                 <div class="flex-shrink-0 w-10 h-10 bg-indigo-500 dark:bg-indigo-400 rounded-full flex items-center justify-center text-white text-lg font-bold mr-3">
@@ -106,7 +123,7 @@ if (clerkUserId) {
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-center">
                                         <p class="font-bold text-gray-900 dark:text-gray-100 truncate">{ticket.userName}</p>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{new Date(ticket.fecha).toLocaleDateString()}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{ticket.fecha}</span>
                                     </div>
                                     <p class="text-sm text-gray-600 dark:text-gray-300 truncate mt-1">
                                         {ticket.preview}
@@ -117,17 +134,82 @@ if (clerkUserId) {
                     )}
                 </div>
 
-                {/* 2. Área de Contenido Principal (Vista Inicial) */}
-                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                    <svg class="w-20 h-20 text-indigo-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                        Selecciona una Conversación
-                    </h2>
-                    <p class="text-gray-600 dark:text-gray-400">
-                        Haz clic en un ticket de la izquierda para comenzar a responder los mensajes.
-                    </p>
+                {/* 2. ÁREA DE CONTENIDO PRINCIPAL (CONTROLADA POR REACT) */}
+                <div class="flex-1 flex flex-col p-0" id="chat-content-area">
+                    
+                    {/* Renderizamos el componente de React aquí. */}
+                    {currentUserRole && (
+                        <ChatInterface
+                            currentUserId={currentUserId}
+                            currentUserRole={currentUserRole}
+                            client:only="react" 
+                         />
+                    )}
                 </div>
             </div>
         </DashboardWrapper>
     </SignedIn>
 </LayoutDashboard>
+
+{/* 3. SCRIPT DE CLIENTE (El "pegamento" que comunica Astro con React) */}
+<script type="module">
+    // Seleccionamos todos los enlaces de tickets
+    const ticketLinks = document.querySelectorAll('.ticket-link');
+    const dashboardWrapper = document.getElementById('dashboard-wrapper');
+    const titleEl = dashboardWrapper?.querySelector('h1'); 
+    const subtitleEl = dashboardWrapper?.querySelector('h1 + p');
+    
+    // Función para activar visualmente el chat y notificar a React
+    const activateChat = (ticketId, userName) => {
+        // Actualiza el título y subtítulo del DashboardWrapper (Astro)
+        if (titleEl) titleEl.textContent = `Chat: ${userName}`;
+        if (subtitleEl) subtitleEl.textContent = `Ticket ID: ${ticketId.substring(0, 8)}...`;
+        
+        // Remueve la selección de todos los tickets y selecciona el actual
+        document.querySelectorAll('.ticket-item').forEach(link => 
+            link.classList.remove('bg-indigo-100', 'dark:bg-indigo-900', 'bg-opacity-50')
+        );
+        const activeLink = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+        if (activeLink) {
+            activeLink.classList.add('bg-indigo-100', 'dark:bg-indigo-900', 'bg-opacity-50');
+        }
+
+        // 🔔 Evento de notificación a React
+        // El componente ChatInterfaceAdmin.jsx está escuchando este evento
+        document.dispatchEvent(new CustomEvent('ticketSelected', {
+            detail: { 
+                ticketId,
+                userName,
+            }
+        }));
+    };
+
+    // Manejador de click en los enlaces de tickets
+    ticketLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const ticketId = link.dataset.ticketId;
+            const userName = link.dataset.userName;
+            
+            if (ticketId && userName) {
+                // Actualiza la URL sin recargar la página
+                history.pushState(null, '', `?ticketId=${ticketId}`);
+                activateChat(ticketId, userName);
+            }
+        });
+    });
+
+    // Cargar ticket inicial si existe en la URL (al cargar la página)
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTicketId = urlParams.get('ticketId');
+    if (initialTicketId) {
+        const link = document.querySelector(`[data-ticket-id="${initialTicketId}"]`);
+        if (link) {
+            const userName = link.dataset.userName;
+            // Damos un pequeño tiempo para que React se inicialice (solo por seguridad)
+            setTimeout(() => {
+                activateChat(initialTicketId, userName);
+            }, 100);
+        }
+    }
+</script>

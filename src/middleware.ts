@@ -4,7 +4,7 @@ import { createUserFromClerk, triggerUserAccessEvent } from "./pages/api/webhook
 import type { APIContext } from "astro";
 
 import { createClient } from "@libsql/client";
-import { handleUserWithoutRole } from "./utils/utils";
+import { handleUserWithoutRole, handleInsertUsersAdmin } from "./utils/utils";
 import { checkUserPaymentAccess } from "./utils/chechUserPaymentAccess";
 
 // ⚡️ Initialize Turso
@@ -83,7 +83,8 @@ export const onRequest = clerkMiddleware((auth, context) => {
 
   if ((!userId && currentPath === '/') || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
     currentPath === '/dashboard' || currentPath === '/client' || currentPath === '/error' ||
-    currentPath === '/client/chat' || currentPath.startsWith('/client/chat/')) {
+    currentPath === '/client/chat' || currentPath.startsWith('/client/chat/') || currentPath === '/client/tickets' ||
+    currentPath.startsWith('/admin/tickets/')) {
     return; // Permitir acceso sin procesar
   }
 
@@ -129,6 +130,10 @@ export const onRequest = clerkMiddleware((auth, context) => {
         { reason: 'payment_required', daysRemaining }
       );
       return redirectToRoute('/', `Acceso restringido - por favor complete su pago (${daysRemaining} días restantes)`);
+    }
+
+    if (orgRole === "org:admin") {
+      await handleInsertUsersAdmin(context, userId ?? "");
     }
 
     if (!orgRole) {
