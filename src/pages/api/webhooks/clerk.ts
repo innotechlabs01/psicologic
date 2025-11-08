@@ -118,6 +118,111 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data']): Pro
   }
 }
 
+export async function createUserFromAdminClerk(userData: ClerkUserEvent['data']): Promise<any> {
+  const primaryEmail = userData.email_addresses.find(email => 
+    email.verification.status === 'verified'
+  )?.email_address || userData.email_addresses[0]?.email_address;
+
+  try {
+    // Primero verificar si el usuario ya existe
+    const result = await client.execute(
+      `select id, status, role from usuarios where clerk_user_id=? limit 1`, [userData.id]
+    )
+
+    if (result.rows[0] || result.rows.length > 0) {
+      // Usuario existe, actualizar información
+      const result = await client.execute(
+        `update usuarios set 
+          email=?,
+          first_name=?,
+          last_name=?,
+          username=?,
+          avatar_url=?,
+          updated_at=?
+          where clerk_user_id=?`,
+        [
+          primaryEmail,
+          userData.first_name,
+          userData.last_name,
+          userData.username,
+          userData.image_url,
+          new Date(userData.updated_at || Date.now()).toISOString(),
+          userData.id
+        ]
+      )
+      if (!result || result.rows.length === 0) {
+        throw result;
+      }
+
+      return result.rows[0];
+    } else {
+      
+      // Usuario no existe, crear nuevo
+      await client.execute(  
+        `
+          insert into usuarios (
+            clerk_user_id,
+            email,
+            first_name,
+            last_name,
+            username,
+            avatar_url,
+            status,
+            role,
+            login_count,
+            created_at,
+            updated_at,
+            metadata
+          ) values (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          )
+        `,
+        [
+          userData.id,
+          primaryEmail,
+          userData.first_name,
+          userData.last_name,
+          userData.username,
+          userData.image_url,
+          'active', // Estado inicial
+          'org:admin', // Rol por defecto
+          0, // login_count
+          new Date(userData.created_at || Date.now()).toISOString(),
+          new Date(userData.updated_at || Date.now()).toISOString(),
+          JSON.stringify({
+            event: 'user_created_from_middleware',
+            source: 'middleware_role_assignment',
+            role: 'org:admin'
+          })
+        ]
+      )
+      
+      // 📊 Registrar evento de creación
+      await triggerUserAccessEvent({
+        userId: userData.id,
+        email: primaryEmail,
+        action: 'login',
+        route: '/register',
+        role: 'org:admin',
+        metadata: { 
+          event: 'user_created_from_middleware', 
+          source: 'middleware_role_assignment',
+          userAgent: 'middleware'
+        }
+      });
+
+      const result = await client.execute(
+        `select * from usuarios where clerk_user_id=? limit 1`, [userData.id]
+      )
+
+      return result.rows[0];
+    }
+  } catch (error) {
+    console.error('Error en createUserFromClerk:', error);
+    throw error;
+  }
+}
+
 // 🔗 FUNCIÓN PARA LLAMAR DESDE EL MIDDLEWARE
 export async function triggerUserAccessEvent(payload: {
   userId: string;

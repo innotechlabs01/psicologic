@@ -1,3 +1,8 @@
+## 1.0.5 - [2025-11-08]
+- Fixed and add information in dashboard
+- Fixed chat client and admin
+- add badge in chat admin
+
 ## 1.0.4 - [2025-11-03]
 - Active module payment by user
 - Create API for tickets
