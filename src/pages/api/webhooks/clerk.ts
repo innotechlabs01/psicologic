@@ -150,7 +150,7 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
           userData.id
         ]
       )
-      if (!result || result.rows.length === 0) {
+      if (!result) {
         throw result;
       }
 

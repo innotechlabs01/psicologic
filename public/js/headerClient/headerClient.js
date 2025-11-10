@@ -25,7 +25,6 @@ const SidebarManager = {
   },
 
   showToast(message, type) {
-    console.log(`[Toast ${type}]: ${message}`);
     // Implementa tu sistema de notificaciones aquí
   },
 

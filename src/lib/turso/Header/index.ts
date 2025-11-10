@@ -13,7 +13,7 @@ export async function GetUserGameHeader({ userId }: { userId: string }) {
     // Fetch user by clerk_user_id
     const result = await client.execute(
       `
-        select id from usuarios where clerk_user_id = ?
+        select id, username from usuarios where clerk_user_id = ?
       `,
       [userId]
     );
@@ -78,12 +78,74 @@ export async function GetUserGameHeader({ userId }: { userId: string }) {
     
     // Transform data to match expected format
     const transformedData = {
+      username: currentUser?.username,
       userId: data?.rows[0].userId,
       menu: menu,
       status: data?.rows[0].status
     };
 
     return transformedData; // Return a single object
+  } catch (error) {
+    console.error('Error en GetUserGameHeader:', error);
+    throw error;
+  }
+}
+
+export async function GetUserGameClientHeader() {
+  try {
+    // Fetch user by clerk_user_id
+    const result = await client.execute(
+      `
+        select id, username from usuarios where role = ?
+      `,
+      ['org:client']
+    );
+
+    if (!result || result.rows.length === 0) {
+      console.error('Error buscando usuario:', result);
+      throw new Error('Error al consultar el usuario');
+    }
+
+    let currentUser = result.rows;
+
+    if (!currentUser) {
+      throw new Error('User not found');
+    }
+
+    let newArrayGames = []
+
+    for( let item of currentUser){
+      const resultUser = await client.execute(
+        `
+          select id, userId, menu, status from user_games where userId = ? and status = true
+        `,
+        [item?.id]
+      );
+
+      if (!resultUser) {
+        console.error('Error checking existing user:', resultUser);
+        throw new Error('Error al consultar el usuario existente');
+      }
+
+      const menu = resultUser.rows[0].menu ? JSON.parse(resultUser.rows[0].menu as unknown as string) : null;
+
+        if (!menu) {
+        throw new Error('Menu data is invalid');
+        }
+        
+        // Transform data to match expected format
+        const transformedData = {
+          username: item?.username,
+          userId: resultUser?.rows[0].userId,
+          menu: menu,
+          status: resultUser?.rows[0].status
+        };
+
+        newArrayGames.push(transformedData)
+    }
+
+    return newArrayGames;
+
   } catch (error) {
     console.error('Error en GetUserGameHeader:', error);
     throw error;

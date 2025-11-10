@@ -2,6 +2,7 @@
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
 import { SignedIn } from "@clerk/astro/components";
+
 ---
 
 <LayoutDashboard title="🔒 Dashboard - ⚙️ Configuraciones">
@@ -17,16 +18,16 @@ import { SignedIn } from "@clerk/astro/components";
           <!-- Menú de navegación lateral -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-fit">
             <nav class="space-y-2">
-              <a href="#perfil" data-section="perfil" class="block px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium active-section">
+              <!-- <a href="#perfil" data-section="perfil" class="block px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium active-section">
                 👤 Perfil
-              </a>
+              </a> -->
               <a href="#juegos" data-section="juegos" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 🎮 Juegos
               </a>
               <a href="#seguridad" data-section="seguridad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-                🔒 Seguridad
+                🔒/🔓 Asociar juego al ususario
               </a>
-              <a href="#preferencias" data-section="preferencias" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <!-- <a href="#preferencias" data-section="preferencias" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 🔧 Preferencias
               </a>
               <a href="#notificaciones" data-section="notificaciones" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -34,7 +35,7 @@ import { SignedIn } from "@clerk/astro/components";
               </a>
               <a href="#privacidad" data-section="privacidad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
                 🛡️ Privacidad
-              </a>
+              </a> -->
             </nav>
           </div>
           
@@ -103,11 +104,9 @@ import { SignedIn } from "@clerk/astro/components";
             <!-- Seguridad -->
             <div id="seguridad" data-section="seguridad" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Seguridad
+                🔓/🔒 Activar-Desactivar Modulos x Usuarios
               </h2>
-              <p class="text-gray-600 dark:text-gray-400">
-                Configura opciones de seguridad como contraseñas y autenticación de dos factores.
-              </p>
+              <div id="treeContainer" class="tree-root mt-4"></div>
             </div>
             
             <!-- Notificaciones -->
@@ -220,8 +219,8 @@ import { SignedIn } from "@clerk/astro/components";
         </div>
       </div>
       
-    <script type="module" src="/js/settings"></script>
-    <script type="module" src="/src/utils/toast.js"></script>
     </DashboardWrapper>
   </SignedIn>
+    <script type="module" src="/js/settings.js"></script>
+    <script type="module" src="/src/utils/toast.js"></script>
 </LayoutDashboard>

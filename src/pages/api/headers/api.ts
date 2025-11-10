@@ -21,7 +21,7 @@ export const GET: APIRoute = async () => {
         `);
 
         // El resultado es un array de filas; tomamos la primera y el campo unread_tickets.
-        const unreadCount = unreadCountResult.rows[0].unread_tickets as number;
+        const unreadCount = unreadCountResult.rows.length === 0 ? 0 : unreadCountResult.rows[0].unread_tickets as number;
 
         return new Response(JSON.stringify({ 
             unreadCount: unreadCount 
