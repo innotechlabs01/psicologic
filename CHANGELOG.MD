@@ -1,3 +1,7 @@
+
+## 1.1.0 - [2025-11-09]
+- Fixed module settings
+
 ## 1.0.5 - [2025-11-08]
 - Fixed and add information in dashboard
 - Fixed chat client and admin

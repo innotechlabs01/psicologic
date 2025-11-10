@@ -123,14 +123,8 @@ const unreadCount = data.unreadCount;
     const closeButton = document.getElementById('sidebar-close');
     const sidebarLinks = document.querySelectorAll('.sidebar-link');
 
-    console.log('🔍 Elementos encontrados:');
-    console.log('Toggle button:', toggleButton);
-    console.log('Sidebar:', sidebar);
-    console.log('Overlay:', overlay);
-
     // Función para mostrar sidebar
     function showSidebar() {
-      console.log('📱 Mostrando sidebar');
       if (sidebar) {
         sidebar.classList.remove('-translate-x-full');
         sidebar.classList.add('translate-x-0');
@@ -147,7 +141,6 @@ const unreadCount = data.unreadCount;
 
     // Función para ocultar sidebar
     function hideSidebar() {
-      console.log('📱 Ocultando sidebar');
       if (sidebar) {
         sidebar.classList.add('-translate-x-full');
         sidebar.classList.remove('translate-x-0');
@@ -166,10 +159,8 @@ const unreadCount = data.unreadCount;
     if (toggleButton) {
       toggleButton.addEventListener('click', (e) => {
         e.preventDefault();
-        console.log('🔘 Toggle button clicked');
         
         const isHidden = sidebar?.classList.contains('-translate-x-full');
-        console.log('Sidebar está oculto:', isHidden);
         
         if (isHidden) {
           showSidebar();
@@ -182,7 +173,6 @@ const unreadCount = data.unreadCount;
     // Cerrar sidebar al hacer click en overlay
     if (overlay) {
       overlay.addEventListener('click', () => {
-        console.log('🔘 Overlay clicked');
         hideSidebar();
       });
     }
@@ -190,7 +180,6 @@ const unreadCount = data.unreadCount;
     // Cerrar sidebar con botón X
     if (closeButton) {
       closeButton.addEventListener('click', () => {
-        console.log('🔘 Close button clicked');
         hideSidebar();
       });
     }
@@ -200,7 +189,6 @@ const unreadCount = data.unreadCount;
       link.addEventListener('click', () => {
         // Solo cerrar en móvil
         if (window.innerWidth < 640) {
-          console.log('🔗 Link clicked on mobile - closing sidebar');
           hideSidebar();
         }
       });
@@ -216,14 +204,9 @@ const unreadCount = data.unreadCount;
     // Cerrar sidebar con tecla ESC
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !sidebar?.classList.contains('-translate-x-full')) {
-        console.log('⌨️ ESC key pressed');
         hideSidebar();
       }
     });
-
-    // Debug: Mostrar estado actual
-    console.log('📊 Estado inicial del sidebar:');
-    console.log('Classes:', sidebar?.className);
   });
 </script>
 
