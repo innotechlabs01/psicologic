@@ -18,8 +18,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-
-    console.log(`🔍 API: Consultando rol para usuario ${userId}`);
     
     // Obtener información del usuario de Clerk con timeout
     const clerkUser = await Promise.race([
@@ -30,7 +28,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
     ]) as any;
     
     if (!clerkUser) {
-      console.log(`❌ API: Usuario ${userId} no encontrado en Clerk`);
       return new Response(JSON.stringify({ 
         error: 'user_not_found',
         role: null,
@@ -44,12 +41,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Extraer rol del publicMetadata
     const userRole = clerkUser.publicMetadata?.role;
     
-    console.log(`✅ API: Usuario ${userId} tiene rol: ${userRole || 'sin rol'}`);
-    console.log(`📝 API: publicMetadata completo:`, clerkUser.publicMetadata);
-    
     // Si no tiene rol, asignar rol por defecto
     if (!userRole) {
-      console.log(`🏷️ API: Asignando rol por defecto 'org:client' a ${userId}`);
       
       try {
         await clerkClient(context).users.updateUser(userId, {
@@ -60,8 +53,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
             roleAssignedBy: 'system-api'
           }
         });
-        
-        console.log(`✅ API: Rol 'org:client' asignado exitosamente a ${userId}`);
         
         return new Response(JSON.stringify({
           success: true,
@@ -74,7 +65,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
         });
         
       } catch (assignError: any) {
-        console.error(`❌ API: Error asignando rol a ${userId}:`, assignError?.message);
         
         // Retornar rol por defecto aunque falle la asignación
         return new Response(JSON.stringify({

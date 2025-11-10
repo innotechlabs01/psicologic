@@ -13,7 +13,6 @@ export async function setupClerkDefaultRoles() {
   // 2. Configurar el rol predeterminado como 'org:client' (cliente)
   // 3. Asegurarse de que los nuevos usuarios sean asignados automáticamente a una organización
   
-  console.log('Clerk configurado para asignar rol de cliente a nuevos usuarios');
 }
 
 /**
@@ -24,12 +23,10 @@ export async function setupClerkDefaultRoles() {
 export function isClientUser(auth: any) {
   // Verificar si el usuario tiene el rol de cliente (org:client)
   // El objeto auth contiene la información de la sesión actual
-  console.log('isClientUser - auth:', JSON.stringify(auth));
   
   // Verificar si orgRole existe, si no, asignar un rol predeterminado para desarrollo
   // En producción, esto debería configurarse correctamente en Clerk
   if (!auth.orgRole) {
-    console.log('No se encontró orgRole, asignando rol predeterminado para desarrollo');
     // Para desarrollo, consideramos que todos los usuarios autenticados son clientes
     return auth.userId ? true : false;
   }
@@ -44,11 +41,9 @@ export function isClientUser(auth: any) {
  */
 export function isAdminUser(auth: any) {
   // Verificar si el usuario tiene el rol de administrador (org:admin)
-  console.log('isAdminUser - auth:', JSON.stringify(auth));
   
   // Verificar si orgRole existe, si no, asignar un rol predeterminado para desarrollo
   if (!auth.orgRole) {
-    console.log('No se encontró orgRole, verificando si es admin por userId');
     // Para desarrollo, puedes definir IDs específicos como administradores
     // O devolver false si no hay configuración de roles
     return false;
