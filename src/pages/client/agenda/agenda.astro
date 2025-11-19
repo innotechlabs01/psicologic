@@ -1,0 +1,19 @@
+<!-- ---
+import LayoutClient from '../../../layouts/LayoutClient.astro';
+import AgendaPacient from '../../../components/Agenda/index.jsx';
+import { SignedIn } from '@clerk/astro/components';
+import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
+---
+
+<LayoutClient>
+  <SignedIn>
+    <DashboardWrapper 
+        title=" 🔎 Agenda tus citas" 
+        subtitle="Consulta tu historial de clínica"
+        >
+      <div class="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
+        <AgendaPacient client:load />
+      </div>
+    </DashboardWrapper>
+  </SignedIn>
+</LayoutClient> -->
