@@ -43,5 +43,5 @@ astro.lock
 # Vercel
 .vercel/
 
-# PDF
-public/pdfs/
+# Public directory (includes pdfs)
+public/
