@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from "react";
-import { Document, Page, pdfjs } from "../../../lib/react-pdf-shim.js";
+import { pdfjs } from "../../../lib/react-pdf-shim.js";
+import { Document as Doc, Page as PageDoc } from "@htmldocs/react";
 
 pdfjs.GlobalWorkerOptions.workerSrc =
   `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
@@ -19,30 +20,21 @@ export default function PdfViewer({ url }: { url: string }) {
         </div>
       )}
 
-      <Document
-        file={url}
-        loading={<></>}
-        onLoadSuccess={({ numPages }: { numPages: number }) => {
-          setNumPages(numPages);
-          setIsLoading(false);
-        }}
-        onLoadError={(err: Error) => {
-          console.error("Error cargando PDF:", err);
-          setIsLoading(false);
-        }}
+      <Doc
+        size="A4"
+        orientation="portrait"
       >
         {!isLoading &&
           Array.from({ length: numPages }, (_, i) => (
-            <Page
+            <PageDoc
               key={i}
-              pageNumber={i + 1}
-              renderAnnotationLayer={false}
-              renderTextLayer={false}
-              width={900}
               className="shadow-lg mb-6 mx-auto bg-white"
-            />
+            >
+              <h1>My Document Title</h1>
+              <p>This is the content of my first page.</p>
+            </PageDoc>
           ))}
-      </Document>
+      </Doc>
     </div>
   );
 }

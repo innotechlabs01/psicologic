@@ -1,11 +1,12 @@
 // @ts-ignore
+import type { APIRoute } from "astro";
 import PDFDocument from "pdfkit";
 
 export const dynamic = "force-node";
 
-export async function GET(req: Request) {
+export const GET: APIRoute = async ({ request }) => {
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     const download = searchParams.get("download");
 
@@ -27,12 +28,16 @@ export async function GET(req: Request) {
       }
     );
 
+    // 💡 MEJORA: Manejar respuesta fallida antes de intentar parsear a JSON
     if (!patientRes.ok) {
+      console.error("PDF GENERATION ERROR:", patientRes); // <-- ¡Agrega esto!
       return Response.json(
-        { error: "Paciente no encontrado" },
-        { status: 404 }
+        { error: `Error al buscar paciente. Código: ${patientRes.status}` },
+        { status: patientRes.status }
       );
     }
+
+    console.log('Salio del res y tiene la informacion para jacer el json')
 
     const patientData = await patientRes.json();
 
@@ -84,6 +89,7 @@ export async function GET(req: Request) {
     });
 
   } catch (error: any) {
+    console.error("PDF GENERATION ERROR:", error); // <-- ¡Agrega esto!
     return Response.json(
       { error: error.message || "Error generando PDF" },
       { status: 500 }

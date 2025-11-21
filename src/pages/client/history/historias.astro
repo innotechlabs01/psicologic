@@ -11,6 +11,6 @@ const { userId: clerkUserId } = Astro.locals.auth();
     title="Historial de Clinicas"
     subtitle="Consulta y Crea las historial de Clinicas"
   >
-  <PatientModule client:load clerkUserId={clerkUserId} />
+    <PatientModule client:load clerkUserId={clerkUserId} />
   </DashboardWrapper>
 </LayoutClient>
