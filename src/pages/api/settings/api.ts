@@ -20,7 +20,7 @@ export const GET: APIRoute = async (context) => {
             });
         }
 
-        const userGameHeader = await GetUserGameClientHeader({ userId });
+        const userGameHeader = await GetUserGameClientHeader();
 
         if (!userGameHeader) {
             return new Response(JSON.stringify({ 

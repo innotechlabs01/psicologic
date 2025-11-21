@@ -1,3 +1,5 @@
+const matchUnique = Math.random().toString(36).substring(2, 10);
+
 const SELECTORS = {
   sidebar: '#separator-sidebar',
   overlay: '#sidebar-overlay',
@@ -105,6 +107,9 @@ const SidebarManager = {
     if (!url.includes('/client/games')) {
       this.closeGamesSubmenu();
     }
+    if (url.includes('/client/settings')) {
+      this.closeGamesSubmenu();
+    }
     try {
       const response = await fetch(url, {
         headers: { 'Accept': 'text/html' },
@@ -207,8 +212,11 @@ const SidebarManager = {
         if (isDynamic && Array.isArray(item.subItem) && item.subItem.length > 0) {
           return this.renderDynamicSubMenu(label, item.subItem, item.id || label);
         }
+        
+        const namePath = label === 'Historia Clinica' ? `/client/history/historias` : `/client/${label}`;
+
         return `
-          <a href="/client/${label}" data-navigate class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
+          <a href="${namePath}" data-navigate class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
             <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
               <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
               <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
@@ -228,8 +236,10 @@ const SidebarManager = {
     // Convertir parentId a string y manejar valores no válidos
     const safeParentId = typeof parentId === 'string' ? parentId : String(parentId || label || 'submenu');
     const subMenuId = `dropdown-${safeParentId.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    const matchUnique = Math.random().toString(36).substring(2, 10);
+
     return `
-      <button type="button" class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" data-collapse-toggle="${subMenuId}">
+      <button type="button" class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700" data-collapse-toggle="${matchUnique}">
         <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 21">
           <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z"/>
         </svg>
@@ -238,14 +248,16 @@ const SidebarManager = {
           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
         </svg>
       </button>
-      <ul id="${subMenuId}" class="hidden py-2 space-y-2">
+      <ul id="${matchUnique}" class="hidden py-2 space-y-2">
         ${subItems
           .filter(nestedItem => nestedItem.status !== false)
           .map(nestedItem => {
             const nestedLabel = typeof nestedItem.name === 'string' ? nestedItem.name : nestedItem.toString();
+            const pathEndPoint = label.toLowerCase() === 'juego' ? `/client/games/${nestedLabel}` : `/client/settings/${nestedLabel}`;
+
             return `
               <li>
-                <a href="/client/games/${nestedLabel}" data-navigate class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 sidebar-link">
+                <a href=${pathEndPoint} data-navigate class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 sidebar-link">
                   <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 21">
                     <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z"/>
                   </svg>

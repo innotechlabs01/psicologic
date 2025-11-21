@@ -32,3 +32,16 @@ astro.lock
 .idea/
 
 *.txt
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Vercel
+.vercel/
+
+# PDF
+public/pdfs/

@@ -1,0 +1,15 @@
+---
+import LayoutClient from '../../../layouts/LayoutClient.astro';
+import BuilderWithEditorAndReorder from '../../../components/Client/settings/BuilderWithEditorAndReorder.jsx';
+import DashboardWrapper from '@components/Dashboard/DashboardWrapper.astro';
+
+---
+
+<LayoutClient>
+    <DashboardWrapper
+        title="Template"
+        subtitle="Personaliza tu template de la historia clinica"
+    >
+        <BuilderWithEditorAndReorder client:only="react" />
+    </DashboardWrapper>
+</LayoutClient>

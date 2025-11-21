@@ -1,0 +1,27 @@
+---
+import LayoutClient from "../../layouts/LayoutClient.astro";
+
+import { SignedIn } from "@clerk/astro/components";
+import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
+import { CalendarHeader } from "../../components/Agenda/Calendar/calendar-header";
+import { CalendarControls } from "../../components/Agenda/Calendar/calendar-controls";
+import { CalendarView } from "../../components/Agenda/Calendar/calendar-view";
+---
+
+<LayoutClient>
+  <SignedIn>
+    <div class="h-svh overflow-hidden lg:p-2 w-full">
+      <div
+        class="lg:border lg:rounded-md overflow-hidden flex flex-col items-center justify-start bg-container h-full w-full bg-background"
+      >
+        <div class="w-full">
+          <CalendarHeader client:load />
+          <CalendarControls client:load />
+        </div>
+        <div class="flex-1 overflow-hidden w-full">
+          <CalendarView client:load />
+        </div>
+      </div>
+    </div>
+  </SignedIn>
+</LayoutClient>
