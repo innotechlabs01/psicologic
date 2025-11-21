@@ -1,0 +1,65 @@
+.pdf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+.pdf-modal {
+  background: #fff;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #1f2937;
+  color: white;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.pdf-viewer-container {
+  padding: 20px;
+  overflow-y: auto;
+  text-align: center;
+  flex: 1;
+}
+
+.pdf-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 0 20px;
+  background: #f9fafb;
+}
+
+.pdf-pagination button {
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pdf-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

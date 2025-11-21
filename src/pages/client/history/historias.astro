@@ -1,0 +1,16 @@
+---
+import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
+import LayoutClient from '../../../layouts/LayoutClient.astro';
+import PatientModule from '../../../components/Client/patients/PatientModule.jsx';
+// @ts-ignore
+const { userId: clerkUserId } = Astro.locals.auth();
+---
+
+<LayoutClient>
+  <DashboardWrapper
+    title="Historial de Clinicas"
+    subtitle="Consulta y Crea las historial de Clinicas"
+  >
+    <PatientModule client:load clerkUserId={clerkUserId} />
+  </DashboardWrapper>
+</LayoutClient>

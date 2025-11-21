@@ -252,8 +252,6 @@ const unreadCount = data.unreadCount;
       const data = await response.json();
       const newCount = data.unreadCount;
 
-      console.log('🔄 Actualizando Badge. Nuevo conteo:', newCount);
-
       if (unreadBadge) {
         if (newCount > 0) {
           // Actualiza el texto si el badge ya existe

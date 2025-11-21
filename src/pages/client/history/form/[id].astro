@@ -1,0 +1,26 @@
+---
+import FormRenderer from '../../../../components/Client/history/FormRenderer.jsx';
+import { createClient } from '@libsql/client';
+
+const db = createClient({
+    url: import.meta.env.TURSO_DATABASE_URL,
+    authToken: import.meta.env.TURSO_AUTH_TOKEN,
+});
+
+const template = await db.execute({
+  sql: "SELECT template FROM template_history WHERE status = true;",
+});
+
+if (!template.rows.length) {
+  throw new Error("Template no encontrado");
+}
+
+const structure = JSON.parse(template.rows[0].template?.toString() || '{}');
+const templateId = template.rows[0].id;
+---
+
+<html>
+  <body>
+    <FormRenderer structure={structure} templateId={templateId} client:only="react" />
+  </body>
+</html>
