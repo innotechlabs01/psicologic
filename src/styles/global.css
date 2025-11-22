@@ -1,7 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 
 
 :root {
@@ -485,6 +482,45 @@ body {
   margin-left: 1rem;
   border-left: 1px dashed #d1d5db;
   padding-left: 0.5rem;
+}
+
+.tree-root li {
+  list-style: none;
+  margin: 4px 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.tree-toggle {
+  display: inline-block;
+  width: 1rem;
+  text-align: center;
+  margin-right: 0.25rem;
+  color: #9ca3af;
+  /* gris */
+  transition: transform 0.2s ease;
+}
+
+.tree-open>.tree-toggle {
+  transform: rotate(90deg);
+}
+
+.tree-root label {
+  cursor: pointer;
+  color: #374151;
+  /* gris oscuro */
+  transition: color 0.2s ease;
+}
+
+.tree-root label:hover {
+  color: #2563eb;
+  /* azul */
+}
+
+.tree-root input[type="checkbox"] {
+  accent-color: #2563eb;
+  /* azul Tailwind */
+  margin-right: 0.25rem;
 }
 
 .tree-root li {
