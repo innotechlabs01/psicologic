@@ -10,6 +10,10 @@ const SELECTORS = {
   sidebarLink: '.sidebar-link[data-navigate]'
 };
 
+const convertNameMenu = (name) => {
+  return name.toLowerCase() === "config_agend" ? "Config. Horario" : name;
+}
+
 const SidebarManager = {
   menuInitialized: false,
 
@@ -34,7 +38,7 @@ const SidebarManager = {
     const sidebar = this.getElement(SELECTORS.sidebar, 'Elementos del sidebar no encontrados');
     const overlay = this.getElement(SELECTORS.overlay, 'Elementos del sidebar no encontrados');
     const toggleButton = this.getElement(SELECTORS.toggleButton, 'Elementos del sidebar no encontrados');
-    
+
     if (sidebar && overlay && toggleButton) {
       sidebar.classList.replace('-translate-x-full', 'translate-x-0');
       overlay.classList.remove('hidden');
@@ -47,7 +51,7 @@ const SidebarManager = {
     const sidebar = this.getElement(SELECTORS.sidebar, 'Elementos del sidebar no encontrados');
     const overlay = this.getElement(SELECTORS.overlay, 'Elementos del sidebar no encontrados');
     const toggleButton = this.getElement(SELECTORS.toggleButton, 'Elementos del sidebar no encontrados');
-    
+
     if (sidebar && overlay && toggleButton) {
       sidebar.classList.replace('translate-x-0', '-translate-x-full');
       overlay.classList.add('hidden');
@@ -82,7 +86,7 @@ const SidebarManager = {
             this.logError('Error ejecutando script inline:', error);
           }
         } else {
-          
+
         }
       }
     }
@@ -164,7 +168,7 @@ const SidebarManager = {
       return;
     }
     const dynamicMenuHtml = this.getElement(SELECTORS.dynamicMenu, 'sidebar-menu-client-dynamic element not found');
-    
+
     if (!dynamicMenuHtml) return;
 
     try {
@@ -212,7 +216,7 @@ const SidebarManager = {
         if (isDynamic && Array.isArray(item.subItem) && item.subItem.length > 0) {
           return this.renderDynamicSubMenu(label, item.subItem, item.id || label);
         }
-        
+
         const namePath = label === 'Historia Clinica' ? `/client/history/historias` : `/client/${label}`;
 
         return `
@@ -250,12 +254,12 @@ const SidebarManager = {
       </button>
       <ul id="${matchUnique}" class="hidden py-2 space-y-2">
         ${subItems
-          .filter(nestedItem => nestedItem.status !== false)
-          .map(nestedItem => {
-            const nestedLabel = typeof nestedItem.name === 'string' ? nestedItem.name : nestedItem.toString();
-            const pathEndPoint = label.toLowerCase() === 'juego' ? `/client/games/${nestedLabel}` : `/client/settings/${nestedLabel}`;
-
-            return `
+        .filter(nestedItem => nestedItem.status !== false)
+        .map(nestedItem => {
+          let nestedLabel = typeof nestedItem.name === 'string' ? nestedItem.name : nestedItem.toString();
+          const pathEndPoint = label.toLowerCase() === 'juego' ? `/client/games/${nestedLabel}` : `/client/settings/${nestedLabel}`;
+          nestedLabel = convertNameMenu(nestedLabel);
+          return `
               <li>
                 <a href=${pathEndPoint} data-navigate class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 sidebar-link">
                   <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 21">
@@ -265,8 +269,8 @@ const SidebarManager = {
                 </a>
               </li>
             `;
-          })
-          .join('')}
+        })
+        .join('')}
       </ul>
     `;
   },

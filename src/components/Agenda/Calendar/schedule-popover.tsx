@@ -14,6 +14,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { cn } from "../../../lib/utils";
 import { Separator } from "../ui/separator";
+import { getHoliday } from "./calendar-utils";
 
 interface SchedulePopoverProps {
     children: React.ReactNode;
@@ -30,6 +31,13 @@ export function SchedulePopover({ children }: SchedulePopoverProps) {
         if (!date || !startTime || !endTime) {
             return;
         }
+
+        const holiday = getHoliday(date);
+        if (holiday) {
+            alert(`Cannot schedule events on holidays: ${holiday}`);
+            return;
+        }
+
         setOpen(false);
         setDate(new Date());
         setStartTime("");
@@ -107,8 +115,6 @@ export function SchedulePopover({ children }: SchedulePopoverProps) {
                                 </div>
                             </div>
                         </div>
-
-                        <Separator />
 
                         <div className="flex flex-col gap-2">
                             <Button

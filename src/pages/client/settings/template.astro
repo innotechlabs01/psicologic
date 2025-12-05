@@ -1,8 +1,7 @@
 ---
-import LayoutClient from '../../../layouts/LayoutClient.astro';
-import BuilderWithEditorAndReorder from '../../../components/Client/settings/BuilderWithEditorAndReorder.jsx';
-import DashboardWrapper from '@components/Dashboard/DashboardWrapper.astro';
-
+import LayoutClient from "../../../layouts/LayoutClient.astro";
+import BuilderWithEditorAndReorder from "../../../components/Client/settings/BuilderWithEditorAndReorder.jsx";
+import DashboardWrapper from "@components/Dashboard/DashboardWrapper.astro";
 ---
 
 <LayoutClient>
@@ -10,6 +9,6 @@ import DashboardWrapper from '@components/Dashboard/DashboardWrapper.astro';
         title="Template"
         subtitle="Personaliza tu template de la historia clinica"
     >
-        <BuilderWithEditorAndReorder client:only="react" />
+        <BuilderWithEditorAndReorder client:load />
     </DashboardWrapper>
 </LayoutClient>

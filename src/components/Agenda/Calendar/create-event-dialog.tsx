@@ -23,6 +23,7 @@ import {
 import { useCalendarStore } from "../store/calendar-store";
 import { cn } from "../../../lib/utils";
 import type { Event } from "../mock-data/events";
+import { getHoliday } from "./calendar-utils";
 
 interface CreateEventDialogProps {
     open: boolean;
@@ -47,6 +48,12 @@ export function CreateEventDialog({
         e.preventDefault();
 
         if (!title || !date || !startTime || !endTime) {
+            return;
+        }
+
+        const holiday = getHoliday(date);
+        if (holiday) {
+            alert(`Cannot schedule events on holidays: ${holiday}`);
             return;
         }
 

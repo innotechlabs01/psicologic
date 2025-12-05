@@ -1,0 +1,35 @@
+---
+import DashboardWrapper from "@components/Dashboard/DashboardWrapper.astro";
+import LayoutClient from "@layouts/LayoutClient.astro";
+import TimeRangeField from "./TimeRangeField.astro";
+
+const days = [
+    "Lunes",
+    "Martes",
+    "Miercoles",
+    "Jueves",
+    "Viernes",
+    "Sabado",
+    "Domingo",
+];
+---
+
+<LayoutClient>
+    <DashboardWrapper
+        title="Configuración de Horario"
+        subtitle="Configura tu horario de atención"
+    >
+        <div
+            class="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6 p-4"
+        >
+            {days.map((day) => <TimeRangeField day={day} />)}
+        </div>
+        <button
+            id="save-agenda"
+            class="mt-6 mx-auto block px-4 py-2 bg-blue-600 text-white rounded shadow"
+        >
+            Guardar agenda
+        </button>
+        <script src="/js/agenda/index.js" type="module"></script>
+    </DashboardWrapper>
+</LayoutClient>
