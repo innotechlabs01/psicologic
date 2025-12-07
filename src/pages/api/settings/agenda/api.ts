@@ -12,24 +12,27 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     try {
         // 1. OBTENCIÓN DE DATOS Y AUTENTICACIÓN
         const { userId: clerkUserId } = locals.auth();
-        const { horarios } = await request.json();
+        const body = await request.json();
 
         if (!clerkUserId) {
-            return new Response(JSON.stringify({ success: false, error: 'No autenticado' }), {
+            return new Response(JSON.stringify({ ok: false, error: 'No autenticado' }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        const saveHorariosUsers = await SaveHorariosUsers({ userId: clerkUserId, payload: horarios });
+        await SaveHorariosUsers({
+            userId: clerkUserId,
+            payload: body
+        });
 
-        return new Response(JSON.stringify({ success: true }), {
+        return new Response(JSON.stringify({ ok: true }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
         console.error(error);
-        return new Response(JSON.stringify({ success: false, error: 'Error al obtener el usuario' }), {
+        return new Response(JSON.stringify({ ok: false, error: 'Error al obtener el usuario' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

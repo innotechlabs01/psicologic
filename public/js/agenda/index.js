@@ -144,6 +144,22 @@ function validateForm() {
     return isValid ? data : null;
 }
 
+function clearAllInputs() {
+    for (const day of DAYS) {
+        const start = document.querySelector(`#${day}-start`);
+        const end = document.querySelector(`#${day}-end`);
+        const errorText = document.querySelector(`#${day}-error`);
+
+        if (start) start.value = "";
+        if (end) end.value = "";
+        if (errorText) {
+            errorText.textContent = "";
+            errorText.classList.add("hidden");
+        }
+    }
+}
+
+
 // =========================================================
 //  ENVÍO A API DE ASTRO
 // =========================================================
@@ -162,6 +178,9 @@ async function sendToServer(payload) {
             return;
         }
 
+        // 👉 LIMPIAR TODO DESPUÉS DE GUARDAR
+        clearAllInputs();
+
         showToast("Agenda guardada correctamente", "success");
     } catch (error) {
         showToast("No se pudo conectar al servidor", "error");
@@ -172,9 +191,12 @@ async function sendToServer(payload) {
 //  LISTENERS
 // =========================================================
 document.addEventListener("DOMContentLoaded", () => {
-    const btnSave = document.querySelector("#save-agenda");
+    const btnSave = document.getElementById("save-agenda");
 
-    if (!btnSave) return;
+    if (!btnSave) {
+        console.error("BOTÓN NO ENCONTRADO");
+        return;
+    }
 
     btnSave.addEventListener("click", async () => {
         const formData = validateForm();

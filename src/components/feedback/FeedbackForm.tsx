@@ -70,7 +70,7 @@ export default function FeedbackForm() {
         <p className="text-gray-600 dark:text-gray-300 mb-6">Tu opinión nos ayuda a mejorar.</p>
 
       {/* Selector de Mood (Emojis) con Estilos en Línea */}
-      <div className="flex justify-between mb-8">
+      <div className="flex justify-between mb-8 gap-4">
         {moodOptions.map(({ emoji }) => (
           <button
             key={emoji}

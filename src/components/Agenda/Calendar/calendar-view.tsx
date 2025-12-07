@@ -11,7 +11,7 @@ import { CalendarDayColumn } from "./calendar-day-column";
 import { INITIAL_SCROLL_OFFSET } from "./calendar-utils";
 
 export function CalendarView() {
-    const { goToNextWeek, goToPreviousWeek, getWeekDays, getCurrentWeekEvents } =
+    const { goToNextWeek, goToPreviousWeek, getWeekDays, getCurrentWeekEvents, setEvents } =
         useCalendarStore();
     const weekDays = getWeekDays();
     const events = getCurrentWeekEvents();
@@ -25,8 +25,41 @@ export function CalendarView() {
     const today = new Date();
 
     useEffect(() => {
+        const refreshData = async () => {
+            try {
+                // Trigger global skeleton by making a request
+                await fetch('/api/headers/api');
+
+                // Fetch real events
+                const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                const end = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+
+                const res = await fetch(`/api/agenda?startDate=${start.toISOString()}&endDate=${end.toISOString()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    // Map API AgendaEvent to UI Event interface
+                    const mappedEvents: Event[] = data.map((e: any) => ({
+                        id: e.id,
+                        title: e.title,
+                        startTime: e.startTime,
+                        endTime: e.endTime,
+                        date: e.date,
+                        participants: e.participants ? [`Name: ${e.participants.name}`, `Email: ${e.participants.email}`] : [],
+                        meetingLink: e.meetingLink,
+                        timezone: 'America/Bogota'
+                    }));
+                    setEvents(mappedEvents);
+                }
+            } catch (error) {
+                console.error("Auto-refresh failed", error);
+            }
+        };
+
+        refreshData(); // Initial Load
+
         const interval = setInterval(() => {
             setCurrentTime(new Date());
+            refreshData();
         }, 60000);
 
         return () => clearInterval(interval);

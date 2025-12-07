@@ -2,19 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "node",
+      "command": "./node_modules/.bin/astro dev",
+      "name": "Development server",
       "request": "launch",
-      "name": "Debug Astro",
-      "runtimeExecutable": "node",
-      "runtimeArgs": [
-        "--inspect",
-        "${workspaceFolder}/node_modules/astro/astro.js",
-        "dev"
-      ],
-      "console": "integratedTerminal",
-      "skipFiles": [
-        "<node_internals>/**"
-      ]
+      "type": "node-terminal"
     }
   ]
 }

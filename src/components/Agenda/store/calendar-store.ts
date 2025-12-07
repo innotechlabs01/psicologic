@@ -10,6 +10,8 @@ import {
 import { type Event, events, addEvent as addEventToStore } from "../mock-data/events";
 
 interface CalendarState {
+    events: Event[];
+    setEvents: (events: Event[]) => void;
     currentWeekStart: Date;
     searchQuery: string;
     eventTypeFilter: "all" | "with-meeting" | "without-meeting";
@@ -37,24 +39,23 @@ function getDayOfWeek(date: Date): number {
     return day === 0 ? 6 : day - 1;
 }
 
-function getEventsForWeek(startDate: Date): Event[] {
+function getEventsForWeek(startDate: Date, allEvents: Event[]): Event[] {
     const weekEvents: Event[] = [];
 
     for (let i = 0; i < 7; i++) {
         const currentDay = addDays(startDate, i);
         const currentDayOfWeek = getDayOfWeek(currentDay);
 
-        events.forEach((event) => {
+        allEvents.forEach((event) => {
             const eventDate = new Date(event.date);
             const eventDayOfWeek = getDayOfWeek(eventDate);
 
             if (eventDayOfWeek === currentDayOfWeek) {
-                const eventDateStr = format(currentDay, "yyyy-MM-dd");
-                weekEvents.push({
-                    ...event,
-                    id: `${event.id}-${eventDateStr}`,
-                    date: eventDateStr,
-                });
+                // Ensure we compare actual dates, not just day of week if year differs
+                // But keeping original logic structure for consistency, just using state events
+                if (event.date === format(currentDay, 'yyyy-MM-dd')) {
+                    weekEvents.push(event);
+                }
             }
         });
     }
@@ -63,6 +64,9 @@ function getEventsForWeek(startDate: Date): Event[] {
 }
 
 export const useCalendarStore = create<CalendarState>((set, get) => ({
+    events: [], // Start empty, load from API
+    setEvents: (events) => set({ events }),
+
     currentWeekStart: startOfWeek(new Date(), { weekStartsOn: 1 }),
     searchQuery: "",
     eventTypeFilter: "all",
@@ -96,12 +100,16 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     ) => set({ participantsFilter: filter }),
 
     addEvent: (event: Omit<Event, "id">) => {
-        addEventToStore(event);
+        // Optimistic update
+        set((state) => ({
+            events: [...state.events, { ...event, id: Math.random().toString() }]
+        }));
     },
 
     getCurrentWeekEvents: () => {
         const state = get();
-        let weekEvents = getEventsForWeek(state.currentWeekStart);
+        // Use state.events instead of imported 'events'
+        let weekEvents = getEventsForWeek(state.currentWeekStart, state.events);
 
         if (state.searchQuery) {
             const query = state.searchQuery.toLowerCase();

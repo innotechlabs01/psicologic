@@ -52,7 +52,7 @@ export function CalendarHeader() {
                             {/* <SidebarTrigger className="shrink-0" /> */}
                             <div className="flex-1 min-w-0">
                                 <h1 className="text-sm md:text-base lg:text-lg font-semibold text-foreground truncate mb-0 md:mb-1">
-                                    {format(currentWeekStart, "MMMM dd, yyyy")}
+                                    {format(currentWeekStart, "MMMM , yyyy")}
                                 </h1>
                                 <p className="hidden md:block text-xs text-muted-foreground">
                                     You have {meetingsCount} meeting
@@ -63,7 +63,7 @@ export function CalendarHeader() {
                         </div>
 
                         <div className="flex items-center gap-1 md:gap-1.5 lg:gap-2 shrink-0">
-                            <DropdownMenu>
+                            {/* <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost"
@@ -140,9 +140,9 @@ export function CalendarHeader() {
                                         </span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
-                            </DropdownMenu>
+                            </DropdownMenu> */}
 
-                            <SchedulePopover>
+                            {/* <SchedulePopover>
                                 <Button
                                     variant="outline"
                                     size="icon"
@@ -151,15 +151,15 @@ export function CalendarHeader() {
                                     <CalendarIcon className="size-4" />
                                     <span className="hidden lg:inline">Schedule</span>
                                 </Button>
-                            </SchedulePopover>
+                            </SchedulePopover> */}
 
                             <Button
                                 size="icon"
-                                className="size-7 md:size-8 shrink-0 md:w-auto md:px-2 md:gap-1.5 bg-foreground text-background hover:bg-foreground/90"
+                                className="size-7 md:size-8 shrink-0 md:w-auto md:px-2 md:gap-1.5 bg-foreground text-background hover:bg-blue-500/90"
                                 onClick={() => setCreateDialogOpen(true)}
                             >
                                 <Plus className="size-4" />
-                                <span className="hidden lg:inline">Create Event</span>
+                                <span className="hidden lg:inline">Agendar Cita</span>
                             </Button>
 
                             {/* <ThemeToggle /> */}
