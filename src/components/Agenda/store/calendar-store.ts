@@ -27,6 +27,8 @@ interface CalendarState {
     setParticipantsFilter: (
         filter: "all" | "with-participants" | "without-participants"
     ) => void;
+    refreshKey: number;
+    applyFilters: (opts: { searchQuery?: string; eventTypeFilter?: "all" | "with-meeting" | "without-meeting"; participantsFilter?: "all" | "with-participants" | "without-participants" }) => void;
     addEvent: (event: Omit<Event, "id">) => void;
     getCurrentWeekEvents: () => Event[];
     getWeekDays: () => Date[];
@@ -105,6 +107,16 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
             events: [...state.events, { ...event, id: Math.random().toString() }]
         }));
     },
+
+    // Manual refresh trigger used to signal CalendarView to fetch with skeleton
+    refreshKey: 0,
+    applyFilters: (opts: { searchQuery?: string; eventTypeFilter?: "all" | "with-meeting" | "without-meeting"; participantsFilter?: "all" | "with-participants" | "without-participants" }) =>
+        set((state) => ({
+            searchQuery: opts.searchQuery ?? state.searchQuery,
+            eventTypeFilter: opts.eventTypeFilter ?? state.eventTypeFilter,
+            participantsFilter: opts.participantsFilter ?? state.participantsFilter,
+            refreshKey: state.refreshKey + 1,
+        })),
 
     getCurrentWeekEvents: () => {
         const state = get();

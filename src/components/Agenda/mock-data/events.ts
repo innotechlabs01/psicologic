@@ -42,10 +42,56 @@ export function getTodayEvents(): Event[] {
     });
 }
 
-export function addEvent(event: Omit<Event, "id">): void {
+function normalizeParticipants(input: any): string[] {
+    if (!input) return [];
+
+    // If it's already a flat array of strings
+    if (Array.isArray(input)) {
+        try {
+            // Flatten one level if nested arrays exist
+            const flat = (input as any[]).flat ? (input as any[]).flat() : (input as any[]);
+            return flat
+                .map((p: any) => {
+                    if (!p) return '';
+                    if (typeof p === 'string') return p;
+                    if (Array.isArray(p)) return p.join(', ');
+                    if (typeof p === 'object') return p.name || p.email || JSON.stringify(p);
+                    return String(p);
+                })
+                .map((s: string) => s.trim())
+                .filter(Boolean);
+        } catch (e) {
+            console.warn('normalizeParticipants: failed to flatten', e);
+        }
+    }
+
+    // If it's an object like { name, email }
+    if (typeof input === 'object') {
+        const name = (input as any).name;
+        const email = (input as any).email;
+        return [name || email].filter(Boolean);
+    }
+
+    // Fallback: coerce to string
+    return [String(input)].filter(Boolean);
+}
+
+export function addEvent(event: Omit<Event, "id"> | any): void {
+    // Accept flexible shapes and normalize fields for the mock store
     const newId = String(events.length + 1);
-    events.push({
-        ...event,
+
+    const participants = normalizeParticipants(event.participants);
+
+    const ev: Event = {
         id: newId,
-    });
+        title: String(event.title || 'Reserva'),
+        startTime: String(event.startTime || event.start_time || '00:00'),
+        endTime: String(event.endTime || event.end_time || '00:00'),
+        date: String(event.date),
+        participants,
+        meetingLink: event.meetingLink || event.meeting_link || undefined,
+        timezone: event.timezone || undefined,
+    };
+
+    events.push(ev);
 }

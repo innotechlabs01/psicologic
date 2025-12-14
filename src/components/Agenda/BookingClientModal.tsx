@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { Loader2, Calendar, Mail, CheckCircle, Video } from 'lucide-react';
+import { useAgendaCache } from '../../hooks/useAgendaCache'; // Import hook
+import { SkeletonLine, SkeletonCard } from './ui/skeleton';
 
-export function BookingClientModal({ selectedDate, onClose, onSuccess }) {
+interface BookingClientModalProps {
+    selectedDate: string;
+    onClose: () => void;
+    onSuccess?: (data: any) => void;
+    loadingExternal?: boolean;
+}
+
+export function BookingClientModal({ selectedDate, onClose, onSuccess, loadingExternal = false }: BookingClientModalProps) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [time, setTime] = useState('09:00');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
+    const { addEventToCache } = useAgendaCache(); // Use hook
 
     const handleBook = async () => {
         setLoading(true);
@@ -27,6 +37,23 @@ export function BookingClientModal({ selectedDate, onClose, onSuccess }) {
             const data = await res.json();
             if (res.ok) {
                 setResult(data);
+
+                // Optimistic Cache Update
+                // Map the API response (AgendaEvent) to the UI Event format
+                // This ensures the calendar view can read it directly from cache
+                const mappedEvent = {
+                    id: data.id,
+                    title: data.title,
+                    startTime: data.startTime,
+                    endTime: data.endTime,
+                    date: data.date,
+                    participants: data.participants ? [data.participants] : [],
+                    meetingLink: data.meetingLink,
+                    timezone: 'America/Bogota'
+                };
+
+                addEventToCache(mappedEvent);
+
                 if (onSuccess) onSuccess(data);
             } else {
                 alert(data.error || 'Error booking');
@@ -39,7 +66,7 @@ export function BookingClientModal({ selectedDate, onClose, onSuccess }) {
         }
     };
 
-    const getICSEventURL = (booking) => {
+    const getICSEventURL = (booking: any) => {
         const startTime = new Date(`${booking.date}T${booking.startTime}:00`);
         const duration = 60 * 60 * 1000; // 60 minutes default
         const endTime = new Date(startTime.getTime() + duration);
@@ -94,6 +121,20 @@ END:VCALENDAR`.trim();
             </div>
         );
     }
+
+        if (loadingExternal) {
+            return (
+                <div className="p-6 space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2"><Calendar className="text-indigo-600" /> Agendar Cita: {selectedDate}</h3>
+                    <SkeletonCard />
+                    <div className="mt-4">
+                        <SkeletonLine className="w-full" />
+                        <SkeletonLine className="w-3/4 mt-2" />
+                        <SkeletonLine className="w-1/2 mt-2" />
+                    </div>
+                </div>
+            );
+        }
 
     return (
         <div className="p-6 space-y-4">

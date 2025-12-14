@@ -22,6 +22,8 @@ import {
 } from "../ui/popover";
 import { useCalendarStore } from "../store/calendar-store";
 import { cn } from "../../../lib/utils";
+import { showToast } from "../../../utils/toast";
+import { useAgendaCache } from '../../../hooks/useAgendaCache';
 import type { Event } from "../mock-data/events";
 import { getHoliday } from "./calendar-utils";
 
@@ -42,18 +44,25 @@ export function CreateEventDialog({
     const [meetingLink, setMeetingLink] = useState("");
     const [timezone, setTimezone] = useState("");
     const [participants, setParticipants] = useState("");
+    // const [name, setName] = useState("");
+    // const [email, setEmail] = useState("");
     const [datePickerOpen, setDatePickerOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const { addEventToCache } = useAgendaCache();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+
         e.preventDefault();
 
-        if (!title || !date || !startTime || !endTime) {
+        if (!title || !date || !startTime || !endTime ) {
+            showToast('Por favor completa título, fecha, horas y participantes.', 'error');
             return;
         }
 
         const holiday = getHoliday(date);
         if (holiday) {
-            alert(`Cannot schedule events on holidays: ${holiday}`);
+            showToast(`Cannot schedule events on holidays: ${holiday}`, 'error');
             return;
         }
 
@@ -62,27 +71,90 @@ export function CreateEventDialog({
             .map((p) => p.trim())
             .filter((p) => p.length > 0);
 
-        const newEvent: Omit<Event, "id"> = {
+        const payload = {
             title,
             date: format(date, "yyyy-MM-dd"),
             startTime,
             endTime,
-            participants: participantsList.length > 0 ? participantsList : ["user1"],
-            meetingLink: meetingLink || undefined,
-            timezone: timezone || undefined,
-        };
+            participants: participantsList,
+        } as any;
 
-        addEvent(newEvent);
-        goToDate(date);
+        setSubmitting(true);
+        try {
+            const res = await fetch('/api/agenda', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
 
-        setTitle("");
-        setDate(new Date());
-        setStartTime("");
-        setEndTime("");
-        setMeetingLink("");
-        setTimezone("");
-        setParticipants("");
-        onOpenChange(false);
+            const data = await res.json();
+
+            if (!res.ok) {
+                const msg = data?.error || 'Error creando la cita';
+                showToast(msg, 'error');
+                setSubmitting(false);
+                return;
+            }
+
+            // Server returns created event
+            const created = data;
+
+            if (!created || !created.id) {
+                showToast('Error al crear la cita.', 'error');
+                setSubmitting(false);
+                return;
+            }
+
+            // Map to client Event shape if needed and add to store
+            addEvent({
+                title: created.title || title,
+                date: created.date || format(date, 'yyyy-MM-dd'),
+                startTime: created.startTime || startTime,
+                endTime: created.endTime || endTime,
+                participants: participantsList.length > 0 ? participantsList : [],
+                meetingLink: created.meetingLink || meetingLink || undefined,
+                timezone: created.timezone || timezone || undefined,
+            });
+
+            // Also update local cache (optimistic) so the calendar reflects the new item
+            try {
+                addEventToCache({
+                    id: created.id,
+                    title: created.title || title,
+                    date: created.date || format(date, 'yyyy-MM-dd'),
+                    startTime: created.startTime || startTime,
+                    endTime: created.endTime || endTime,
+                    participants: created.participants || participantsList,
+                    meetingLink: created.meetingLink || meetingLink || undefined,
+                    timezone: created.timezone || timezone || undefined,
+                });
+                console.debug('[CreateEventDialog] addEventToCache updated', created.id);
+            } catch (err) {
+                console.warn('Failed to update agenda cache', err);
+            }
+            console.debug('[CreateEventDialog] event created and added to store', created.id);
+
+            goToDate(date);
+
+            showToast('Cita creada correctamente', 'success');
+
+            // Reset
+            setTitle("");
+            setDate(new Date());
+            setStartTime("");
+            setEndTime("");
+            setMeetingLink("");
+            setTimezone("");
+            setParticipants("");
+            // setName("");
+            // setEmail("");
+            onOpenChange(false);
+        } catch (err) {
+            console.error('Failed to create event', err);
+            showToast('Error de red al crear la cita', 'error');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -135,6 +207,28 @@ export function CreateEventDialog({
                                 </PopoverContent>
                             </Popover>
                         </div>
+
+                        {/* <div className="grid gap-2">
+                            <Label htmlFor="name">Tu nombre</Label>
+                            <Input
+                                id="name"
+                                placeholder="Tu nombre"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </div> */}
+
+                        {/* <div className="grid gap-2">
+                            <Label htmlFor="email">Correo electrónico</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="tu@correo.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div> */}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="grid gap-2">

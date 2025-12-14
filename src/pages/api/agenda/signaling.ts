@@ -3,6 +3,7 @@ import { addSignalingMessage, getSignalingMessages } from '../../../lib/turso/ag
 
 export const POST: APIRoute = async ({ request }) => {
     try {
+        ;
         const body = await request.json();
         const { meetingToken, type, payload, sender } = body;
 
@@ -24,6 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const GET: APIRoute = async ({ request, url }) => {
+    ;
     const meetingToken = url.searchParams.get('token');
     const afterId = parseInt(url.searchParams.get('afterId') || '0');
 

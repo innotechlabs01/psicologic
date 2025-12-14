@@ -43,7 +43,7 @@ export function CalendarWeekHeader({
                 return (
                     <div
                         key={day.toISOString()}
-                        className="flex-1 border-r border-border last:border-r-0 p-1.5 md:p-2 min-w-44 flex flex-col justify-center"
+                        className="flex-1 border-r border-border last:border-r-0 p-1.5 md:p-2 min-w-32 flex flex-col justify-center"
                     >
                         <div className={cn(
                             "text-xs md:text-sm font-medium",

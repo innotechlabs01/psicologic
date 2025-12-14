@@ -48,8 +48,8 @@ function logAccessEvent(
       action,
       route,
       role: orgRole,
-      ip: context.request.headers.get('x-forwarded-for')?.toString() || 
-          context.clientAddress,
+      ip: context.request.headers.get('x-forwarded-for')?.toString() ||
+        context.clientAddress,
       userAgent: context.request.headers.get('user-agent')?.toString(),
       metadata: {
         timestamp: new Date().toISOString(),
@@ -73,32 +73,29 @@ function redirectToRoute(route: string, message: string, status: number = 302) {
   });
 }
 
-export const onRequest = clerkMiddleware((auth, context) => {
+export const onRequest = clerkMiddleware((auth, context, next) => {
   const { userId, sessionId, orgRole } = auth();
   const currentPath = new URL(context.request.url).pathname;
 
-  if (!userId && currentPath !== '/client' && currentPath !== '/index' && currentPath.startsWith('/client/') && currentPath === '/dashboard/' && currentPath.startsWith('/dashboard/')) {
+  if (!userId && (currentPath.startsWith('/client') || currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin'))) {
     return redirectToRoute('/', 'Debes iniciar sesión');
   }
 
-  if ((!userId && currentPath === '/') || currentPath.startsWith('/dashboard/') || currentPath.startsWith('/client/') ||
-    currentPath === '/dashboard' || currentPath === '/client' || currentPath === '/error' ||
-    currentPath === '/client/chat' || currentPath.startsWith('/client/chat/') || currentPath === '/client/tickets' ||
-    currentPath.startsWith('/admin/tickets/')) {
-    return; // Permitir acceso sin procesar
+  if ((!userId && currentPath === '/') || currentPath === '/error') {
+    return next(); // Permitir acceso sin procesar a rutas publicas
   }
 
   if (currentPath === '/error') {
-    return redirectToRoute('/error', 'Redirigiendo desde error');
+    return next();
   }
 
   // Omitir archivos estáticos y APIs
-  if (currentPath.startsWith('/api/') || 
-      currentPath.startsWith('/_') || 
-      currentPath.includes('.') ||
-      currentPath === '/favicon.ico') {
+  if (currentPath.startsWith('/api/') ||
+    currentPath.startsWith('/_') ||
+    currentPath.includes('.') ||
+    currentPath === '/favicon.ico') {
     console.log("⚡ Omitiendo archivo estático/API");
-    return;
+    return next();
   }
 
   // 🔗 Registrar acceso de usuario autenticado
@@ -160,7 +157,11 @@ export const onRequest = clerkMiddleware((auth, context) => {
     }
 
 
-    if(newAssignedRole === "org:admin") {
+    if (newAssignedRole === "org:admin") {
+      if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin')) {
+        return next();
+      }
+
       logAccessEvent(
         context,
         userId ?? 'anonymous',
@@ -172,7 +173,11 @@ export const onRequest = clerkMiddleware((auth, context) => {
       return redirectToRoute('/dashboard', 'Redirigiendo a dashboard');
     }
 
-    if(newAssignedRole === "org:client") {
+    if (newAssignedRole === "org:client") {
+      if (currentPath.startsWith('/client')) {
+        return next();
+      }
+
       console.log("🔄 Redirigiendo cliente a client");
       logAccessEvent(
         context,

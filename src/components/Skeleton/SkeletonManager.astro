@@ -68,14 +68,23 @@ const { type = "default" } = Astro.props;
     const sk = document.getElementById("global-skeleton");
     if (!sk) return;
 
-    // Handler for fetch events
-    const show = () => sk.classList.add("active");
-    const hide = () => setTimeout(() => sk.classList.remove("active"), 300); // 300ms fade/delay out
+      // Handler for fetch events
+      const show = () => sk.classList.add("active");
+      const hide = () => setTimeout(() => sk.classList.remove("active"), 300); // 300ms fade/delay out
 
-    window.removeEventListener("global:fetch-start", show);
-    window.removeEventListener("global:fetch-end", hide);
-    window.addEventListener("global:fetch-start", show);
-    window.addEventListener("global:fetch-end", hide);
+      // For agenda overlay we don't react to global fetch events (many background polls exist)
+      // Instead we listen to custom agenda events dispatched from the agenda view when needed.
+      if (sk.getAttribute('data-type') === 'agenda') {
+        window.removeEventListener('agenda:fetch-start', show);
+        window.removeEventListener('agenda:fetch-end', hide);
+        window.addEventListener('agenda:fetch-start', show);
+        window.addEventListener('agenda:fetch-end', hide);
+      } else {
+        window.removeEventListener("global:fetch-start", show);
+        window.removeEventListener("global:fetch-end", hide);
+        window.addEventListener("global:fetch-start", show);
+        window.addEventListener("global:fetch-end", hide);
+      }
 
     // Forces skeleton to show immediately when navigation starts
     document.addEventListener("astro:before-preparation", () => {

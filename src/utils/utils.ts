@@ -234,6 +234,10 @@ const handlerInitializePaymentTrial = async (context: APIContext, userId: string
       const nextPaymentDate = new Date(Date.now() + 1360 * 24 * 60 * 60 * 1000).toISOString(); 
       const blockedPaymentDate = new Date(Date.now() + (1360 + 5) * 24 * 60 * 60 * 1000).toISOString(); 
       try{
+        // DEBUG: pausa aquí si se ejecuta el proceso con un inspector (ej. `node --inspect`)
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+          ;
+        }
         await client.execute(
           `
             INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
@@ -251,6 +255,10 @@ const handlerInitializePaymentTrial = async (context: APIContext, userId: string
           ]
         );
         // Asegurar que el usuario esté marcado como 'approved' o 'active' inicialmente
+        // DEBUG: pausa aquí antes del UPDATE si se adjunta un inspector
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+          ;
+        }
         await client.execute(
           `
             UPDATE usuarios
@@ -269,6 +277,10 @@ const handlerInitializePaymentTrial = async (context: APIContext, userId: string
       return;
     }
 
+    // DEBUG: pausa aquí si se ejecuta el proceso con un inspector (ej. `node --inspect`)
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      ;
+    }
     await client.execute(
       `
         INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
@@ -288,6 +300,10 @@ const handlerInitializePaymentTrial = async (context: APIContext, userId: string
 
 
     // Asegurar que el usuario esté marcado como 'approved' o 'active' inicialmente
+    // DEBUG: pausa aquí antes del UPDATE si se adjunta un inspector
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      ;
+    }
     const result = await client.execute(
       `
         UPDATE usuarios

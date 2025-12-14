@@ -4,164 +4,252 @@ import { SignOutButton, SignedIn } from "@clerk/astro/components";
 const response = await fetch(`${Astro.url.origin}/api/headers/api`);
 const data = await response.json();
 const unreadCount = data.unreadCount;
-
 ---
 
 <!-- Botón toggle para móvil -->
-<button 
-  id="sidebar-toggle" 
-  type="button" 
+<button
+  id="sidebar-toggle"
+  type="button"
   class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-  aria-controls="separator-sidebar" 
+  aria-controls="separator-sidebar"
   aria-expanded="false"
 >
-   <span class="sr-only">Open sidebar</span>
-   <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-   <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
-   </svg>
+  <span class="sr-only">Open sidebar</span>
+  <svg
+    class="w-6 h-6"
+    aria-hidden="true"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      clip-rule="evenodd"
+      fill-rule="evenodd"
+      d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
+    ></path>
+  </svg>
 </button>
 
 <!-- Overlay para cerrar el sidebar en móvil -->
-<div id="sidebar-overlay" class="fixed inset-0 z-30 bg-black bg-opacity-50 sm:hidden hidden"></div>
+<div
+  id="sidebar-overlay"
+  class="fixed inset-0 z-30 bg-black bg-opacity-50 sm:hidden hidden"
+>
+</div>
 
 <!-- Sidebar -->
-<aside 
-  id="separator-sidebar" 
-  class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 -translate-x-full sm:translate-x-0" 
+<aside
+  id="separator-sidebar"
+  class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 -translate-x-full sm:translate-x-0"
   aria-label="Sidebar"
 >
-   <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
-      <!-- Botón cerrar en móvil (opcional) -->
-      <div class="flex justify-end mb-4 sm:hidden">
-        <button 
-          id="sidebar-close" 
-          class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+  <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+    <!-- Botón cerrar en móvil (opcional) -->
+    <div class="flex justify-end mb-4 sm:hidden">
+      <button
+        id="sidebar-close"
+        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
 
-      <ul class="space-y-2 font-medium">
-         <li>
-            <a href="/dashboard" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
-               <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
-                  <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
-                  <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
-               </svg>
-               <span class="ms-3">Dashboard</span>
-            </a>
-         </li>
-         <li style="display: none;">
-            <a href="/admin/users" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
-               <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
-                  <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">Usuarios</span>
-            </a>
-         </li> 
-         <li>
-            <a href="/dashboard/message" id="messages-link" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
-               <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18">
-                  <path d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">Mensajes</span>
-               {unreadCount > 0 && (
-                  <span 
-                    id="unread-badge" 
-                    class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-red-800 bg-red-100 rounded-full dark:bg-red-900 dark:text-red-300"
-                  >
-                    {unreadCount}
-                  </span>
-               )}
-               {unreadCount === 0 && (
-                  <span 
-                    id="unread-badge" 
-                    class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-red-800 bg-red-100 rounded-full dark:bg-red-900 dark:text-red-300 hidden"
-                  >
-                    0
-                  </span>
-               )}
-            </a>
-         </li>
-         <li>
-            <a href="/dashboard/payments" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
-               <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="m17.418 3.623-.018-.008a6.713 6.713 0 0 0-2.4-.569V2h1a1 1 0 1 0 0-2h-2a1 1 0 0 0-1 1v2H9.89A6.977 6.977 0 0 1 12 8v5h-2V8A5 5 0 1 0 0 8v6a1 1 0 0 0 1 1h8v4a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-4h6a1 1 0 0 0 1-1V8a5 5 0 0 0-2.582-4.377ZM6 12H4a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">Pagos</span>
-            </a>
-         </li>
-         <li>
-            <a href="/dashboard/settings" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
-               <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 18">
-                  <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"/>
-               </svg>
-               <span class="flex-1 ms-3 whitespace-nowrap">Configuraciones</span>
-            </a>
-         </li>
-      </ul>
-      
-      <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700">
-         <li>
-            <SignOutButton redirectUrl="http://localhost:4321/" asChild>
-               <a class="mt-2 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
-               Cerrar sesión
-               </a>
-            </SignOutButton>
-         </li>
-      </ul>
-   </div>
+    <ul class="space-y-2 font-medium">
+      <li>
+        <a
+          href="/dashboard"
+          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+        >
+          <svg
+            class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 22 21"
+          >
+            <path
+              d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"
+            ></path>
+            <path
+              d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"
+            ></path>
+          </svg>
+          <span class="ms-3">Dashboard</span>
+        </a>
+      </li>
+      <li style="display: none;">
+        <a
+          href="/admin/users"
+          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+        >
+          <svg
+            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 18"
+          >
+            <path
+              d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"
+            ></path>
+          </svg>
+          <span class="flex-1 ms-3 whitespace-nowrap">Usuarios</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/dashboard/message"
+          id="messages-link"
+          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+        >
+          <svg
+            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 18 18"
+          >
+            <path
+              d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z"
+            ></path>
+          </svg>
+          <span class="flex-1 ms-3 whitespace-nowrap">Mensajes</span>
+          {
+            unreadCount > 0 && (
+              <span
+                id="unread-badge"
+                class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-red-800 bg-red-100 rounded-full dark:bg-red-900 dark:text-red-300"
+              >
+                {unreadCount}
+              </span>
+            )
+          }
+          {
+            unreadCount === 0 && (
+              <span
+                id="unread-badge"
+                class="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-red-800 bg-red-100 rounded-full dark:bg-red-900 dark:text-red-300 hidden"
+              >
+                0
+              </span>
+            )
+          }
+        </a>
+      </li>
+      <li>
+        <a
+          href="/dashboard/payments"
+          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+        >
+          <svg
+            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              d="m17.418 3.623-.018-.008a6.713 6.713 0 0 0-2.4-.569V2h1a1 1 0 1 0 0-2h-2a1 1 0 0 0-1 1v2H9.89A6.977 6.977 0 0 1 12 8v5h-2V8A5 5 0 1 0 0 8v6a1 1 0 0 0 1 1h8v4a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-4h6a1 1 0 0 0 1-1V8a5 5 0 0 0-2.582-4.377ZM6 12H4a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2Z"
+            ></path>
+          </svg>
+          <span class="flex-1 ms-3 whitespace-nowrap">Pagos</span>
+        </a>
+      </li>
+      <li>
+        <a
+          href="/dashboard/settings"
+          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+        >
+          <svg
+            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            viewBox="0 0 20 18"
+          >
+            <path
+              d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v2a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2a5.006 5.006 0 0 0-5-5Z"
+            ></path>
+          </svg>
+          <span class="flex-1 ms-3 whitespace-nowrap">Configuraciones</span>
+        </a>
+      </li>
+    </ul>
+
+    <ul
+      class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700"
+    >
+      <li>
+        <SignOutButton redirectUrl="/" asChild>
+          <a
+            class="mt-2 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 cursor-pointer"
+          >
+            Cerrar sesión
+          </a>
+        </SignOutButton>
+      </li>
+    </ul>
+  </div>
 </aside>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const toggleButton = document.getElementById('sidebar-toggle');
-    const sidebar = document.getElementById('separator-sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    const closeButton = document.getElementById('sidebar-close');
-    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggleButton = document.getElementById("sidebar-toggle");
+    const sidebar = document.getElementById("separator-sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+    const closeButton = document.getElementById("sidebar-close");
+    const sidebarLinks = document.querySelectorAll(".sidebar-link");
 
     // Función para mostrar sidebar
     function showSidebar() {
       if (sidebar) {
-        sidebar.classList.remove('-translate-x-full');
-        sidebar.classList.add('translate-x-0');
+        sidebar.classList.remove("-translate-x-full");
+        sidebar.classList.add("translate-x-0");
       }
       if (overlay) {
-        overlay.classList.remove('hidden');
+        overlay.classList.remove("hidden");
       }
       if (toggleButton) {
-        toggleButton.setAttribute('aria-expanded', 'true');
+        toggleButton.setAttribute("aria-expanded", "true");
       }
       // Prevenir scroll del body
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     }
 
     // Función para ocultar sidebar
     function hideSidebar() {
       if (sidebar) {
-        sidebar.classList.add('-translate-x-full');
-        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add("-translate-x-full");
+        sidebar.classList.remove("translate-x-0");
       }
       if (overlay) {
-        overlay.classList.add('hidden');
+        overlay.classList.add("hidden");
       }
       if (toggleButton) {
-        toggleButton.setAttribute('aria-expanded', 'false');
+        toggleButton.setAttribute("aria-expanded", "false");
       }
       // Restaurar scroll del body
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
 
     // Event listeners
     if (toggleButton) {
-      toggleButton.addEventListener('click', (e) => {
+      toggleButton.addEventListener("click", (e) => {
         e.preventDefault();
-        
-        const isHidden = sidebar?.classList.contains('-translate-x-full');
-        
+
+        const isHidden = sidebar?.classList.contains("-translate-x-full");
+
         if (isHidden) {
           showSidebar();
         } else {
@@ -172,21 +260,21 @@ const unreadCount = data.unreadCount;
 
     // Cerrar sidebar al hacer click en overlay
     if (overlay) {
-      overlay.addEventListener('click', () => {
+      overlay.addEventListener("click", () => {
         hideSidebar();
       });
     }
 
     // Cerrar sidebar con botón X
     if (closeButton) {
-      closeButton.addEventListener('click', () => {
+      closeButton.addEventListener("click", () => {
         hideSidebar();
       });
     }
 
     // Cerrar sidebar al hacer click en un enlace (en móvil)
-    sidebarLinks.forEach(link => {
-      link.addEventListener('click', () => {
+    sidebarLinks.forEach((link) => {
+      link.addEventListener("click", () => {
         // Solo cerrar en móvil
         if (window.innerWidth < 640) {
           hideSidebar();
@@ -195,15 +283,18 @@ const unreadCount = data.unreadCount;
     });
 
     // Cerrar sidebar al redimensionar a desktop
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
       if (window.innerWidth >= 640) {
         hideSidebar();
       }
     });
 
     // Cerrar sidebar con tecla ESC
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !sidebar?.classList.contains('-translate-x-full')) {
+    document.addEventListener("keydown", (e) => {
+      if (
+        e.key === "Escape" &&
+        !sidebar?.classList.contains("-translate-x-full")
+      ) {
         hideSidebar();
       }
     });
@@ -215,21 +306,21 @@ const unreadCount = data.unreadCount;
   #separator-sidebar {
     transition: transform 0.3s ease-in-out;
   }
-  
+
   /* Overlay con animación */
   #sidebar-overlay {
     transition: opacity 0.3s ease-in-out;
   }
-  
+
   /* Asegurar que el sidebar esté por encima de otros elementos */
   #separator-sidebar {
     z-index: 50;
   }
-  
+
   #sidebar-overlay {
     z-index: 40;
   }
-  
+
   /* Mejorar la experiencia táctil en móvil */
   @media (max-width: 640px) {
     #sidebar-toggle {
@@ -240,15 +331,15 @@ const unreadCount = data.unreadCount;
 
 <script>
   // Script para manejar la reactividad del Badge de Mensajes
-  
+
   // 1. Encontrar el elemento Badge (le daremos un ID único)
-  const unreadBadge = document.getElementById('unread-badge');
-  const messagesLink = document.getElementById('messages-link'); // Asegúrate de darle este ID al <a>
+  const unreadBadge = document.getElementById("unread-badge");
+  const messagesLink = document.getElementById("messages-link"); // Asegúrate de darle este ID al <a>
 
   // 2. Función para obtener y actualizar el conteo
   async function updateUnreadCount() {
     try {
-      const response = await fetch('/api/headers/api'); // Llama a la API de Astro
+      const response = await fetch("/api/headers/api"); // Llama a la API de Astro
       const data = await response.json();
       const newCount = data.unreadCount;
 
@@ -256,23 +347,21 @@ const unreadCount = data.unreadCount;
         if (newCount > 0) {
           // Actualiza el texto si el badge ya existe
           unreadBadge.textContent = newCount;
-          unreadBadge.classList.remove('hidden'); // Asegura que esté visible
+          unreadBadge.classList.remove("hidden"); // Asegura que esté visible
         } else {
           // Oculta/elimina si el conteo es 0
-          unreadBadge.classList.add('hidden'); 
+          unreadBadge.classList.add("hidden");
           // Opcional: podrías eliminar el elemento completamente si quieres
         }
-      } 
+      }
       // Si el badge no existe pero el conteo es > 0, deberías crearlo.
       // Pero para simplificar, si está oculto/ausente, lo manejamos con clases/Astro.
-
     } catch (error) {
-      console.error('Error al actualizar el conteo de no leídos:', error);
+      console.error("Error al actualizar el conteo de no leídos:", error);
       // En caso de error, es mejor no tocar el badge
     }
   }
 
   // 3. Escuchar el evento disparado por el componente React
-  document.addEventListener('unreadCountUpdated', updateUnreadCount);
-
+  document.addEventListener("unreadCountUpdated", updateUnreadCount);
 </script>
