@@ -342,8 +342,14 @@
   .top-\[17px\] {
     top: 17px;
   }
+  .top-\[18\%\] {
+    top: 18%;
+  }
   .top-\[20\%\] {
     top: 20%;
+  }
+  .top-\[48\%\] {
+    top: 48%;
   }
   .top-\[50\%\] {
     top: 50%;
@@ -360,11 +366,11 @@
   .right-4 {
     right: calc(var(--spacing) * 4);
   }
+  .right-8 {
+    right: calc(var(--spacing) * 8);
+  }
   .bottom-0 {
     bottom: calc(var(--spacing) * 0);
-  }
-  .bottom-1 {
-    bottom: calc(var(--spacing) * 1);
   }
   .bottom-4 {
     bottom: calc(var(--spacing) * 4);
@@ -381,8 +387,14 @@
   .left-3 {
     left: calc(var(--spacing) * 3);
   }
+  .left-\[12\%\] {
+    left: 12%;
+  }
   .left-\[14\.28\%\] {
     left: 14.28%;
+  }
+  .left-\[40\%\] {
+    left: 40%;
   }
   .left-\[42\.84\%\] {
     left: 42.84%;
@@ -440,6 +452,9 @@
   }
   .my-1 {
     margin-block: calc(var(--spacing) * 1);
+  }
+  .my-3 {
+    margin-block: calc(var(--spacing) * 3);
   }
   .my-4 {
     margin-block: calc(var(--spacing) * 4);
@@ -661,9 +676,6 @@
   .h-12 {
     height: calc(var(--spacing) * 12);
   }
-  .h-14 {
-    height: calc(var(--spacing) * 14);
-  }
   .h-16 {
     height: calc(var(--spacing) * 16);
   }
@@ -685,8 +697,14 @@
   .h-96 {
     height: calc(var(--spacing) * 96);
   }
+  .h-\[8\%\] {
+    height: 8%;
+  }
   .h-\[10\%\] {
     height: 10%;
+  }
+  .h-\[12\%\] {
+    height: 12%;
   }
   .h-\[15\%\] {
     height: 15%;
@@ -823,6 +841,9 @@
   .w-80 {
     width: calc(var(--spacing) * 80);
   }
+  .w-\[14\%\] {
+    width: 14%;
+  }
   .w-\[14\.28\%\] {
     width: 14.28%;
   }
@@ -831,9 +852,6 @@
   }
   .w-\[80px\] {
     width: 80px;
-  }
-  .w-\[288px\]\! {
-    width: 288px !important;
   }
   .w-auto {
     width: auto;
@@ -864,9 +882,6 @@
   }
   .max-w-\[280px\] {
     max-width: 280px;
-  }
-  .max-w-\[288px\]\! {
-    max-width: 288px !important;
   }
   .max-w-\[300px\] {
     max-width: 300px;
@@ -907,17 +922,14 @@
   .min-w-5 {
     min-width: calc(var(--spacing) * 5);
   }
-  .min-w-44 {
-    min-width: calc(var(--spacing) * 44);
+  .min-w-32 {
+    min-width: calc(var(--spacing) * 32);
   }
   .min-w-\[8rem\] {
     min-width: 8rem;
   }
   .min-w-\[200px\] {
     min-width: 200px;
-  }
-  .min-w-\[288px\]\! {
-    min-width: 288px !important;
   }
   .min-w-full {
     min-width: 100%;
@@ -1832,6 +1844,9 @@
   .text-\[10px\] {
     font-size: 10px;
   }
+  .text-\[11px\] {
+    font-size: 11px;
+  }
   .text-\[13px\] {
     font-size: 13px;
   }
@@ -2063,6 +2078,9 @@
   }
   .opacity-50 {
     opacity: 50%;
+  }
+  .opacity-60 {
+    opacity: 60%;
   }
   .opacity-70 {
     opacity: 70%;

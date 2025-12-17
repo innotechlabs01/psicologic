@@ -44,20 +44,17 @@ function getDayOfWeek(date: Date): number {
 function getEventsForWeek(startDate: Date, allEvents: Event[]): Event[] {
     const weekEvents: Event[] = [];
 
+    // Helper to format date consistent with event.date (yyyy-MM-dd)
+    const getIsoDate = (d: Date) => format(d, 'yyyy-MM-dd');
+
     for (let i = 0; i < 7; i++) {
         const currentDay = addDays(startDate, i);
-        const currentDayOfWeek = getDayOfWeek(currentDay);
+        const currentDayStr = getIsoDate(currentDay);
 
         allEvents.forEach((event) => {
-            const eventDate = new Date(event.date);
-            const eventDayOfWeek = getDayOfWeek(eventDate);
-
-            if (eventDayOfWeek === currentDayOfWeek) {
-                // Ensure we compare actual dates, not just day of week if year differs
-                // But keeping original logic structure for consistency, just using state events
-                if (event.date === format(currentDay, 'yyyy-MM-dd')) {
-                    weekEvents.push(event);
-                }
+            // Simple string comparison - safe and robust
+            if (event.date === currentDayStr) {
+                weekEvents.push(event);
             }
         });
     }

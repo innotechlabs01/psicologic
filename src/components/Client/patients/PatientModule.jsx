@@ -16,30 +16,30 @@ async function fetchFullClinicalEntry(clinicalEntryId) {
       headers: { "Content-Type": "application/json" },
     }
   );
-  
+
   if (!response.ok) {
-      const errorBody = await response.json().catch(() => ({ message: 'Error desconocido' }));
-      throw new Error(`Failed to fetch clinical data. Status: ${response.status}. Detail: ${errorBody.message || 'Check network tab.'}`);
+    const errorBody = await response.json().catch(() => ({ message: 'Error desconocido' }));
+    throw new Error(`Failed to fetch clinical data. Status: ${response.status}. Detail: ${errorBody.message || 'Check network tab.'}`);
   }
   return await response.json();
 }
 
 // Componente ClinicalViewModal (Integrado)
 function ClinicalViewModal({ entry, onClose }) {
-  
+
   // Si 'entry' es null o undefined (mientras se carga), mostramos un estado de carga.
   if (!entry) {
-      return (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="text-white text-xl flex items-center space-x-3">
-              <svg className="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Cargando historia clínica...</span>
-          </div>
+    return (
+      <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="text-white text-xl flex items-center space-x-3">
+          <svg className="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Cargando historia clínica...</span>
         </div>
-      );
+      </div>
+    );
   }
 
   // Obtener historial clínico y secciones generales de forma segura.
@@ -68,10 +68,10 @@ function ClinicalViewModal({ entry, onClose }) {
   return (
     // Overlay y Fondo
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      
+
       {/* Contenedor del Modal - Estilo de Ficha Técnica */}
       <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden animate-fadeIn border border-gray-100">
-        
+
         {/* Encabezado Principal */}
         <div className="px-8 py-5 border-b bg-white flex items-center justify-between sticky top-0 z-10">
           <div className="flex flex-col">
@@ -80,8 +80,8 @@ function ClinicalViewModal({ entry, onClose }) {
               Registro creado el: {clinicHistory.created_at ? new Date(clinicHistory.created_at).toLocaleDateString() : 'Fecha no disponible'}
             </p>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-700 p-2 transition duration-150 rounded-full hover:bg-gray-100"
             aria-label="Cerrar"
           >
@@ -93,7 +93,7 @@ function ClinicalViewModal({ entry, onClose }) {
 
         {/* Cuerpo de la Historia Clínica - Scrollable */}
         <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto bg-gray-50">
-          
+
           {answerEntries.length === 0 ? (
             <div className="text-center py-10 text-gray-500">
               <p>No hay respuestas registradas para esta entrada o el formato es incorrecto.</p>
@@ -181,26 +181,26 @@ export default function PatientModule({ clerkUserId }) {
 
   useEffect(() => {
     if (activeEntryView) {
-        // Establecer fullModalEntry a null para que el modal muestre el loading
-        setFullModalEntry(null); 
-        
-        async function loadEntryData() {
-            try {
-                // Cargar los datos completos de la API
-                const data = await fetchFullClinicalEntry(activeEntryView.id); 
-                
-                // Combinar los datos básicos (name, etc.) con los datos clínicos (clinicHistory)
-                setFullModalEntry({
-                    ...activeEntryView, 
-                    ...data,           
-                });
-            } catch (error) {
-                console.error("Error al cargar la ficha clínica:", error);
-                // Si falla, cerramos la vista.
-                setActiveEntryView(null); 
-            }
+      // Establecer fullModalEntry a null para que el modal muestre el loading
+      setFullModalEntry(null);
+
+      async function loadEntryData() {
+        try {
+          // Cargar los datos completos de la API
+          const data = await fetchFullClinicalEntry(activeEntryView.id);
+
+          // Combinar los datos básicos (name, etc.) con los datos clínicos (clinicHistory)
+          setFullModalEntry({
+            ...activeEntryView,
+            ...data,
+          });
+        } catch (error) {
+          console.error("Error al cargar la ficha clínica:", error);
+          // Si falla, cerramos la vista.
+          setActiveEntryView(null);
         }
-        loadEntryData();
+      }
+      loadEntryData();
     }
   }, [activeEntryView]);
 
@@ -371,39 +371,39 @@ export default function PatientModule({ clerkUserId }) {
         </thead>
         <tbody>
           {filteredPatients().length === 0 ? (
-              // ⬇️ Caso 1: Array vacío (length es 0)
-              <tr>
-                <td colSpan={2} className="border p-2 text-center">
-                  **No se encontraron pacientes**
+            // ⬇️ Caso 1: Array vacío (length es 0)
+            <tr>
+              <td colSpan={2} className="border p-2 text-center">
+                **No se encontraron pacientes**
+              </td>
+            </tr>
+          ) : (
+            // ⬇️ Caso 2: Array con datos (length > 0)
+            filteredPatients().map((p) => (
+              <tr key={p.id}>
+                <td className="border p-2">{p.name}</td>
+                <td className="border p-2 flex gap-2">
+                  <button
+                    className="px-2 py-1 bg-gray-900 text-white rounded"
+                    // Al hacer clic, establecemos el paciente básico. El useEffect se encarga de cargar los datos completos.
+                    onClick={() => setActiveEntryView(p)}
+                  >
+                    Vista
+                  </button>
+                  <button
+                    className="px-2 py-1 bg-blue-600 text-white rounded"
+                    onClick={async () => {
+                      setPdfModalOpen(true);
+                      // Cargar los datos completos si no los tienes
+                      const data = await fetchFullClinicalEntry(p.id);
+                      setPdfEntry({ ...p, ...data });
+                    }}
+                  >
+                    PDF
+                  </button>
                 </td>
               </tr>
-          ) : (
-              // ⬇️ Caso 2: Array con datos (length > 0)
-              filteredPatients().map((p) => (
-                  <tr key={p.id}>
-                    <td className="border p-2">{p.name}</td>
-                    <td className="border p-2 flex gap-2">
-                      <button
-                        className="px-2 py-1 bg-gray-900 text-white rounded"
-                        // Al hacer clic, establecemos el paciente básico. El useEffect se encarga de cargar los datos completos.
-                        onClick={() => setActiveEntryView(p)} 
-                      >
-                        Vista
-                      </button>
-                      <button
-                        className="px-2 py-1 bg-blue-600 text-white rounded"
-                        onClick={async () => {
-                          setPdfModalOpen(true);
-                          // Cargar los datos completos si no los tienes
-                          const data = await fetchFullClinicalEntry(p.id);
-                          setPdfEntry({ ...p, ...data });
-                        }}
-                      >
-                        PDF
-                      </button>
-                    </td>
-                  </tr>
-              ))
+            ))
           )}
         </tbody>
       </table>

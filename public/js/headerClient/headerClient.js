@@ -172,6 +172,11 @@ const SidebarManager = {
     if (!dynamicMenuHtml) return;
 
     try {
+      // Evitar cargar menú dinámico en la página de reunión pública para prevenir redirecciones
+      if (window.location.pathname.includes('/agenda/meet')) {
+        return;
+      }
+
       const response = await fetch('/api/settings/games/menu', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },

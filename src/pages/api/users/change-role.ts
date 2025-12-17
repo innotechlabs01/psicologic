@@ -2,11 +2,16 @@
 import type { APIRoute } from 'astro';
 import { changeUserRole } from '../../../lib/turso/userControl';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const { userId, newRole } = await request.json();
-    
-    if (!userId || !newRole) {
+    const { userId: targetUserId, newRole } = await request.json();
+    const { userId, orgRole } = locals.auth();
+
+    if (!userId || orgRole !== 'org:admin') {
+      return new Response('Unauthorized - Admin access required', { status: 403 });
+    }
+
+    if (!targetUserId || !newRole) {
       return new Response('Missing userId or newRole', { status: 400 });
     }
 
@@ -14,8 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response('Invalid role', { status: 400 });
     }
 
-    const changedBy = 'current_admin_id'; // Reemplazar con ID del admin actual
-    const success = await changeUserRole(userId, newRole, changedBy);
+    const success = await changeUserRole(targetUserId, newRole, userId);
 
     if (success) {
       return new Response(JSON.stringify({ message: 'Rol actualizado exitosamente' }), {

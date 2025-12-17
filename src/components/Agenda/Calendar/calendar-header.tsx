@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useCalendarStore } from "../store/calendar-store";
-import { getTodayEvents } from "../mock-data/events";
+// import { getTodayEvents } from "../mock-data/events";
 // import Link from "next/link";
 // import { ThemeToggle } from "../theme-toggle";
 import {
@@ -29,13 +29,22 @@ import { SchedulePopover } from "./schedule-popover";
 // import { SidebarTrigger } from "../ui/sidebar";
 
 export function CalendarHeader() {
-    const { currentWeekStart } = useCalendarStore();
-    const todayEvents = getTodayEvents();
+    const { currentWeekStart, events } = useCalendarStore();
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+    // Filter events for today (local time)
+    const todayEvents = events.filter(e => e.date === todayStr);
+
     const meetingsCount = todayEvents.filter(
         (e) =>
             e.title.toLowerCase().includes("call") ||
-            e.title.toLowerCase().includes("meeting")
+            e.title.toLowerCase().includes("cita") || // Added 'cita' for Spanish context
+            e.meetingLink // Or simply check if it has a link
     ).length;
+
+    // Count events that are NOT meetings (e.g. reminders, tasks, blocks)
+    // Adjust logic as per user domain. If 'event' means 'not a call', we keep the substraction or refine filter.
+    // For now, keeping logic consistent with "events vs meetings" distinction where meeting implies a call/link.
     const eventsCount = todayEvents.length - meetingsCount;
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -55,9 +64,8 @@ export function CalendarHeader() {
                                     {format(currentWeekStart, "MMMM , yyyy")}
                                 </h1>
                                 <p className="hidden md:block text-xs text-muted-foreground">
-                                    You have {meetingsCount} meeting
-                                    {meetingsCount !== 1 ? "s" : ""} and {eventsCount} event
-                                    {eventsCount !== 1 ? "s" : ""} today 🗓️
+                                    Tienes {meetingsCount} cita{meetingsCount !== 1 ? "s" : ""} y {eventsCount} evento
+                                    {eventsCount !== 1 ? "s" : ""} para hoy 🗓️
                                 </p>
                             </div>
                         </div>

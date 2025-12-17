@@ -8,7 +8,7 @@ import { EventSheet } from "./event-sheet";
 import { CalendarWeekHeader } from "./calendar-week-header";
 import { CalendarHoursColumn } from "./calendar-hours-column";
 import { CalendarDayColumn } from "./calendar-day-column";
-import { INITIAL_SCROLL_OFFSET } from "./calendar-utils";
+import { getCurrentTimePosition } from "./calendar-utils";
 import { useAgendaCache } from "../../../hooks/useAgendaCache";
 
 export function CalendarView() {
@@ -17,11 +17,17 @@ export function CalendarView() {
     const { refreshKey, currentWeekStart, applyFilters } = useCalendarStore();
     const weekDays = getWeekDays();
     const events = getCurrentWeekEvents();
-    const hoursScrollRef = useRef<HTMLDivElement>(null);
-    const daysScrollRefs = useRef<(HTMLDivElement | null)[]>([]);
-    const hasScrolledRef = useRef(false);
-    const [currentTime, setCurrentTime] = useState(new Date());
+
+    // Auto-scroll logic
+
+    const [currentTime, setCurrentTime] = useState<Date | null>(null);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+    useEffect(() => {
+        setCurrentTime(new Date());
+        const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+        return () => clearInterval(timer);
+    }, []);
     const [sheetOpen, setSheetOpen] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -35,7 +41,7 @@ export function CalendarView() {
 
     const fetchAgenda = async (showSkeleton = false) => {
         try {
-            debugger;
+
             if (showSkeleton) {
                 // Notify SkeletonManager for agenda to show overlay
                 if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('agenda:fetch-start'));
@@ -51,7 +57,10 @@ export function CalendarView() {
             if (cachedData) {
                 console.log("Using cached agenda data");
                 setEvents(cachedData);
-                if (showSkeleton) setLoading(false);
+                if (showSkeleton) {
+                    setLoading(false);
+                    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('agenda:fetch-end'));
+                }
                 return;
             }
 
@@ -135,24 +144,25 @@ export function CalendarView() {
 
             console.debug('[CalendarView] valid events to set:', validEvents.length);
             setEvents(validEvents);
-            if (showSkeleton) setLoading(false);
 
             // Update Cache
             setCachedEvents(today.getFullYear(), today.getMonth(), validEvents);
 
+            setLoading(false);
+
             if (showSkeleton && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('agenda:fetch-end'));
         } catch (error) {
             console.error("Auto-refresh failed", error);
+            setLoading(false);
             if (showSkeleton) {
-                setLoading(false);
                 if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('agenda:fetch-end'));
             }
         }
     };
 
     useEffect(() => {
-        // Initial fetch without showing skeleton overlay
-        fetchAgenda(false).then(() => {
+        // Initial fetch showing skeleton overlay/events to ensures SkeletonManager clears
+        fetchAgenda(true).then(() => {
             firstLoadRef.current = false;
         });
     }, []);
@@ -163,8 +173,6 @@ export function CalendarView() {
         if (firstLoadRef.current) return;
         fetchAgenda(true);
     }, [refreshKey]);
-
-    console.log("Rendering CalendarView", { currentWeekStart, events, loading, weekDays });
 
     // events are rendered inside each `CalendarDayColumn` (see `src/components/Agenda/Calendar/calendar-day-column.tsx`)
     // Each `CalendarDayColumn` renders one or more `EventCard` components for that day's events.
@@ -179,45 +187,18 @@ export function CalendarView() {
         (day) => format(day, "yyyy-MM-dd") === format(today, "yyyy-MM-dd")
     );
 
+    // Auto-scroll logic to center current time
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
-        const scrollToInitial = () => {
-            if (!hasScrolledRef.current && hoursScrollRef.current) {
-                hoursScrollRef.current.scrollTop = INITIAL_SCROLL_OFFSET;
-                daysScrollRefs.current.forEach((ref) => {
-                    if (ref) {
-                        ref.scrollTop = INITIAL_SCROLL_OFFSET;
-                    }
-                });
-                hasScrolledRef.current = true;
-            }
-        };
-
-        scrollToInitial();
-        const timeoutId = setTimeout(scrollToInitial, 100);
-        return () => clearTimeout(timeoutId);
-    }, [weekDays]);
-
-    const handleHoursScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const scrollTop = e.currentTarget.scrollTop;
-        daysScrollRefs.current.forEach((ref) => {
-            if (ref) {
-                ref.scrollTop = scrollTop;
-            }
-        });
-    };
-
-    const handleDayScroll =
-        (index: number) => (e: React.UIEvent<HTMLDivElement>) => {
-            const scrollTop = e.currentTarget.scrollTop;
-            if (hoursScrollRef.current) {
-                hoursScrollRef.current.scrollTop = scrollTop;
-            }
-            daysScrollRefs.current.forEach((ref, idx) => {
-                if (ref && idx !== index) {
-                    ref.scrollTop = scrollTop;
-                }
-            });
-        };
+        if (!loading && scrollContainerRef.current) {
+            const now = new Date();
+            const top = getCurrentTimePosition(now);
+            // Center the time or offset slightly so user sees context (300px buffer)
+            const offset = Math.max(0, top - 300);
+            scrollContainerRef.current.scrollTop = offset;
+        }
+    }, [loading]);
 
     const handleEventClick = (event: Event) => {
         setSelectedEvent(event);
@@ -241,8 +222,16 @@ export function CalendarView() {
                 open={sheetOpen}
                 onOpenChange={setSheetOpen}
             />
-            <div className="flex flex-col h-full overflow-x-auto w-full" aria-busy={loading} role="status">
+            {/* Unified Scroll Container */}
+            <div
+                ref={scrollContainerRef}
+                className="flex flex-col flex-1 min-h-0 w-full overflow-auto relative"
+                aria-busy={loading}
+                role="status"
+            >
                 {loading && <span className="sr-only">Cargando eventos...</span>}
+
+                {/* Sticky Header */}
                 <CalendarWeekHeader
                     weekDays={weekDays}
                     onPreviousWeek={handlePrevWeek}
@@ -250,10 +239,7 @@ export function CalendarView() {
                 />
 
                 <div className="flex min-w-full w-max">
-                    <CalendarHoursColumn
-                        onScroll={handleHoursScroll}
-                        scrollRef={hoursScrollRef}
-                    />
+                    <CalendarHoursColumn />
 
                     {weekDays.map((day, dayIndex) => {
                         const dayStr = format(day, "yyyy-MM-dd");
@@ -268,10 +254,6 @@ export function CalendarView() {
                                 today={today}
                                 isTodayInWeek={isTodayInWeek}
                                 currentTime={currentTime}
-                                onScroll={handleDayScroll}
-                                scrollRef={(el) => {
-                                    daysScrollRefs.current[dayIndex] = el;
-                                }}
                                 onEventClick={handleEventClick}
                                 loading={loading}
                             />

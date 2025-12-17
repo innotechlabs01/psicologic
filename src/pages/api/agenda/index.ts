@@ -6,7 +6,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const startDate = url.searchParams.get('startDate');
     const endDate = url.searchParams.get('endDate');
     const token = url.searchParams.get('token');
-    debugger;
+
     // Token-based access (public meeting link)
     if (token) {
         const event = await getEventByToken(token);
@@ -29,8 +29,6 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     // Fetch events ONLY for the logged in user
     const events = await getEventsByDateRange(startDate, endDate, userId);
-    console.log('GET /api/agenda fetched events count:', Array.isArray(events) ? events.length : 0);
-    try { console.log('GET /api/agenda sample:', JSON.stringify((events || []).slice(0,3))); } catch(e) { }
 
     // Auth Check for Admin (Legacy/Optional logic kept if needed, but primary filter is now userId)
     const isAdmin = orgRole === 'org:admin';
@@ -49,7 +47,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
-    debugger;
+
     try {
         // RATE LIMITING
         // Get IP from header (Vercel/Proxies) or clientAddress

@@ -22,8 +22,8 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
         clerkUser = await clerkClient(context).users.getUser(userId);
         break;
       } catch (error) {
-        if ((error as { status?: number; retryAfter?: number }).status === 429 && 
-            (error as { status?: number; retryAfter?: number }).retryAfter) {
+        if ((error as { status?: number; retryAfter?: number }).status === 429 &&
+          (error as { status?: number; retryAfter?: number }).retryAfter) {
           console.warn(`⚠️ Rate limit hit, retrying after ${(error as { status?: number; retryAfter?: number }).retryAfter}s (attempt ${attempt})`);
           await delay((error as { status?: number; retryAfter?: number }).retryAfter ?? 1 * 1000);
         } else {
@@ -40,10 +40,10 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
     const userData = {
       id: clerkUser.id,
       email: clerkUser.emailAddresses[0]?.emailAddress,
-      firstName: clerkUser.firstName,
-      lastName: clerkUser.lastName
+      // firstName: clerkUser.firstName, // Minimal logging
+      // lastName: clerkUser.lastName
     };
-    console.log("📝 Datos del usuario obtenidos de Clerk:", userData);
+    console.log("📝 Datos del usuario obtenidos de Clerk (Sanitized)");
 
     // Create or update user in database
     try {
@@ -108,8 +108,8 @@ export async function handleInsertUsersAdmin(context: any, userId: string): Prom
         clerkUser = await clerkClient(context).users.getUser(userId);
         break;
       } catch (error) {
-        if ((error as { status?: number; retryAfter?: number }).status === 429 && 
-            (error as { status?: number; retryAfter?: number }).retryAfter) {
+        if ((error as { status?: number; retryAfter?: number }).status === 429 &&
+          (error as { status?: number; retryAfter?: number }).retryAfter) {
           console.warn(`⚠️ Rate limit hit, retrying after ${(error as { status?: number; retryAfter?: number }).retryAfter}s (attempt ${attempt})`);
           await delay((error as { status?: number; retryAfter?: number }).retryAfter ?? 1 * 1000);
         } else {
@@ -123,13 +123,7 @@ export async function handleInsertUsersAdmin(context: any, userId: string): Prom
       return "null";
     }
 
-    const userData = {
-      id: clerkUser.id,
-      email: clerkUser.emailAddresses[0]?.emailAddress,
-      firstName: clerkUser.firstName,
-      lastName: clerkUser.lastName
-    };
-    console.log("📝 Datos del usuario obtenidos de Clerk:", userData);
+    // console.log("📝 Datos del usuario obtenidos de Clerk:", userData); // Sanitized
 
     // Create or update user in database
     try {
@@ -182,29 +176,25 @@ const handlerAddUserToOrg = async (context: APIContext, userId: string): Promise
   // Asociar organización con el usuario (background, sin bloquear middleware)
 
   try {
-    console.log("🧲 Verificando membresía en organización...");
+    const orgId = import.meta.env.PUBLIC_CLERK_ORG_ID || "org_32LzH7sL3DcbEJ1GnvOErWFTQkO"; // Use env or fallback
 
     const memberships = await clerkClient(context).organizations.getOrganizationMembershipList({
-      organizationId: "org_32LzH7sL3DcbEJ1GnvOErWFTQkO",
+      organizationId: orgId,
     });
 
     const alreadyMember = memberships.data.some(m => m.publicUserData?.userId === userId);
 
     if (!alreadyMember) {
-      console.log("➕ Creando membresía para el usuario en la organización...");
       await clerkClient(context).organizations.createOrganizationMembership({
-        organizationId: "org_32LzH7sL3DcbEJ1GnvOErWFTQkO",
+        organizationId: orgId,
         userId,
         role: "org:client",
       });
-      console.log("✅ Usuario asociado a la organización correctamente");
       return true;
     } else {
-      console.log("ℹ️ Usuario ya pertenece a la organización");
       return true;
     }
   } catch (error) {
-    console.error("❌ Error asociando usuario a organización:", error);
     return false;
   }
 }
@@ -219,63 +209,19 @@ const handlerInitializePaymentTrial = async (context: APIContext, userId: string
     // validamos la autenticacion
     const clerkUser = await clerkClient(context).users.getUser(userId);
     if (!clerkUser) {
-      console.error("❌ Error de autenticación en Clerk:", clerkUser);
       throw clerkUser;
     }
-    
+
     // 15 días de prueba (Fecha límite de pago)
-    const nextPaymentDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(); 
+    const nextPaymentDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString();
     // 5 días de prórroga (Fecha de bloqueo total)
-    const blockedPaymentDate = new Date(Date.now() + (15 + 5) * 24 * 60 * 60 * 1000).toISOString(); 
+    const blockedPaymentDate = new Date(Date.now() + (15 + 5) * 24 * 60 * 60 * 1000).toISOString();
 
     console.log(`Setting up 15-day trial for user ${userId}. Payment due: ${nextPaymentDate}, Block date: ${blockedPaymentDate}`);
 
-    if (userId === "user_33QQtauDI314VtzXnGnZQPan2Cw" || userId === "user_33RoQhnBva6vjdOAXGuHVgxRQNl") {
-      const nextPaymentDate = new Date(Date.now() + 1360 * 24 * 60 * 60 * 1000).toISOString(); 
-      const blockedPaymentDate = new Date(Date.now() + (1360 + 5) * 24 * 60 * 60 * 1000).toISOString(); 
-      try{
-        // DEBUG: pausa aquí si se ejecuta el proceso con un inspector (ej. `node --inspect`)
-        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
-          ;
-        }
-        await client.execute(
-          `
-            INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          `,
-          [
-            uuidv4(), // Usar un ID de transacción único
-            userId,
-            0, // Monto 0 para la prueba
-            'trial', // Estado inicial de prueba
-            new Date(), // Fecha de inicio de la prueba
-            nextPaymentDate,
-            blockedPaymentDate,
-            new Date()
-          ]
-        );
-        // Asegurar que el usuario esté marcado como 'approved' o 'active' inicialmente
-        // DEBUG: pausa aquí antes del UPDATE si se adjunta un inspector
-        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
-          ;
-        }
-        await client.execute(
-          `
-            UPDATE usuarios
-            SET status = ?
-            WHERE clerk_user_id = ?
-          `,
-          [
-            'active', // Usar 'active' para indicar que está usando la app
-            userId
-          ]
-        );
-        } catch (error) {
-          console.error("❌ Error al insertar pago en la base de datos:", error);
-          throw error;
-        }
-      return;
-    }
+    // Eliminado código de excepciones hardcoded
+    // if (userId === "..." || userId === "...") { ... } 
+
 
     // DEBUG: pausa aquí si se ejecuta el proceso con un inspector (ej. `node --inspect`)
     if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
@@ -317,12 +263,12 @@ const handlerInitializePaymentTrial = async (context: APIContext, userId: string
     );
 
     if (result) {
-        console.error('❌ Error al actualizar estado del usuario a "active":', result);
+      console.error('❌ Error al actualizar estado del usuario a "active":', result);
     }
-    
+
     console.log("✅ Registro de prueba de pago inicial completado.");
 
-  } catch(error) {
+  } catch (error) {
     console.error(`Se evidencia un error en handlerInitializePaymentTrial:`, error);
     // No lanzar error para no bloquear el login, pero registrarlo.
     throw error;

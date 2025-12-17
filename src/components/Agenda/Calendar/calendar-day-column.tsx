@@ -18,9 +18,7 @@ interface CalendarDayColumnProps {
     events: Event[];
     today: Date;
     isTodayInWeek: boolean;
-    currentTime: Date;
-    onScroll: (index: number) => (e: React.UIEvent<HTMLDivElement>) => void;
-    scrollRef: (el: HTMLDivElement | null) => void;
+    currentTime: Date | null;
     onEventClick: (event: Event) => void;
     loading?: boolean;
 }
@@ -32,8 +30,6 @@ export function CalendarDayColumn({
     today,
     isTodayInWeek,
     currentTime,
-    onScroll,
-    scrollRef,
     onEventClick,
     loading,
 }: CalendarDayColumnProps) {
@@ -43,7 +39,7 @@ export function CalendarDayColumn({
     if (typeof window !== 'undefined') {
         try {
             // Lightweight sample to avoid huge logs
-            console.debug('[CalendarDayColumn] day:', day.toISOString(), 'eventsCount:', events?.length, 'sample:', events?.slice(0,2));
+            console.debug('[CalendarDayColumn] day:', day.toISOString(), 'eventsCount:', events?.length, 'sample:', events?.slice(0, 2));
         } catch (e) {
             console.debug('[CalendarDayColumn] debug error', e);
         }
@@ -51,10 +47,8 @@ export function CalendarDayColumn({
 
     return (
         <div
-            ref={scrollRef}
-            onScroll={onScroll(dayIndex)}
             className={cn(
-                "flex-1 border-r border-border last:border-r-0 relative min-w-32 overflow-y-auto transition-shadow duration-300",
+                "flex-1 border-r border-border last:border-r-0 relative min-w-32 transition-shadow duration-300",
                 holiday &&
                 "bg-red-100/50 dark:bg-red-900/20 shadow-[0_0_12px_rgba(255,0,0,0.45)]"
             )}
