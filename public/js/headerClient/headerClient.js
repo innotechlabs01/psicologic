@@ -10,6 +10,10 @@ const SELECTORS = {
   sidebarLink: '.sidebar-link[data-navigate]'
 };
 
+const convertNameMenu = (name) => {
+  return name.toLowerCase() === "config_agend" ? "Config. Horario" : name;
+}
+
 const SidebarManager = {
   menuInitialized: false,
 
@@ -34,7 +38,7 @@ const SidebarManager = {
     const sidebar = this.getElement(SELECTORS.sidebar, 'Elementos del sidebar no encontrados');
     const overlay = this.getElement(SELECTORS.overlay, 'Elementos del sidebar no encontrados');
     const toggleButton = this.getElement(SELECTORS.toggleButton, 'Elementos del sidebar no encontrados');
-    
+
     if (sidebar && overlay && toggleButton) {
       sidebar.classList.replace('-translate-x-full', 'translate-x-0');
       overlay.classList.remove('hidden');
@@ -47,7 +51,7 @@ const SidebarManager = {
     const sidebar = this.getElement(SELECTORS.sidebar, 'Elementos del sidebar no encontrados');
     const overlay = this.getElement(SELECTORS.overlay, 'Elementos del sidebar no encontrados');
     const toggleButton = this.getElement(SELECTORS.toggleButton, 'Elementos del sidebar no encontrados');
-    
+
     if (sidebar && overlay && toggleButton) {
       sidebar.classList.replace('translate-x-0', '-translate-x-full');
       overlay.classList.add('hidden');
@@ -82,7 +86,7 @@ const SidebarManager = {
             this.logError('Error ejecutando script inline:', error);
           }
         } else {
-          
+
         }
       }
     }
@@ -164,10 +168,15 @@ const SidebarManager = {
       return;
     }
     const dynamicMenuHtml = this.getElement(SELECTORS.dynamicMenu, 'sidebar-menu-client-dynamic element not found');
-    
+
     if (!dynamicMenuHtml) return;
 
     try {
+      // Evitar cargar menú dinámico en la página de reunión pública para prevenir redirecciones
+      if (window.location.pathname.includes('/agenda/meet')) {
+        return;
+      }
+
       const response = await fetch('/api/settings/games/menu', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -212,7 +221,7 @@ const SidebarManager = {
         if (isDynamic && Array.isArray(item.subItem) && item.subItem.length > 0) {
           return this.renderDynamicSubMenu(label, item.subItem, item.id || label);
         }
-        
+
         const namePath = label === 'Historia Clinica' ? `/client/history/historias` : `/client/${label}`;
 
         return `
@@ -250,23 +259,23 @@ const SidebarManager = {
       </button>
       <ul id="${matchUnique}" class="hidden py-2 space-y-2">
         ${subItems
-          .filter(nestedItem => nestedItem.status !== false)
-          .map(nestedItem => {
-            const nestedLabel = typeof nestedItem.name === 'string' ? nestedItem.name : nestedItem.toString();
-            const pathEndPoint = label.toLowerCase() === 'juego' ? `/client/games/${nestedLabel}` : `/client/settings/${nestedLabel}`;
+        .filter(nestedItem => nestedItem.status !== false)
+        .map(nestedItem => {
+          const nestedLabel = typeof nestedItem.name === 'string' ? nestedItem.name : nestedItem.toString();
+          const pathEndPoint = label.toLowerCase() === 'juego' ? `/client/games/${nestedLabel}` : `/client/settings/${nestedLabel}`;
 
-            return `
-              <li>
-                <a href=${pathEndPoint} data-navigate class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 sidebar-link">
-                  <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 21">
-                    <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z"/>
-                  </svg>
-                  <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">${nestedLabel}</span>
-                </a>
+          return `
+            <li>
+            <a href=${pathEndPoint} data-navigate class="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 sidebar-link">
+              <svg class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 21">
+                <path d="M15 12a1 1 0 0 0 .962-.726l2-7A1 1 0 0 0 17 3H3.77L3.175.745A1 1 0 0 0 2.208 0H1a1 1 0 0 0 0 2h.438l.6 2.255v.019l2 7 .746 2.986A3 3 0 1 0 9 17a2.966 2.966 0 0 0-.184-1h2.368c-.118.32-.18.659-.184 1a3 3 0 1 0 3-3H6.78l-.5-2H15Z" />
+              </svg>
+              <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">${nestedLabel}</span>
+            </a>
               </li>
-            `;
-          })
-          .join('')}
+  `;
+        })
+        .join('')}
       </ul>
     `;
   },

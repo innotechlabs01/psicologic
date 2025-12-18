@@ -33,7 +33,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 // -------------------- Helpers --------------------
 function genId(prefix = 'c') {
-  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function moveItem(arr, fromIndex, toIndex) {
@@ -173,10 +173,9 @@ export default function BuilderWithEditorAndReorder() {
         body: JSON.stringify({ name: 'Historia Clínica', structure: { components } }),
       });
       if (!res.ok) throw new Error('Error saving');
-      const data = await res.json();
-      window.alert('Guardado con id: ' + (data.id || 's/n'));
+      showToast('Template guardado', 'success');
     } catch (err) {
-      window.alert('Error guardando: ' + (err?.message || String(err)));
+      showToast('Error guardando template: ' + (err?.message || String(err)), 'error');
     }
   }
 

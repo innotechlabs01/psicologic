@@ -1,4 +1,7 @@
 
+## 1.2.0.- [unreleased]
+- History Clinic
+
 ## 1.1.0 - [2025-11-09]
 - Fixed module settings
 

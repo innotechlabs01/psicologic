@@ -1,0 +1,15 @@
+---
+import LayoutClient from "../../layouts/LayoutClient.astro";
+import { CalendarScheduler } from "../../components/Agenda/Client/CalendarScheduler";
+// We will create this component integrating the user's logic
+---
+
+<LayoutClient title="Agendar Cita">
+    <div
+        class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4"
+    >
+        <div class="w-full max-w-5xl">
+            <CalendarScheduler client:load />
+        </div>
+    </div>
+</LayoutClient>

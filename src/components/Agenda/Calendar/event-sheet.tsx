@@ -57,30 +57,11 @@ function getMeetingCode(link?: string): string {
 }
 
 function getParticipantName(participantId: string): string {
-    const names: Record<string, string> = {
-        user1: "James Brown",
-        user2: "Sophia Williams",
-        user3: "Arthur Taylor",
-        user4: "Emma Wright",
-        user5: "Leonel Ngoya",
-    };
-
-    return (
-        names[participantId] ||
-        participantId.charAt(0).toUpperCase() + participantId.slice(1)
-    );
+    return participantId.charAt(0).toUpperCase() + participantId.slice(1);
 }
 
 function getParticipantEmail(participantId: string): string {
-    const emails: Record<string, string> = {
-        user1: "james11@gmail.com",
-        user2: "sophia.williams@gmail.com",
-        user3: "arthur@hotmail.com",
-        user4: "emma@outlook.com",
-        user5: "leonelngoya@gmail.com",
-    };
-
-    return emails[participantId] || `${participantId}@gmail.com`;
+    return `${participantId}@gmail.com`;
 }
 
 function copyToClipboard(text: string) {
@@ -101,8 +82,8 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
     const meetingCode = getMeetingCode(event.meetingLink);
 
     const organizer = event.participants[0] || "user1";
-    const organizerName = getParticipantName(organizer);
-    const organizerEmail = getParticipantEmail(organizer);
+    const organizerName = organizer;
+    const organizerEmail = organizer;
     const otherParticipants = event.participants.slice(1);
 
     const mockParticipants = [
@@ -115,19 +96,12 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
         },
         ...otherParticipants.slice(0, 3).map((p) => ({
             id: p,
-            name: getParticipantName(p),
-            email: getParticipantEmail(p),
+            name: p,
+            email: p,
             isOrganizer: false,
             rsvp: "yes" as const,
         })),
-        {
-            id: "user5",
-            name: "Leonel Ngoya",
-            email: "leonelngoya@gmail.com",
-            isOrganizer: false,
-            rsvp: rsvpStatus || ("yes" as const),
-            isYou: true,
-        },
+
     ];
 
     const yesCount = mockParticipants.filter((p) => p.rsvp === "yes").length;
@@ -197,10 +171,10 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                             </div>
                         </div>
 
-                        <Button variant="outline">
+                        {/* <Button variant="outline">
                             <span>Propose new time</span>
                             <ArrowUpRight className="size-4" />
-                        </Button>
+                        </Button> */}
                     </SheetHeader>
 
                     <div className="flex-1 overflow-y-auto px-4 py-4">
@@ -301,7 +275,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                                             </svg>
                                         </div>
                                         <p className="text-xs font-medium text-muted-foreground flex-1">
-                                            Meeting in Google Meet
+                                            Meeting
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             Code: {meetingCode}
@@ -316,7 +290,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                                                 }
                                             }}
                                         >
-                                            <span>Join Google Meet meeting</span>
+                                            <span>Join meeting</span>
                                             <div className="flex gap-0.5">
                                                 <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded">
                                                     ⌘
@@ -356,12 +330,12 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                                     </div>
                                     <span>Organizer: {organizerEmail}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {/* <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <div className="p-1">
                                         <Phone className="size-4" />
                                     </div>
                                     <span>(US) +1 904-330-1131</span>
-                                </div>
+                                </div> */}
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <div className="p-1">
                                         <Users className="size-4" />

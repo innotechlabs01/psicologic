@@ -10,6 +10,8 @@ import {
 import { type Event, events, addEvent as addEventToStore } from "../mock-data/events";
 
 interface CalendarState {
+    events: Event[];
+    setEvents: (events: Event[]) => void;
     currentWeekStart: Date;
     searchQuery: string;
     eventTypeFilter: "all" | "with-meeting" | "without-meeting";
@@ -25,6 +27,8 @@ interface CalendarState {
     setParticipantsFilter: (
         filter: "all" | "with-participants" | "without-participants"
     ) => void;
+    refreshKey: number;
+    applyFilters: (opts: { searchQuery?: string; eventTypeFilter?: "all" | "with-meeting" | "without-meeting"; participantsFilter?: "all" | "with-participants" | "without-participants" }) => void;
     addEvent: (event: Omit<Event, "id">) => void;
     getCurrentWeekEvents: () => Event[];
     getWeekDays: () => Date[];
@@ -37,24 +41,20 @@ function getDayOfWeek(date: Date): number {
     return day === 0 ? 6 : day - 1;
 }
 
-function getEventsForWeek(startDate: Date): Event[] {
+function getEventsForWeek(startDate: Date, allEvents: Event[]): Event[] {
     const weekEvents: Event[] = [];
+
+    // Helper to format date consistent with event.date (yyyy-MM-dd)
+    const getIsoDate = (d: Date) => format(d, 'yyyy-MM-dd');
 
     for (let i = 0; i < 7; i++) {
         const currentDay = addDays(startDate, i);
-        const currentDayOfWeek = getDayOfWeek(currentDay);
+        const currentDayStr = getIsoDate(currentDay);
 
-        events.forEach((event) => {
-            const eventDate = new Date(event.date);
-            const eventDayOfWeek = getDayOfWeek(eventDate);
-
-            if (eventDayOfWeek === currentDayOfWeek) {
-                const eventDateStr = format(currentDay, "yyyy-MM-dd");
-                weekEvents.push({
-                    ...event,
-                    id: `${event.id}-${eventDateStr}`,
-                    date: eventDateStr,
-                });
+        allEvents.forEach((event) => {
+            // Simple string comparison - safe and robust
+            if (event.date === currentDayStr) {
+                weekEvents.push(event);
             }
         });
     }
@@ -63,6 +63,9 @@ function getEventsForWeek(startDate: Date): Event[] {
 }
 
 export const useCalendarStore = create<CalendarState>((set, get) => ({
+    events: [], // Start empty, load from API
+    setEvents: (events) => set({ events }),
+
     currentWeekStart: startOfWeek(new Date(), { weekStartsOn: 1 }),
     searchQuery: "",
     eventTypeFilter: "all",
@@ -96,12 +99,26 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     ) => set({ participantsFilter: filter }),
 
     addEvent: (event: Omit<Event, "id">) => {
-        addEventToStore(event);
+        // Optimistic update
+        set((state) => ({
+            events: [...state.events, { ...event, id: Math.random().toString() }]
+        }));
     },
+
+    // Manual refresh trigger used to signal CalendarView to fetch with skeleton
+    refreshKey: 0,
+    applyFilters: (opts: { searchQuery?: string; eventTypeFilter?: "all" | "with-meeting" | "without-meeting"; participantsFilter?: "all" | "with-participants" | "without-participants" }) =>
+        set((state) => ({
+            searchQuery: opts.searchQuery ?? state.searchQuery,
+            eventTypeFilter: opts.eventTypeFilter ?? state.eventTypeFilter,
+            participantsFilter: opts.participantsFilter ?? state.participantsFilter,
+            refreshKey: state.refreshKey + 1,
+        })),
 
     getCurrentWeekEvents: () => {
         const state = get();
-        let weekEvents = getEventsForWeek(state.currentWeekStart);
+        // Use state.events instead of imported 'events'
+        let weekEvents = getEventsForWeek(state.currentWeekStart, state.events);
 
         if (state.searchQuery) {
             const query = state.searchQuery.toLowerCase();

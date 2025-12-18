@@ -1,0 +1,79 @@
+<style>
+  :root {
+    --loader-bg: rgba(245, 246, 248, 0.92);
+    --loader-accent: #6366f1; /* Indigo 500 (moderno, SaaS) */
+  }
+
+  #global-loader {
+    position: fixed;
+    inset: 0;
+    background: var(--loader-bg);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 1;
+    transition: opacity .4s ease, visibility .4s ease;
+    visibility: visible;
+  }
+
+  #global-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  /* Orb estilo SaaS moderno */
+  .orb {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 30% 30%,
+      var(--loader-accent),
+      rgba(99,102,241,0.4)
+    );
+    animation: pulse 1.2s infinite ease-in-out,
+               float 3s infinite ease-in-out;
+    filter: drop-shadow(0 0 8px rgba(99,102,241,0.4));
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.85; }
+    50% { transform: scale(1.07); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.85; }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0); }
+  }
+</style>
+
+<div id="global-loader">
+  <div class="orb"></div>
+</div>
+
+<script>
+  // Se oculta cuando toda la página (React, Clerk, Astro) terminó de cargar
+  window.addEventListener("load", () => {
+    const loader = document.getElementById("global-loader");
+    if (!loader) return;
+    setTimeout(() => loader.classList.add("hidden"), 150);
+  });
+</script>
+
+<script>
+  // Más preciso: cuando Astro hidrata o se cambia la página
+  document.addEventListener("astro:page-load", () => {
+    const loader = document.getElementById("global-loader");
+    if (!loader) return;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        loader.classList.add("hidden");
+      });
+    });
+  });
+</script>

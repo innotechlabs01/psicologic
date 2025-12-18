@@ -9,15 +9,33 @@ interface EventCardProps {
     event: Event;
     style: React.CSSProperties;
     onClick?: () => void;
+    loading?: boolean;
 }
 
-export function EventCard({ event, style, onClick }: EventCardProps) {
+import { SkeletonCard, SkeletonLine, SkeletonCircle } from "../ui/skeleton";
+
+export function EventCard({ event, style, onClick, loading }: EventCardProps) {
     const duration = getEventDuration(event.startTime, event.endTime);
     const isVeryShortEvent = duration < 30;
     const isMediumEvent = duration >= 25 && duration < 60;
     const timeStr = `${event.startTime} - ${event.endTime}${event.timezone ? ` (${event.timezone})` : ""
         }`;
     const hasMultipleParticipants = event.participants.length > 3;
+
+    if (loading) {
+        return (
+            <div
+                className="absolute left-2 right-2 bg-card border border-border rounded-lg px-2 py-1 z-10"
+                style={style}
+            >
+                <div className="flex items-center gap-2">
+                    <SkeletonCircle className="w-4 h-4" />
+                    <SkeletonLine className="w-3/4 h-3" />
+                    <SkeletonLine className="w-12 h-3 ml-auto" />
+                </div>
+            </div>
+        );
+    }
 
     if (isVeryShortEvent) {
         return (

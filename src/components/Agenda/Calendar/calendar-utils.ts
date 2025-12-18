@@ -45,3 +45,31 @@ export function getEventDuration(startTime: string, endTime: string): number {
     const endTotal = endHour * 60 + (endMin || 0);
     return endTotal - startTotal;
 }
+
+import festivos from "festivos-colombianos";
+import { format } from "date-fns";
+
+export function getHoliday(date: Date): string | null {
+    const year = date.getFullYear();
+
+    let holidaysColombia;
+    // Handle different import scenarios (ESM vs CJS interop)
+    if (typeof festivos === 'function') {
+        holidaysColombia = festivos;
+    } else if (typeof festivos === 'object' && festivos !== null) {
+        // @ts-ignore
+        holidaysColombia = festivos.default || festivos;
+    }
+
+    if (typeof holidaysColombia !== 'function') {
+        console.error("festivos-colombianos library not loaded correctly", festivos);
+        return null;
+    }
+
+    const holidays = holidaysColombia(year);
+    const dateStr = format(date, "yyyy-MM-dd");
+
+    const holiday = holidays.find((h: any) => h.celebrationDay === dateStr);
+
+    return holiday ? holiday.celebration : null;
+}

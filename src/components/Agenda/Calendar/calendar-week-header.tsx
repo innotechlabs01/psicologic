@@ -4,6 +4,9 @@ import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../ui/button";
 
+import { getHoliday } from "./calendar-utils";
+import { cn } from "../../../lib/utils";
+
 interface CalendarWeekHeaderProps {
     weekDays: Date[];
     onPreviousWeek: () => void;
@@ -35,16 +38,27 @@ export function CalendarWeekHeader({
                     <ChevronRight className="size-4 md:size-5" />
                 </Button>
             </div>
-            {weekDays.map((day) => (
-                <div
-                    key={day.toISOString()}
-                    className="flex-1 border-r border-border last:border-r-0 p-1.5 md:p-2 min-w-44 flex items-center"
-                >
-                    <div className="text-xs md:text-sm font-medium text-foreground">
-                        {format(day, "dd EEE").toUpperCase()}
+            {weekDays.map((day) => {
+                const holiday = getHoliday(day);
+                return (
+                    <div
+                        key={day.toISOString()}
+                        className="flex-1 border-r border-border last:border-r-0 p-1.5 md:p-2 min-w-32 flex flex-col justify-center"
+                    >
+                        <div className={cn(
+                            "text-xs md:text-sm font-medium",
+                            holiday ? "text-red-500" : "text-foreground"
+                        )}>
+                            {format(day, "dd EEE").toUpperCase()}
+                        </div>
+                        {holiday && (
+                            <div className="text-[10px] md:text-xs text-red-500 truncate font-normal" title={holiday}>
+                                {holiday}
+                            </div>
+                        )}
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 }

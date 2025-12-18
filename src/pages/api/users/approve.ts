@@ -2,22 +2,20 @@
 import type { APIRoute } from 'astro';
 import { approveUser } from '../../../lib/turso/userControl';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const { userId } = await request.json();
-    
-    if (!userId) {
-      return new Response('Missing userId', { status: 400 });
+    const { userId: targetUserId } = await request.json();
+    const { userId, orgRole } = locals.auth();
+
+    if (!userId || orgRole !== 'org:admin') {
+      return new Response('Unauthorized - Admin access required', { status: 403 });
     }
 
-    // TODO: Verificar que el usuario actual sea admin
-    // const currentUser = await getCurrentUser(request);
-    // if (!isAdmin(currentUser)) {
-    //   return new Response('Unauthorized', { status: 403 });
-    // }
+    if (!targetUserId) {
+      return new Response('Missing target userId', { status: 400 });
+    }
 
-    const approvedBy = 'current_admin_id'; // Reemplazar con ID del admin actual
-    const success = await approveUser(userId, approvedBy);
+    const success = await approveUser(targetUserId, userId);
 
     if (success) {
       return new Response(JSON.stringify({ message: 'Usuario aprobado exitosamente' }), {
