@@ -55,7 +55,7 @@ export function CreateEventDialog({
 
         e.preventDefault();
 
-        if (!title || !date || !startTime || !endTime ) {
+        if (!title || !date || !startTime || !endTime) {
             showToast('Por favor completa título, fecha, horas y participantes.', 'error');
             return;
         }

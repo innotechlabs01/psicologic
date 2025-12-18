@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 
 :root {
@@ -120,6 +123,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+
 
 body {
   margin: 0;
@@ -566,7 +571,7 @@ body {
 #global-loader {
   position: fixed;
   inset: 0;
-  background: rgba(255,255,255,0.6);
+  background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -587,8 +592,15 @@ body {
 }
 
 @keyframes bounce {
-  from { transform: translateY(0) scale(1); opacity: 0.4; }
-  to   { transform: translateY(-6px) scale(1.2); opacity: 1; }
+  from {
+    transform: translateY(0) scale(1);
+    opacity: 0.4;
+  }
+
+  to {
+    transform: translateY(-6px) scale(1.2);
+    opacity: 1;
+  }
 }
 
 #global-loader.show {

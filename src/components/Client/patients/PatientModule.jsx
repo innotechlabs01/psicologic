@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import ClinicPdfModal from "../pdf/PdfPreviewModal.tsx";
 
+import { showToast } from "../../../utils/toast";
+
 function formatLabel(str) {
   return str.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -93,7 +95,6 @@ function ClinicalViewModal({ entry, onClose }) {
 
         {/* Cuerpo de la Historia Clínica - Scrollable */}
         <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto bg-gray-50">
-
           {answerEntries.length === 0 ? (
             <div className="text-center py-10 text-gray-500">
               <p>No hay respuestas registradas para esta entrada o el formato es incorrecto.</p>
@@ -249,6 +250,15 @@ export default function PatientModule({ clerkUserId }) {
 
 
   async function saveNewPatient() {
+    const tRes = await fetch(`/api/patients/template-default?id=${clerkUserId}`);
+    const tJson = await tRes.json();
+
+    if (!tJson.ok) {
+      setShowCreateModal(false);
+      showToast(`${tJson.message}`, 'error')
+      return null // 👈 corta el flujo
+    }
+
     // Lógica de guardar paciente y obtener template... (sin cambios)
     const res = await fetch("/api/patients/patient-create", {
       method: "POST",
@@ -256,9 +266,6 @@ export default function PatientModule({ clerkUserId }) {
       headers: { "Content-Type": "application/json" },
     });
     const json = await res.json();
-
-    const tRes = await fetch(`/api/patients/template-default?id=${clerkUserId}`);
-    const tJson = await tRes.json();
 
     setSelectedPatient(json.id);
     setTemplateStructure(tJson);
@@ -440,24 +447,32 @@ export default function PatientModule({ clerkUserId }) {
             <input
               className="border p-2 rounded w-full"
               placeholder="Nombre"
+              type="text"
+              required
               onChange={(e) => setCreateData({ ...createData, name: e.target.value })}
             />
 
             <input
               className="border p-2 rounded w-full"
               placeholder="Documento"
+              type="number"
+              required
               onChange={(e) => setCreateData({ ...createData, document: e.target.value })}
             />
 
             <input
               className="border p-2 rounded w-full"
               placeholder="Email"
+              type="email"
+              required
               onChange={(e) => setCreateData({ ...createData, email: e.target.value })}
             />
 
             <input
               className="border p-2 rounded w-full"
               placeholder="Teléfono"
+              type="number"
+              required
               onChange={(e) => setCreateData({ ...createData, phone: e.target.value })}
             />
 
