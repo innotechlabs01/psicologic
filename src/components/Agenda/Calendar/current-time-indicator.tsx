@@ -7,7 +7,7 @@ interface CurrentTimeIndicatorProps {
     day: Date;
     today: Date;
     isTodayInWeek: boolean;
-    currentTime: Date;
+    currentTime: Date | null;
 }
 
 export function CurrentTimeIndicator({
@@ -16,7 +16,7 @@ export function CurrentTimeIndicator({
     isTodayInWeek,
     currentTime,
 }: CurrentTimeIndicatorProps) {
-    if (!isTodayInWeek || !isSameDay(day, today)) {
+    if (!currentTime || !isTodayInWeek || !isSameDay(day, today)) {
         return null;
     }
 

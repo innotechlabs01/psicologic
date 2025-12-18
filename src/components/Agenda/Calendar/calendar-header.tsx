@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useCalendarStore } from "../store/calendar-store";
-import { getTodayEvents } from "../mock-data/events";
+// import { getTodayEvents } from "../mock-data/events";
 // import Link from "next/link";
 // import { ThemeToggle } from "../theme-toggle";
 import {
@@ -29,13 +29,22 @@ import { SchedulePopover } from "./schedule-popover";
 // import { SidebarTrigger } from "../ui/sidebar";
 
 export function CalendarHeader() {
-    const { currentWeekStart } = useCalendarStore();
-    const todayEvents = getTodayEvents();
+    const { currentWeekStart, events } = useCalendarStore();
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+
+    // Filter events for today (local time)
+    const todayEvents = events.filter(e => e.date === todayStr);
+
     const meetingsCount = todayEvents.filter(
         (e) =>
             e.title.toLowerCase().includes("call") ||
-            e.title.toLowerCase().includes("meeting")
+            e.title.toLowerCase().includes("cita") || // Added 'cita' for Spanish context
+            e.meetingLink // Or simply check if it has a link
     ).length;
+
+    // Count events that are NOT meetings (e.g. reminders, tasks, blocks)
+    // Adjust logic as per user domain. If 'event' means 'not a call', we keep the substraction or refine filter.
+    // For now, keeping logic consistent with "events vs meetings" distinction where meeting implies a call/link.
     const eventsCount = todayEvents.length - meetingsCount;
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
@@ -52,18 +61,17 @@ export function CalendarHeader() {
                             {/* <SidebarTrigger className="shrink-0" /> */}
                             <div className="flex-1 min-w-0">
                                 <h1 className="text-sm md:text-base lg:text-lg font-semibold text-foreground truncate mb-0 md:mb-1">
-                                    {format(currentWeekStart, "MMMM dd, yyyy")}
+                                    {format(currentWeekStart, "MMMM , yyyy")}
                                 </h1>
                                 <p className="hidden md:block text-xs text-muted-foreground">
-                                    You have {meetingsCount} meeting
-                                    {meetingsCount !== 1 ? "s" : ""} and {eventsCount} event
-                                    {eventsCount !== 1 ? "s" : ""} today 🗓️
+                                    Tienes {meetingsCount} cita{meetingsCount !== 1 ? "s" : ""} y {eventsCount} evento
+                                    {eventsCount !== 1 ? "s" : ""} para hoy 🗓️
                                 </p>
-                            </div>
-                        </div>
+                            </div >
+                        </div >
 
                         <div className="flex items-center gap-1 md:gap-1.5 lg:gap-2 shrink-0">
-                            <DropdownMenu>
+                            {/* <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         variant="ghost"
@@ -140,9 +148,9 @@ export function CalendarHeader() {
                                         </span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
-                            </DropdownMenu>
+                            </DropdownMenu> */}
 
-                            <SchedulePopover>
+                            {/* <SchedulePopover>
                                 <Button
                                     variant="outline"
                                     size="icon"
@@ -151,15 +159,15 @@ export function CalendarHeader() {
                                     <CalendarIcon className="size-4" />
                                     <span className="hidden lg:inline">Schedule</span>
                                 </Button>
-                            </SchedulePopover>
+                            </SchedulePopover> */}
 
                             <Button
                                 size="icon"
-                                className="size-7 md:size-8 shrink-0 md:w-auto md:px-2 md:gap-1.5 bg-foreground text-background hover:bg-foreground/90"
+                                className="size-7 md:size-8 shrink-0 md:w-auto md:px-2 md:gap-1.5 bg-foreground text-background hover:bg-blue-500/90"
                                 onClick={() => setCreateDialogOpen(true)}
                             >
                                 <Plus className="size-4" />
-                                <span className="hidden lg:inline">Create Event</span>
+                                <span className="hidden lg:inline">Agendar Cita</span>
                             </Button>
 
                             {/* <ThemeToggle /> */}
@@ -178,9 +186,9 @@ export function CalendarHeader() {
                                 </Button>
                             </Link> */}
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </div >
+                </div >
+            </div >
         </>
     );
 }

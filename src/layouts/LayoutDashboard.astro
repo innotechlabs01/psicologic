@@ -3,7 +3,10 @@
 import Footer from "../components/Footer/footer.astro";
 import Header from "../components/Header/header.astro";
 
-const { title } = Astro.props;
+import SkeletonManager from "../components/Skeleton/SkeletonManager.astro";
+import { ClientRouter } from "astro:transitions";
+
+const { title, skeletonType } = Astro.props;
 ---
 
 <!doctype html>
@@ -15,6 +18,7 @@ const { title } = Astro.props;
     <meta name="generator" content={Astro.generator} />
     <link rel="stylesheet" href="/css/main.css" />
     <title>{title}</title>
+    <ClientRouter />
   </head>
 
   <body class="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -28,17 +32,16 @@ const { title } = Astro.props;
 
       <!-- Contenido principal alineado -->
       <main class="flex-2 w-full sm:w-auto">
-        <div class="p-6 max-w-full">
+        <div class="p-6 max-w-full relative min-h-[calc(100vh-4rem)]">
           <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2">
           </div>
-          <script type="module" src="/js/toast.js"></script>
-          <slot />
         </div>
+        <script type="module" src="/js/toast.js"></script>
+        <SkeletonManager type={skeletonType} />
+        <slot />
       </main>
     </div>
-
-    <Footer />
-  </body>
+  </body><Footer />
 </html>
 
 <style>

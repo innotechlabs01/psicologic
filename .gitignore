@@ -13,6 +13,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+.vscode
+.vscode/*
+.vscode/
+
 # pnpm lock file
 pnpm-lock.*
 *pmp-lock.yaml
@@ -43,5 +47,5 @@ astro.lock
 # Vercel
 .vercel/
 
-# Public directory (includes pdfs)
-public/
+# PDF
+public/pdfs/

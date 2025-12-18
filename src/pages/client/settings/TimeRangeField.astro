@@ -1,0 +1,22 @@
+---
+const { day } = Astro.props;
+const id = day
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+// Esto convierte: "Miércoles" → "miercoles"
+---
+
+<div class="flex flex-col gap-1">
+    <label class="font-medium">{day}</label>
+
+    <input
+        id={`${id}-start`}
+        type="time"
+        class="time-field border p-2 rounded"
+    />
+
+    <input id={`${id}-end`} type="time" class="time-field border p-2 rounded" />
+
+    <p id={`${id}-error`} class="text-red-500 text-xs mt-1 hidden"></p>
+</div>

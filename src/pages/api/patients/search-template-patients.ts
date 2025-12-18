@@ -46,12 +46,16 @@ export const POST: APIRoute = async ({ request }) => {
       templateRaw = templateRes.rows?.[0]?.template || null;
     }
 
+    if (!templateRaw || templateRaw === null) {
+      return new Response(JSON.stringify({ error: "Template no encontrado." }), { status: 404 });
+    }
+
     // 3. Parsear template + answers
     let template: any = null;
     let answers: any = {};
 
-    try { template = templateRaw ? JSON.parse(templateRaw.toString()) : null; } catch {}
-    try { answers = clinicHistory.answers ? JSON.parse(clinicHistory.answers.toString()) : {}; } catch {}
+    try { template = templateRaw ? JSON.parse(templateRaw.toString()) : null; } catch { }
+    try { answers = clinicHistory.answers ? JSON.parse(clinicHistory.answers.toString()) : {}; } catch { }
 
     // 4. Construir las secciones tipadas
     const sections: SectionMap = {};
