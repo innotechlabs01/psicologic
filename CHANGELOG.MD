@@ -1,5 +1,5 @@
 
-## 1.3.0.- [unreleased]
+## 1.3.0.- [2025-12-21]
 - Create, modify agenda
 - Create, modify patient
 - Modify PDF
