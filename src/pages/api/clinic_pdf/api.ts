@@ -6,6 +6,7 @@ export const dynamic = "force-node";
 
 export const GET: APIRoute = async ({ request }) => {
   try {
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     const download = searchParams.get("download");
@@ -17,16 +18,20 @@ export const GET: APIRoute = async ({ request }) => {
       );
     }
 
-    // Buscar paciente
-    const patientRes = await fetch(
-      `${process.env.BASE_PATH}/api/patients/search-template-patients`,
-      {
-        method: "POST",
-        body: JSON.stringify({ id }),
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-      }
+    const apiUrl = new URL(
+      '/api/patients/search-template-patients',
+      request.url
     );
+
+    // Buscar paciente
+    const patientRes = await fetch(apiUrl.toString(), {
+      method: "POST",
+      body: JSON.stringify({ id }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
 
     // 💡 MEJORA: Manejar respuesta fallida antes de intentar parsear a JSON
     if (!patientRes.ok) {
@@ -80,11 +85,9 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
-        "Content-Type": "application/pdf",
-        "Content-Length": pdfBuffer.length.toString(),
-        "Accept-Ranges": "bytes",
-        "Cache-Control": "no-store",
-        "Content-Disposition": `${download ? "attachment" : "inline"}; filename=HistoriaClinica-${id}.pdf`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline; filename="HistoriaClinica.pdf"',
+        'Cache-Control': 'no-store',
       },
     });
 
