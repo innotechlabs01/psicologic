@@ -67,8 +67,8 @@ export function CalendarHeader() {
                                     Tienes {meetingsCount} cita{meetingsCount !== 1 ? "s" : ""} y {eventsCount} evento
                                     {eventsCount !== 1 ? "s" : ""} para hoy 🗓️
                                 </p>
-                            </div>
-                        </div>
+                            </div >
+                        </div >
 
                         <div className="flex items-center gap-1 md:gap-1.5 lg:gap-2 shrink-0">
                             {/* <DropdownMenu>
@@ -186,9 +186,9 @@ export function CalendarHeader() {
                                 </Button>
                             </Link> */}
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </div >
+                </div >
+            </div >
         </>
     );
 }
