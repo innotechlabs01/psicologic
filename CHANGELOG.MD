@@ -1,5 +1,10 @@
 
-## 1.2.0.- [unreleased]
+## 1.3.0.- [2025-12-21]
+- Create, modify agenda
+- Create, modify patient
+- Modify PDF
+
+## 1.2.0.- [2025-12-01]
 - History Clinic
 
 ## 1.1.0 - [2025-11-09]
