@@ -28,16 +28,16 @@ export async function sendBookingEmail(to: string, bookingDetails: any) {
             text: `Hola ${name},\n\nTu cita ha sido confirmada para el ${date} a las ${startTime}.\n\nPara unirte a la videollamada, usa este enlace seguro:\n${meetingLink}\n\nToken de Seguridad: ${secureToken}\n\nGracias.`, // plain text body
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                    <h2 style="color: #4f46e5;">¡Cita Confirmada!</h2>
+                    <h2 style="color: #8A2BE2;">¡Cita Confirmada!</h2>
                     <p>Hola <strong>${name}</strong>,</p>
                     <p>Tu cita de asesoría ha sido reservada con éxito.</p>
-                    <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <div style="background-color: #F5F5F5; padding: 15px; border-radius: 8px; margin: 20px 0;">
                         <p style="margin: 5px 0;"><strong>📅 Fecha:</strong> ${date}</p>
                         <p style="margin: 5px 0;"><strong>⏰ Hora:</strong> ${startTime}</p>
-                        <p style="margin: 5px 0;"><strong>🔒 Token:</strong> <code style="background: #e5e7eb; padding: 2px 4px; border-radius: 4px;">${secureToken}</code></p>
+                        <p style="margin: 5px 0;"><strong>🔒 Token:</strong> <code style="background: #F5F5F5; padding: 2px 4px; border-radius: 4px;">${secureToken}</code></p>
                     </div>
                     <p>Haz clic en el siguiente botón para unirte a la sala a la hora acordada:</p>
-                    <a href="${meetingLink}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Unirse a la Videollamada</a>
+                    <a href="${meetingLink}" style="display: inline-block; background-color: #8A2BE2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Unirse a la Videollamada</a>
                     <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">Si el botón no funciona, copia y pega este enlace: <br/>${meetingLink}</p>
                 </div>
             `,

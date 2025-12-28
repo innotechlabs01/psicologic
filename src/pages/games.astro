@@ -1,0 +1,24 @@
+---
+import { SignedIn } from "@clerk/astro/components";
+import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
+import LayoutGames from "../layouts/LayoutGames.astro";
+---
+
+<LayoutGames title=" 🔒 Games">
+    <SignedIn>
+        <DashboardWrapper
+            title="Área de Games"
+            subtitle="Bienvenido a tu área de games"
+        >
+            <main class="max-w-xl mx-auto py-12">
+                <h1 class="text-black text-3xl font-bold dark:text-black">
+                    Juegos
+                </h1>
+                <p class="text-black dark:text-black mt-4">
+                    Esta pagina esta diseñada para que puedas jugar a los juegos
+                    que te ayuden a mejorar tu salud mental.
+                </p>
+            </main>
+        </DashboardWrapper>
+    </SignedIn>
+</LayoutGames>

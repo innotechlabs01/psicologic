@@ -64,6 +64,18 @@ const saveStatusPayment = async (userId: string, paymentId: string, amount: numb
         `,
         ['active', userId]
       );
+
+      // If this payment is approved, mark patient's membership_paid if linked
+      try {
+        await client.execute(
+          `
+            update patientsClient set membership_paid = ?, updated_at = ? where userId = ?
+          `,
+          [1, new Date().toISOString(), userId]
+        );
+      } catch (err) {
+        console.warn('⚠️ Error updating patientsClient membership_paid:', err);
+      }
     }
 
 
@@ -94,33 +106,34 @@ export default function PaymentStatus({ refPayco, userId }: PropsPaymentStatus) 
       .then(async data => {
         const respuesta = data.data?.x_cod_response;
         const transaction = data.data?.x_transaction_id;
+        const amount = parseFloat(String(data.data?.x_amount)) || 0;
         setTransactionId(transaction);
         setEstado(respuesta);
 
         switch (respuesta) {
           case 1:
-            await saveStatusPayment(userId ?? '', transaction ?? '', 140000, 1);
+            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 1);
             setMensaje('¡Pago aprobado!');
             setColor('text-green-600');
             setIcono('✅');
             toast.success('Pago aprobado');
             break;
           case 2:
-            await saveStatusPayment(userId ?? '', transaction ?? '', 140000, 2);
+            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 2);
             setMensaje('Pago rechazado.');
             setColor('text-red-600');
             setIcono('❌');
             toast.error('Pago rechazado');
             break;
           case 3: 
-            await saveStatusPayment(userId ?? '', transaction ?? '', 140000, 3);
+            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 3);
             setMensaje('Pago pendiente de validación.');
             setColor('text-yellow-600');
             setIcono('⏳');
             toast.warning('Pago pendiente');
             break;
           case 4:
-            await saveStatusPayment(userId ?? '', transaction ?? '', 140000, 4);
+            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 4);
             setMensaje('Transacción fallida.');
             setColor('text-orange-600');
             setIcono('⚠️');

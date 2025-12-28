@@ -1,25 +1,95 @@
 ---
-import innoTechLogoWhite from '../../public/img/logo/logo_white.png';
+import innoTechLogoWhite from "../../public/img/logo/logo_white.png";
 import { SignInButton } from "@clerk/astro/components";
 ---
 
-<div class="flex flex-col items-center justify-center">
-    <img src={innoTechLogoWhite.src} alt="inno tech logo" class="w-80 h-32" />
-    <h1 class="text-3xl font-bold pt-8 text-black">Bienvenido a Psicologic Platform</h1>
-    <p class="text-lg pt-3 text-black">
-        Herramienta disenada para facilitarte a ti el trabajo. 
-		<br />
-        Puedes usarla para mejorar la salud mental y el bienestar.
-        <br />
-        <br />
-        ¿Listo para comenzar? 
-		<br />
-        <br />
-		<div class="bg-blue-500 w-40 h-10 rounded-md text-center
-		justify-center align-middle top-1 text-white text-2xl flex flex-col
-		font-san hover:bg-gradient-to-tr from-blue-400 via-blue-500
-		to-blue-600">
-			<SignInButton mode="modal" />
-		</div>
-    </p>
+<div
+  class="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4"
+>
+  <img
+    src={innoTechLogoWhite.src}
+    alt="InnoTech Logo"
+    class="mb-10 h-32 w-auto"
+  />
+
+  <div class="flex w-full max-w-3xl flex-col gap-10">
+    <!-- Card principal -->
+    <div
+      class="relative rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
+    >
+      <h1 class="mb-4 text-center text-3xl font-bold text-zinc-900">
+        Bienvenido a <span class="text-blue-600">Psicologic Platform</span>
+      </h1>
+
+      <p class="mb-8 text-center text-lg text-zinc-600">
+        Una plataforma moderna diseñada para facilitar tu trabajo profesional,
+        mejorar la salud mental y potenciar el bienestar emocional de las
+        personas.
+      </p>
+
+      <div class="flex justify-center">
+        <div
+          class="flex h-12 w-44 items-center justify-center rounded-xl
+          bg-gradient-to-tr from-blue-500 via-blue-600 to-blue-700
+          text-lg font-semibold text-white transition-all
+          hover:scale-105 hover:shadow-lg"
+        >
+          <SignInButton mode="modal" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Card secundaria -->
+    <div
+      class="relative rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
+    >
+      <h2 class="mb-4 text-2xl font-bold text-zinc-900">
+        Para jugadores de Psicologic Platform
+      </h2>
+
+      <p class="mb-8 text-lg text-zinc-600 leading-relaxed">
+        Nuestro objetivo es brindar apoyo, acompañamiento y herramientas que
+        ayuden a fortalecer habilidades emocionales, sociales y de pareja a
+        través de juegos y actividades lúdicas.
+        <br /><br />
+        Con Psicologic Platform podrás vivir nuevas experiencias, mejorar la comunicación
+        y fortalecer tus relaciones de una forma divertida, segura y significativa.
+      </p>
+
+      <div class="flex justify-center">
+        <div
+          class="flex h-12 w-44 items-center justify-center rounded-xl
+          bg-gradient-to-tr from-blue-500 via-blue-600 to-blue-700
+          text-lg font-semibold text-white transition-all
+          hover:scale-105 hover:shadow-lg"
+          id="btn-game-login"
+        >
+          <SignInButton mode="modal" />
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const gameBtn = document.getElementById("btn-game-login");
+    if (gameBtn) {
+      const setGameAuth = () => {
+        try {
+          console.log("🎮 Game login initiated - Setting auth_source");
+          document.cookie =
+            "auth_source=game:memory; Path=/; Max-Age=86400; SameSite=Lax";
+          localStorage.setItem("auth_source", "game:memory");
+          window.dispatchEvent(new Event("auth_source_changed"));
+        } catch (e) {
+          console.warn("Error setting auth_source:", e);
+        }
+      };
+
+      // Listen for both click and mousedown to ensure we catch it before navigation/modal interaction
+      gameBtn.addEventListener("click", setGameAuth);
+      gameBtn.addEventListener("mousedown", setGameAuth);
+    }
+  });
+</script>

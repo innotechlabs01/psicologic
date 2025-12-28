@@ -54,7 +54,24 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Aquí puedes actualizar el estado del pago en tu base de datos
   // según data.x_response (1 = Aceptada, 2 = Rechazada, 3 = Pendiente, 4 = Fallida)
-  await saveStatusPayment(data.x_cust_id_cliente.toString(), data.x_transaction_id.toString(), 140000, data.x_response.toString());
+  const amount = parseFloat(String(data.x_amount)) || 0;
+  await saveStatusPayment(data.x_cust_id_cliente.toString(), data.x_transaction_id.toString(), amount, data.x_response.toString());
+
+  // If payment approved, update patientsClient membership flag
+  try {
+    if (String(data.x_response) === '1') {
+      await client.execute(
+        `update patientsClient set membership_paid = ?, updated_at = ? where userId = ?`,
+        [1, new Date().toISOString(), data.x_cust_id_cliente.toString()]
+      );
+      await client.execute(
+        `update usuarios set status = ? where clerk_user_id = ?`,
+        ['active', data.x_cust_id_cliente.toString()]
+      );
+    }
+  } catch (err) {
+    console.warn('⚠️ Error updating membership after confirmation:', err);
+  }
 
   return new Response('OK', { status: 200 });
 };

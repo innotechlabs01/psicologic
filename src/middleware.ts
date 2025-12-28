@@ -2,6 +2,7 @@ import { clerkMiddleware, createRouteMatcher, clerkClient } from "@clerk/astro/s
 import { isAdminRole, isClientRole } from "./lib/clerk/roles";
 import { createUserFromClerk, triggerUserAccessEvent } from "./pages/api/webhooks/clerk";
 import type { APIContext } from "astro";
+import { checkUserGameAccess } from "./utils/checkUserGameAccess";
 
 import { createClient } from "@libsql/client";
 import { handleUserWithoutRole, handleInsertUsersAdmin } from "./utils/utils";
@@ -62,6 +63,17 @@ function asyncLogAccessEvent(
   });
 }
 
+// Helper: parse cookies from header into an object
+function parseCookies(cookieHeader?: string) {
+  return (cookieHeader || '').split(';').map(c => c.trim()).reduce<Record<string, string>>((acc, kv) => {
+    if (!kv) return acc;
+    const [k, ...vParts] = kv.split('=');
+    const v = vParts.join('=');
+    if (k && v !== undefined) acc[k] = decodeURIComponent(v);
+    return acc;
+  }, {});
+}
+
 function redirectToRoute(route: string, message: string, status: number = 302) {
   console.log(`🔄 REDIRECT: ${message} -> ${route} (Status: ${status})`);
   return new Response(null, {
@@ -73,19 +85,29 @@ function redirectToRoute(route: string, message: string, status: number = 302) {
 }
 
 export const onRequest = clerkMiddleware(async (auth, context, next) => {
+
   const { userId, sessionId, orgRole } = auth();
   const currentPath = new URL(context.request.url).pathname;
+
+  const cookies = parseCookies(context.request.headers.get('cookie') ?? '');
+  const authSource = cookies['auth_source'];
+  const isGameLogin = typeof authSource === 'string' && authSource.startsWith('game:');
+  const gameId = isGameLogin ? authSource.split(':')[1] : null;
 
   if (!userId && (currentPath.startsWith('/client') || currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin') || (currentPath.startsWith('/agenda') && !currentPath.startsWith('/agenda/meet')))) {
     return redirectToRoute('/', 'Debes iniciar sesión');
   }
 
   if ((!userId && currentPath === '/') || currentPath === '/error' || currentPath.startsWith('/agenda/meet')) {
-    return next(); // Permitir acceso sin procesar a rutas publicas
+    const response = await next();
+
+    return response;
   }
 
   if (currentPath === '/error') {
-    return next();
+    const response = await next();
+
+    return response;
   }
 
   // Omitir archivos estáticos y APIs
@@ -93,12 +115,11 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     currentPath.startsWith('/_') ||
     currentPath.includes('.') ||
     currentPath === '/favicon.ico') {
-    // console.log("⚡ Omitiendo archivo estático/API"); // Reduce noise
-    return next();
+    const response = await next();
+
+    return response;
   }
 
-  // 🔗 Registrar acceso de usuario autenticado
-  // Await to ensure no SocketErrors
   await asyncLogAccessEvent(
     context,
     userId ?? 'anonymous',
@@ -107,6 +128,24 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     currentPath,
     { sessionId, authenticated: true }
   );
+
+  // Si el flujo de login viene de un juego, y ya está autenticado, validar acceso al juego
+  if (isGameLogin && userId) {
+    const allowed = await checkUserGameAccess(userId, gameId);
+    if (!allowed) {
+      await asyncLogAccessEvent(
+        context,
+        userId ?? 'anonymous',
+        orgRole ?? 'SIN_ROL',
+        'denied',
+        currentPath,
+        { reason: 'game_access_denied', gameId }
+      );
+      const res = redirectToRoute('/', 'No tienes acceso al juego');
+      res.headers.set('Set-Cookie', 'auth_source=; Path=/; Max-Age=0;');
+      return res;
+    }
+  }
 
   let newAssignedRole = "";
 
@@ -136,7 +175,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     newAssignedRole = await getUserRole(userId ?? "");
 
     if (!newAssignedRole) {
-      newAssignedRole = await handleUserWithoutRole(context, userId ?? "");
+      newAssignedRole = await handleUserWithoutRole(context, userId ?? "", isGameLogin);
     }
 
     if (!newAssignedRole) {
@@ -168,15 +207,17 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       '/dashboard',
       { fromRoute: currentPath, targetRole: 'admin', role: newAssignedRole }
     );
-    return redirectToRoute('/dashboard', 'Redirigiendo a dashboard');
+    const res = redirectToRoute('/dashboard', 'Redirigiendo a dashboard');
+
+    return res;
   }
 
-  if (newAssignedRole === "org:client") {
+  if (newAssignedRole === "org:client" || newAssignedRole === "org:moderator") {
     if (currentPath.startsWith('/client')) {
       return next();
     }
 
-    console.log("🔄 Redirigiendo cliente a client");
+    console.log("🔄 Redirigiendo client a client");
     await asyncLogAccessEvent(
       context,
       userId ?? 'anonymous',
@@ -185,7 +226,9 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       '/client',
       { fromRoute: currentPath, targetRole: 'client', role: newAssignedRole }
     );
-    return redirectToRoute('/client', 'Redirigiendo a client');
+    const resClient = redirectToRoute('/client', 'Redirigiendo a client');
+
+    return resClient;
   }
 
   // Si llega aquí, rol no reconocido
@@ -197,5 +240,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     currentPath,
     { reason: 'unrecognized_role', role: newAssignedRole }
   );
-  return redirectToRoute('/', 'Rol de usuario no válido');
+  const res = redirectToRoute('/', 'Rol de usuario no válido');
+
+  return res;
 });
