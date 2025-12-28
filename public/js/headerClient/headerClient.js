@@ -34,6 +34,56 @@ const SidebarManager = {
     // Implementa tu sistema de notificaciones aquí
   },
 
+  // --- Helpers para detectar login de juego (localStorage preferido) ---
+  getAuthSourceFromCookies() {
+    const cookieHeader = document.cookie || '';
+    return cookieHeader.split(';').map(c => c.trim()).reduce((acc, kv) => {
+      if (!kv) return acc;
+      const [k, ...vParts] = kv.split('=');
+      acc[k] = decodeURIComponent(vParts.join('='));
+      return acc;
+    }, {})['auth_source'];
+  },
+
+  getAuthSource() {
+    try {
+      const storage = localStorage.getItem('auth_source');
+      if (storage) return storage;
+    } catch (e) {
+      console.warn('LocalStorage no disponible:', e);
+    }
+    return this.getAuthSourceFromCookies();
+  },
+
+  isGameLogin() {
+    const authSource = this.getAuthSource();
+    if (window.location.pathname.startsWith('/games') || window.location.pathname.startsWith('/client/games')) {
+      return true;
+    }
+    return typeof authSource === 'string' && authSource.startsWith('game:');
+  },
+
+  setGameLoginFlag(value) {
+    try {
+      if (typeof value !== 'string') value = String(value);
+      localStorage.setItem('auth_source', value);
+    } catch (e) {
+      console.warn('No se pudo escribir en localStorage:', e);
+    }
+  },
+
+  clearGameLoginFlag() {
+    try {
+      localStorage.removeItem('auth_source');
+    } catch (e) {
+      console.warn('No se pudo limpiar localStorage:', e);
+    }
+  },
+
+  markGameLoginComplete() {
+    this.clearGameLoginFlag();
+  },
+
   showSidebar() {
     const sidebar = this.getElement(SELECTORS.sidebar, 'Elementos del sidebar no encontrados');
     const overlay = this.getElement(SELECTORS.overlay, 'Elementos del sidebar no encontrados');
@@ -177,9 +227,27 @@ const SidebarManager = {
         return;
       }
 
-      const response = await fetch('/api/settings/games/menu', {
+
+      // Determinar explícitamente si la petición viene desde un login de juego
+      // Preferir flag en localStorage para detectar logins de juegos posteriores al cargado del script.
+      const isGame = this.isGameLogin();
+      const endpoint = `/api/settings/games/menu${isGame ? '?isGame=true' : ''}`;
+      // Debug: mostrar qué endpoint se va a solicitar
+      console.debug('[SidebarManager] fetching menu endpoint:', endpoint, { isGame });
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (isGame) {
+        // Añadir header para ayudar al servidor a detectar la intención de juego
+        const authSource = this.getAuthSource();
+        if (authSource) {
+          headers['x-auth-source'] = authSource;
+          console.debug('[SidebarManager] adding x-auth-source header:', authSource);
+        }
+      }
+
+      const response = await fetch(endpoint, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include'
       });
 
@@ -346,8 +414,55 @@ const SidebarManager = {
     });
   },
 
+  handleAuthSourceChange() {
+    // Forzar re-inicialización del menú dinámico si detectamos un cambio en auth_source
+    console.debug('[SidebarManager] auth_source changed — reinitializing menu');
+    // Resetear flag para forzar recarga
+    this.menuInitialized = false;
+    this.initializeSidebar().catch(err => this.logError('Error re-inicializando el menú tras cambio de auth_source', err));
+  },
+
   async initialize() {
     this.setupEventListeners();
+
+    // Escuchar cambios de localStorage desde otras pestañas
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'auth_source') {
+        this.handleAuthSourceChange();
+      }
+    });
+
+    // Escuchar un evento custom dispatched al cambiar auth_source en la misma pestaña
+    window.addEventListener('auth_source_changed', () => this.handleAuthSourceChange());
+
+    // Si la pestaña gana foco, re-evaluar (por si el usuario volvió de un flujo externo)
+    window.addEventListener('focus', () => {
+      const current = this.getAuthSource();
+      const wasGame = this.menuInitialized && this.isGameLogin();
+      const isNowGame = typeof current === 'string' && current.startsWith('game:');
+      if (isNowGame && !wasGame) {
+        this.handleAuthSourceChange();
+      }
+    });
+
+    // Envolver Clerk.signOut para limpiar la bandera de juego en logout
+    (() => {
+      const wrap = () => {
+        if (window.Clerk && typeof window.Clerk.signOut === 'function' && !window.Clerk._signOutWrapped) {
+          const original = window.Clerk.signOut.bind(window.Clerk);
+          window.Clerk.signOut = (...args) => {
+            this.clearGameLoginFlag();
+            return original(...args);
+          };
+          window.Clerk._signOutWrapped = true;
+        }
+      };
+      wrap();
+      const interval = setInterval(() => {
+        wrap();
+        if (window.Clerk && window.Clerk._signOutWrapped) clearInterval(interval);
+      }, 500);
+    })();
     await this.initializeSidebar();
   }
 };

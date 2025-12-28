@@ -5,14 +5,16 @@ import { createClient } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
 // Simple delay utility function
 import { delay } from "../lib/utils";
+import { is } from "date-fns/locale";
 // Initialize Supabase client with service role key
 const client = createClient({
   url: import.meta.env.TURSO_DATABASE_URL,
   authToken: import.meta.env.TURSO_AUTH_TOKEN
 });
 
-export async function handleUserWithoutRole(context: any, userId: string): Promise<string> {
+export async function handleUserWithoutRole(context: any, userId: string, isGameLogin: boolean): Promise<string> {
   try {
+
     console.log("🔄 Usuario sin rol - intentando crear/actualizar en base de datos...");
 
     // Attempt to fetch user with retry logic
@@ -62,19 +64,30 @@ export async function handleUserWithoutRole(context: any, userId: string): Promi
         public_metadata: clerkUser.publicMetadata || {},
         private_metadata: clerkUser.privateMetadata || {},
         unsafe_metadata: clerkUser.unsafeMetadata || {}
-      });
+      }, context, isGameLogin);
 
       if (createdUser) {
         console.log("✅ Usuario creado/actualizado correctamente");
         // Assign default role
         try {
-          await clerkClient(context).users.updateUser(userId, {
-            publicMetadata: { ...clerkUser.publicMetadata, role: 'org:client' }
-          });
+
+          if (isGameLogin) {
+            await clerkClient(context).users.updateUser(userId, {
+              publicMetadata: { ...clerkUser.publicMetadata, role: 'org:moderator' }
+            });
+          } else {
+            await clerkClient(context).users.updateUser(userId, {
+              publicMetadata: { ...clerkUser.publicMetadata, role: 'org:client' }
+            });
+          }
           console.log("✅ Rol 'org:client' asignado en Clerk");
-          await handlerAddUserToOrg(context, userId);
+          await handlerAddUserToOrg(context, userId, isGameLogin);
           await handlerInitializePaymentTrial(context, userId)
           // await handleUserPayment(context, userId);
+          if (isGameLogin) {
+            return 'org:moderator';
+          }
+
           return 'org:client';
         } catch (roleError) {
           console.error("❌ Error asignando rol en Clerk:", roleError);
@@ -172,29 +185,39 @@ export async function handleInsertUsersAdmin(context: any, userId: string): Prom
   }
 }
 
-const handlerAddUserToOrg = async (context: APIContext, userId: string): Promise<boolean> => {
+const handlerAddUserToOrg = async (context: APIContext, userId: string, isGameLogin: boolean): Promise<boolean> => {
   // Asociar organización con el usuario (background, sin bloquear middleware)
 
+  let alreadyMember = true;
+  let orgId = "";
   try {
-    const orgId = import.meta.env.PUBLIC_CLERK_ORG_ID || "org_32LzH7sL3DcbEJ1GnvOErWFTQkO"; // Use env or fallback
+
+    if (isGameLogin) {
+      orgId = import.meta.env.PUBLIC_DEFAULT_GAME_ID || "org_37BFVsUdkH9fDa7TRcpKjFprc0Z"; // Use env or fallback
+    } else {
+      orgId = import.meta.env.PUBLIC_CLERK_ORG_ID || "org_32LzH7sL3DcbEJ1GnvOErWFTQkO"; // Use env or fallback
+    }
+
+    const result = await clerkClient(context).organizations.getOrganizationList();
+    console.log("Organization List:", result);
 
     const memberships = await clerkClient(context).organizations.getOrganizationMembershipList({
       organizationId: orgId,
     });
 
-    const alreadyMember = memberships.data.some(m => m.publicUserData?.userId === userId);
+    alreadyMember = memberships.data.some(m => m.publicUserData?.userId === userId);
+    const nameRole = isGameLogin ? 'org:moderator' : 'org:client';
 
     if (!alreadyMember) {
       await clerkClient(context).organizations.createOrganizationMembership({
         organizationId: orgId,
         userId,
-        role: "org:client",
+        role: nameRole,
       });
-      return true;
-    } else {
-      return true;
     }
+    return true;
   } catch (error) {
+    console.log('⚠️ Error adding user to organization:', error);
     return false;
   }
 }

@@ -1,7 +1,7 @@
 <style>
   :root {
     --loader-bg: rgba(245, 246, 248, 0.92);
-    --loader-accent: #6366f1; /* Indigo 500 (moderno, SaaS) */
+    --loader-accent: var(--color-morado-principal); /* Púrpura principal */
   }
 
   #global-loader {
@@ -31,11 +31,11 @@
     background: radial-gradient(
       circle at 30% 30%,
       var(--loader-accent),
-      rgba(99,102,241,0.4)
+      rgba(138,43,226,0.4)
     );
     animation: pulse 1.2s infinite ease-in-out,
                float 3s infinite ease-in-out;
-    filter: drop-shadow(0 0 8px rgba(99,102,241,0.4));
+    filter: drop-shadow(0 0 8px rgba(138,43,226,0.4));
   }
 
   @keyframes pulse {
