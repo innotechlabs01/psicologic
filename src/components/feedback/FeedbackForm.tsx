@@ -36,8 +36,8 @@ export default function FeedbackForm() {
   };
 
   const disabledButtonStyle = {
-    backgroundColor: '#d1d5db', // bg-gray-300
-    color: '#1f2937', // text-gray-800
+    backgroundColor: 'var(--color-gris-claro)', // bg gray -> token
+    color: 'var(--color-azul-oscuro)', // text -> token
     cursor: 'not-allowed'
   };
 

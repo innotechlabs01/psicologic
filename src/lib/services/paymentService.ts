@@ -8,39 +8,50 @@ const client = createClient({
   authToken: import.meta.env.TURSO_AUTH_TOKEN
 });
 
-// 🇪🇸 Formato dd/mm/yyyy
-const formattedDate = (date: number) => {
-    const newDate = new Date(date);
-    return newDate.toLocaleDateString('en-US', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-    });
+// 🇪🇸 Formato YYYY-MM-DD
+const processDate = (date: string | number | null | undefined): string => {
+  if (!date) return '';
+
+  // Check if it's a timestamp (number) or string numeric (13 digits)
+  const isTimestamp = typeof date === 'number' || (typeof date === 'string' && /^\d{13}$/.test(date));
+
+  if (isTimestamp) {
+    const d = new Date(Number(date));
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString().split('T')[0];
+  }
+
+  // Assume ISO string or similar
+  if (typeof date === 'string') {
+    return date.split('T')[0];
+  }
+
+  return '';
 };
 
 const statusHistory = (status: string) => {
-    switch (status) {
-        case 'trial':
-            return 'trial';
-        case 'approved':
-            return 'approved';
-        case 'pending':
-            return 'pending';
-        case 'denied':
-            return 'denied';
-        default:
-            return 'unknown';
-    }
+  switch (status) {
+    case 'trial':
+      return 'trial';
+    case 'approved':
+      return 'approved';
+    case 'pending':
+      return 'pending';
+    case 'denied':
+      return 'denied';
+    default:
+      return 'unknown';
+  }
 }
 
 export class PaymentService {
-  
+
   // Obtener información de pagos de un usuario
   static async getUserPaymentInfo(userId: string) {
     try {
       const result = await client.execute(
         `
-        SELECT id, clerk_user_id FROM usuarios WHERE clerk_user_id = ?
+        SELECT id, clerk_user_id, role FROM usuarios WHERE clerk_user_id = ?
         `,
         [userId]
       )
@@ -62,23 +73,28 @@ export class PaymentService {
       }
 
       if (!paymentResult.rows[0]) {
+        const isGameUser = String(result.rows[0]?.role || '') === 'org:moderator';
         return {
           payment_count: 0,
           last_payment_date: null,
           next_payment_date: null,
           subscription_status: 'inactive',
           days_to_next_payment: 0,
-          is_subscription_active: false
+          is_subscription_active: false,
+          isGameUser
         };
       }
 
-    const paymentDate = formattedDate(parseInt(paymentResult.rows[0].paymentDate?.toString() || '0'));
-    const nextPaymentDate = formattedDate(parseInt(paymentResult.rows[0].nextPaymentDate?.toString() || '0'));
-    const blockedPaymentDate = formattedDate(parseInt(paymentResult.rows[0].blockedPaymentDate?.toString() || '0'));
-    const subscriptionStatus = this.isSubscriptionActive(nextPaymentDate);
-    const daysToNextPayment = this.calculateDaysToNextPayment(nextPaymentDate);
+      const paymentDate = processDate(paymentResult.rows[0].paymentDate as any);
+      const nextPaymentDate = processDate(paymentResult.rows[0].nextPaymentDate as any);
+      const blockedPaymentDate = processDate(paymentResult.rows[0].blockedPaymentDate as any);
 
-    return {
+      // For logic calculations, we might need the full date if available, or just use the YYYY-MM-DD string which works too with new Date()
+      const subscriptionStatus = this.isSubscriptionActive(nextPaymentDate);
+      const daysToNextPayment = this.calculateDaysToNextPayment(nextPaymentDate);
+
+      const isGameUser = String(result.rows[0]?.role || '') === 'org:moderator';
+      return {
         paymentId: paymentResult.rows[0].paymentId as string,
         userId: paymentResult.rows[0].userId as string,
         paymentDate: paymentDate,
@@ -87,9 +103,10 @@ export class PaymentService {
         lastPaymentDate: blockedPaymentDate,
         daysToNext: daysToNextPayment,
         subscriptionStatus: paymentResult.rows[0].status as string,
-        isActive: subscriptionStatus
-    }
-      
+        isActive: subscriptionStatus,
+        isGameUser
+      }
+
     } catch (error) {
       console.error('Error al obtener información de pagos:', error);
       throw error;
@@ -109,7 +126,7 @@ export class PaymentService {
       if (!result) {
         throw new Error('Usuario no encontrado');
       }
-        
+
       const historyResult = await client.execute(
         `
         select * from payments where userId = ? order by paymentDate desc
@@ -125,12 +142,12 @@ export class PaymentService {
       if (!historyResult.rows[0]) {
         return [];
       }
-      
+
       const newPaymentHistory: paymentHistory[] = [];
 
       historyResult.rows.forEach((item) => {
-        const paymentDate = formattedDate(parseInt(item.paymentDate?.toString() || '0'));
-        const nextPaymentDate = formattedDate(parseInt(item.nextPaymentDate?.toString() || '0'));
+        const paymentDate = processDate(item.paymentDate as any);
+        const nextPaymentDate = processDate(item.nextPaymentDate as any);
         const status = statusHistory(item.status as string);
 
         newPaymentHistory.push({
@@ -145,9 +162,9 @@ export class PaymentService {
       })
 
       return newPaymentHistory.sort(
-        (a, b) => 
-            new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
-    );
+        (a, b) =>
+          new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      );
 
     } catch (error) {
       console.error('Error al obtener historial:', error);
@@ -158,12 +175,12 @@ export class PaymentService {
   // Calcular días restantes para el próximo pago
   static calculateDaysToNextPayment(nextPaymentDate: string | Date): number {
     if (!nextPaymentDate) return 0;
-    
+
     const next = new Date(nextPaymentDate);
     const today = new Date();
     const diffTime = next.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return Math.max(0, diffDays);
   }
 

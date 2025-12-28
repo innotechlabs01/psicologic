@@ -1,0 +1,35 @@
+---
+import LayoutClient from "../../layouts/LayoutClient.astro";
+import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
+
+import UserManagement from "../../components/Client/users/UserManagement.astro";
+import { SignedIn } from "@clerk/astro/components";
+---
+
+<LayoutClient>
+    <SignedIn>
+        <DashboardWrapper>
+            <div class="p-6 bg-white rounded-lg shadow-md">
+                <h1 class="text-2xl font-bold mb-4 text-gray-800">Gestión de Usuarios</h1>
+                <UserManagement />
+            </div>
+        </DashboardWrapper>
+
+        <!-- Asegura que en cliente tengamos el userId accesible para los scripts -->
+        <script>
+          (function(){
+            try {
+              const clerkData = document.getElementById('__CLERK_ASTRO_DATA__');
+              if (clerkData) {
+                const parsed = JSON.parse(clerkData.textContent || '{}');
+                (window as any).__CLERK = (window as any).__CLERK || {};
+                if (parsed && parsed.user) {
+                  (window as any).__CLERK.userId = parsed.user.id || parsed.userId || '';
+                }
+              }
+            } catch (e) { console.warn('No clerk data available on page'); }
+          })();
+        </script>
+
+    </SignedIn>
+</LayoutClient>

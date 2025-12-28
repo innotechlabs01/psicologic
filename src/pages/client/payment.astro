@@ -14,9 +14,12 @@ if (!userId) {
   return Astro.redirect('/login');
 }
 
-// Obtener datos de usuario de Clerk
 const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
 const paymentData = await response.json();
+
+// Definir monto de pago según tipo de usuario
+const isGameUser = Boolean(paymentData?.paymentInfo?.isGameUser);
+const paymentAmount = isGameUser ? '5000' : '140000';
 
 ---
 <LayoutClient title="💳 Payment">
@@ -76,6 +79,8 @@ const paymentData = await response.json();
 <script type="text/javascript" src="https://checkout.epayco.co/checkout.js" />
 
 <script type="module">
+  // Server-provided amount based on user type
+  const PAYMENT_AMOUNT = "{paymentAmount}";
   const button = document.getElementById('payment-button');
 
   button?.addEventListener('click', async () => {
@@ -88,7 +93,7 @@ const paymentData = await response.json();
           description: 'Descripción del producto',
           invoice: `test-${Date.now()}`,
           currency: 'cop',
-          amount: '140000',
+          amount: PAYMENT_AMOUNT,
           tax_base: '0',
           tax: '0',
           country: 'co',
@@ -147,7 +152,7 @@ const userData = {
 // Obtener datos de pago
 const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
 const paymentData = await response.json();
----
+-->
 
 <LayoutClient title="💳 Payment">
     <SignedIn>

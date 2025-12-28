@@ -37,11 +37,11 @@ export async function checkUserPaymentAccess(userId: string): Promise<{ canAcces
     // Calcular días restantes hasta la fecha de bloqueo
     const timeToBlock = blockedPaymentDate.getTime() - now.getTime();
     const daysRemaining = Math.ceil(timeToBlock / (1000 * 60 * 60 * 24));
-    
+
     // Calcular días restantes hasta la fecha de pago
     const timeToPayment = nextPaymentDate.getTime() - now.getTime();
     const daysToPayment = Math.ceil(timeToPayment / (1000 * 60 * 60 * 24));
-    
+
     console.log(`Payment status: ${payment.status}. Days to Block: ${daysRemaining}. Days to Next Payment: ${daysToPayment}`);
 
 
@@ -52,19 +52,19 @@ export async function checkUserPaymentAccess(userId: string): Promise<{ canAcces
     // Lógica para el botón de pago (opcional, pero útil para el frontend)
     // El botón se activa 10 días antes de nextPaymentDate (dias restantes de pago <= 10)
     // Se puede almacenar daysToPayment en la metadata de Clerk o usar una API de Astro para exponerlo.
-    
+
     // 4. Actualizar estado del usuario en la tabla 'usuarios' si el acceso ha expirado
     if (!canAccess && payment.status !== 'denied') {
-        // El usuario debe ser marcado como 'denied' en la tabla 'usuarios'
-        console.log(`🚫 Access expired. Denying user ${userId} and setting status to 'denied'.`);
-        await client.execute(`update usuarios set status='denied where clerk_user_id=?`, [userId])
-        return { canAccess: false, daysRemaining: daysToPayment };
+      // El usuario debe ser marcado como 'denied' en la tabla 'usuarios'
+      console.log(`🚫 Access expired. Denying user ${userId} and setting status to 'denied'.`);
+      await client.execute(`update usuarios set status='denied' where clerk_user_id=?`, [userId])
+      return { canAccess: false, daysRemaining: daysToPayment };
     } else if (canAccess && payment.status === 'denied') {
-        // Si por alguna razón el usuario está marcado como 'denied' pero aún tiene acceso
-        // (ej. acaba de pagar), se podría resetear el estado, pero la lógica de pago
-        // se encargaría de actualizar el registro principal, lo cual es mejor.
-        // Solo nos enfocamos en el bloqueo.
-        return { canAccess: false, daysRemaining: 0 };
+      // Si por alguna razón el usuario está marcado como 'denied' pero aún tiene acceso
+      // (ej. acaba de pagar), se podría resetear el estado, pero la lógica de pago
+      // se encargaría de actualizar el registro principal, lo cual es mejor.
+      // Solo nos enfocamos en el bloqueo.
+      return { canAccess: false, daysRemaining: 0 };
     }
 
     return { canAccess, daysRemaining: daysToPayment };

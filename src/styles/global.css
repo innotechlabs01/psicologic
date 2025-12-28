@@ -37,7 +37,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-}
+
+  /* Paleta de marca */
+  --color-azul-principal: #007BFF;
+  --color-morado-principal: #8A2BE2;
+  --color-azul-oscuro: #0A1F44;
+  --color-lavanda: #C3A6FF;
+  --color-gris-claro: #F5F5F5;
+} 
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -167,21 +174,21 @@ body {
 .input-group label {
   display: block;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-azul-oscuro);
 }
 
 .input-group input {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-gris-claro);
   border-radius: 0.375rem;
   transition: border-color 0.2s ease-in-out;
 }
 
 .input-group input:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--color-azul-principal);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
 .cards-container {
@@ -202,7 +209,7 @@ body {
 }
 
 .cards-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-gris-claro);
   border-radius: 4px;
 }
 
@@ -250,7 +257,7 @@ body {
 .card .back .card-number {
   font-size: 24px;
   font-weight: bold;
-  color: #ff69b4;
+  color: var(--color-lavanda);
   z-index: 2;
   position: relative;
 }
@@ -273,8 +280,8 @@ body {
 
 .card .face {
   background: #ffffff;
-  border: 2px solid #2563eb;
-  color: #1f2937;
+  border: 2px solid var(--color-azul-principal);
+  color: var(--color-azul-oscuro);
   font-size: 0.9rem;
   font-weight: 600;
   transform: rotateY(180deg);
@@ -346,7 +353,7 @@ body {
 }
 
 .player-stats {
-  background-color: #f3f4f6;
+  background-color: var(--color-gris-claro);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
@@ -361,7 +368,7 @@ body {
 #stats {
   font-size: 18px;
   margin-bottom: 10px;
-  color: #ff69b4;
+  color: var(--color-lavanda);
 }
 
 #mensaje {
@@ -373,7 +380,7 @@ body {
 #titulo {
   font-size: 24px;
   margin-bottom: 10px;
-  color: #ff69b4;
+  color: var(--color-lavanda);
 }
 
 .memory-game {
@@ -393,7 +400,7 @@ body {
   transform-style: preserve-3d;
   transition: transform 0.5s;
   cursor: pointer;
-  background: #ffd1dc;
+  background: var(--color-lavanda);
   border-radius: 5px;
 }
 
@@ -424,20 +431,20 @@ body {
   justify-content: center;
   text-align: center;
   font-size: 14px;
-  color: #ff69b4;
+  color: var(--color-lavanda);
   box-sizing: border-box;
 }
 
 .face {
-  background: #f8e5e1;
+  background: var(--color-lavanda);
   transform: rotateY(180deg);
 }
 
 .back {
-  background: #ffd1dc;
+  background: var(--color-lavanda);
   font-size: 24px;
   font-weight: bold;
-  color: #1f2937;
+  color: var(--color-azul-oscuro);
 }
 
 .face::before {
@@ -458,7 +465,7 @@ body {
 
 .back::after {
   font-size: 40px;
-  color: #ff69b4;
+  color: var(--color-lavanda);
 }
 
 .card .face {
@@ -485,7 +492,7 @@ body {
 /* Tree minimalista */
 .tree-root ul {
   margin-left: 1rem;
-  border-left: 1px dashed #d1d5db;
+  border-left: 1px dashed var(--color-gris-claro);
   padding-left: 0.5rem;
 }
 
@@ -512,18 +519,18 @@ body {
 
 .tree-root label {
   cursor: pointer;
-  color: #374151;
+  color: var(--color-azul-oscuro);
   /* gris oscuro */
   transition: color 0.2s ease;
 }
 
 .tree-root label:hover {
-  color: #2563eb;
+  color: var(--color-azul-principal);
   /* azul */
 }
 
 .tree-root input[type="checkbox"] {
-  accent-color: #2563eb;
+  accent-color: var(--color-azul-principal);
   /* azul Tailwind */
   margin-right: 0.25rem;
 }
@@ -540,7 +547,7 @@ body {
   width: 1rem;
   text-align: center;
   margin-right: 0.25rem;
-  color: #9ca3af;
+  color: var(--color-azul-oscuro);
   /* gris */
   transition: transform 0.2s ease;
 }
@@ -551,18 +558,18 @@ body {
 
 .tree-root label {
   cursor: pointer;
-  color: #374151;
+  color: var(--color-azul-oscuro);
   /* gris oscuro */
   transition: color 0.2s ease;
 }
 
 .tree-root label:hover {
-  color: #2563eb;
+  color: var(--color-azul-principal);
   /* azul */
 }
 
 .tree-root input[type="checkbox"] {
-  accent-color: #2563eb;
+  accent-color: var(--color-azul-principal);
   /* azul Tailwind */
   margin-right: 0.25rem;
 }
@@ -586,7 +593,7 @@ body {
 .loader-dot {
   width: 12px;
   height: 12px;
-  background: #6366f1;
+  background: var(--color-morado-principal);
   border-radius: 50%;
   animation: bounce 0.6s infinite alternate;
 }

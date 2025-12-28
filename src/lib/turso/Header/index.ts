@@ -8,7 +8,7 @@ const client = createClient({
   authToken: import.meta.env.TURSO_AUTH_TOKEN
 });
 
-export async function GetUserGameHeader({ userId }: { userId: string }) {
+export async function GetUserGameHeader({ userId, isGame = false }: { userId: string; isGame?: boolean }) {
   try {
     // Fetch user by clerk_user_id
     const result = await client.execute(
@@ -36,17 +36,24 @@ export async function GetUserGameHeader({ userId }: { userId: string }) {
       [currentUser?.id]
     );
 
-    if (!resultUser) {
-      console.error('Error checking existing user:', resultUser);
-      throw new Error('Error al consultar el usuario existente');
-    }
     if (!resultUser.rows[0]) {
-      const newUser = await client.execute(
-        `
-          insert into user_games (userId, menu, status) values (?, ?, ?)
-        `,
-        [currentUser?.id, JSON.stringify({menu: [{ id: 1, name: 'Juego', slug: 'juego',status: true, subItem:[{"id":1,"name":"cartas","slug":"cartas","status":true}, {"id": 2,"name": "overcome_fears","slug": "globe-alt","status": true}]},{ id: 2, name: 'payment', slug: 'payment', status: true },{ id: 3, name: 'message', slug: 'message', status: true },{ id: 4, name: 'feedback', slug: 'feedback', status: true }]}), true]
-      );
+      let newUser;
+      if (isGame) {
+        newUser = await client.execute(
+          `
+            insert into user_games (userId, menu, status) values (?, ?, ?)
+          `,
+          [currentUser?.id, JSON.stringify({ menu: [{ id: 1, name: "Juego", slug: "juego", status: true, subItem: [{ "id": 1, "name": "cartas", "slug": "cartas", "status": true }, { "id": 2, "name": "miedo", "slug": "globe-alt", "status": true }] }, { "id": 2, "name": "payment", "slug": "payment", "status": true }] }), true]
+        );
+
+      } else {
+        newUser = await client.execute(
+          `
+            insert into user_games (userId, menu, status) values (?, ?, ?)
+          `,
+          [currentUser?.id, JSON.stringify({ menu: [{ id: 1, name: "users", slug: "users", status: true }, { id: 2, name: "agenda", slug: "history", status: true }, { id: 3, name: "Historia Clinica", slug: "history", status: true }, { id: 4, name: "Juego", slug: "juego", status: true, subItem: [{ "id": 1, "name": "cartas", "slug": "cartas", "status": true }, { "id": 2, "name": "miedo", "slug": "globe-alt", "status": true }] }, { "id": 5, "name": "payment", "slug": "payment", "status": true }, { id: 6, name: "message", slug: "message", status: true }, { id: 7, name: "feedback", slug: "feedback", status: true }, { id: 8, name: "Configuraciones", slug: "settings", status: true, subItem: [{ "id": 1, "name": "template", "slug": "cartas", "status": true }, { "id": 2, "name": "config_agend", "slug": "cartas", "status": true }] }] }), true]
+        );
+      }
 
       if (!newUser) {
         throw new Error('Error creating new user');
@@ -70,12 +77,49 @@ export async function GetUserGameHeader({ userId }: { userId: string }) {
       throw new Error('User game header not found');
     }
 
-   const menu = data.rows[0].menu ? JSON.parse(data.rows[0].menu as unknown as string) : null;
+    let menu = data.rows[0].menu ? JSON.parse(data.rows[0].menu as unknown as string) : null;
 
     if (!menu) {
-     throw new Error('Menu data is invalid');
+      throw new Error('Menu data is invalid');
     }
-    
+
+    // If requested as a game session, ensure game menu exists
+    if (isGame) {
+      try {
+        // Normalize menu to an array
+        let menuArray: any[] = [];
+        let isWrapped = false;
+
+        if (Array.isArray(menu)) {
+          menuArray = menu;
+        } else if (menu && typeof menu === 'object' && Array.isArray(menu.menu)) {
+          menuArray = menu.menu;
+          isWrapped = true;
+        }
+
+        const hasGame = menuArray.some((m: any) => m && m.slug === 'juego');
+
+        if (!hasGame) {
+          const gameMenu = { id: 1, name: "Juego", slug: "juego", status: true, subItem: [{ id: 1, name: "cartas", slug: "cartas", status: true }, { id: 2, name: "miedo", slug: "globe-alt", status: true }] };
+          menuArray.unshift(gameMenu);
+
+          // Re-wrap if it was wrapped, or just save the array if that's the convention you want to enforce.
+          // Based on the insert statements, it seems the intention is { menu: [...] }
+          const newMenuData = isWrapped ? { ...menu, menu: menuArray } : menuArray;
+
+          await client.execute(
+            `update user_games set menu = ? where userId = ?`,
+            [JSON.stringify(newMenuData), currentUser?.id]
+          );
+
+          // Update local variable to reflect change
+          menu = newMenuData;
+        }
+      } catch (err) {
+        console.error('Error ensuring game menu:', err);
+      }
+    }
+
     // Transform data to match expected format
     const transformedData = {
       username: currentUser?.username,
@@ -114,7 +158,7 @@ export async function GetUserGameClientHeader() {
 
     let newArrayGames = []
 
-    for( let item of currentUser){
+    for (let item of currentUser) {
       const resultUser = await client.execute(
         `
           select id, userId, menu, status from user_games where userId = ? and status = true
@@ -129,19 +173,19 @@ export async function GetUserGameClientHeader() {
 
       const menu = resultUser.rows[0].menu ? JSON.parse(resultUser.rows[0].menu as unknown as string) : null;
 
-        if (!menu) {
+      if (!menu) {
         throw new Error('Menu data is invalid');
-        }
-        
-        // Transform data to match expected format
-        const transformedData = {
-          username: item?.username,
-          userId: resultUser?.rows[0].userId,
-          menu: menu,
-          status: resultUser?.rows[0].status
-        };
+      }
 
-        newArrayGames.push(transformedData)
+      // Transform data to match expected format
+      const transformedData = {
+        username: item?.username,
+        userId: resultUser?.rows[0].userId,
+        menu: menu,
+        status: resultUser?.rows[0].status
+      };
+
+      newArrayGames.push(transformedData)
     }
 
     return newArrayGames;

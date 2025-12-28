@@ -2,6 +2,7 @@
 import type { APIContext, APIRoute } from 'astro';
 import { Webhook } from 'svix';
 import { createClient } from '@libsql/client';
+import { clerkClient } from '@clerk/astro/server';
 import type { ClerkUserEvent } from './interface';
 
 const client = createClient({
@@ -10,8 +11,9 @@ const client = createClient({
 });
 
 // 🆕 FUNCIÓN PARA CREAR USUARIO DESDE CLERK (LLAMADA DESDE MIDDLEWARE)
-export async function createUserFromClerk(userData: ClerkUserEvent['data']): Promise<any> {
-  const primaryEmail = userData.email_addresses.find(email => 
+export async function createUserFromClerk(userData: ClerkUserEvent['data'], context?: APIContext, isGameLogin: boolean = false): Promise<any> {
+
+  const primaryEmail = userData.email_addresses.find(email =>
     email.verification.status === 'verified'
   )?.email_address || userData.email_addresses[0]?.email_address;
 
@@ -46,11 +48,28 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data']): Pro
         throw result;
       }
 
+      // If a patient exists with this email, activate their membership and link to this clerk user
+      try {
+        const patientRes = await client.execute(
+          `select id from patientsClient where email = ? limit 1`, [primaryEmail]
+        );
+        if (patientRes && patientRes.rows[0]) {
+          const patientId = patientRes.rows[0].id;
+          await client.execute(
+            `update patientsClient set membership_paid = ?, updated_at = ? where id = ?`,
+            [1, new Date().toISOString(), patientId]
+          );
+          console.log(`✅ Activated membership for patient ${patientId} matching email ${primaryEmail}`);
+        }
+      } catch (err) {
+        console.error('Error activating membership for patient:', err);
+      }
+
       return result.rows[0];
     } else {
-      
+
       // Usuario no existe, crear nuevo
-      await client.execute(  
+      await client.execute(
         `
           insert into usuarios (
             clerk_user_id,
@@ -77,18 +96,18 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data']): Pro
           userData.username,
           userData.image_url,
           'active', // Estado inicial
-          'org:client', // Rol por defecto
+          isGameLogin ? "org:moderator" : "org:client", // Rol por defecto
           0, // login_count
           new Date(userData.created_at || Date.now()).toISOString(),
           new Date(userData.updated_at || Date.now()).toISOString(),
           JSON.stringify({
             event: 'user_created_from_middleware',
             source: 'middleware_role_assignment',
-            role: 'org:client'
+            role: isGameLogin ? "org:moderator" : "org:client"
           })
         ]
       )
-      
+
       // 📊 Registrar evento de creación
       await triggerUserAccessEvent({
         userId: userData.id,
@@ -96,20 +115,37 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data']): Pro
         action: 'login',
         route: '/register',
         role: 'org:client',
-        metadata: { 
-          event: 'user_created_from_middleware', 
+        metadata: {
+          event: 'user_created_from_middleware',
           source: 'middleware_role_assignment',
           userAgent: 'middleware'
         }
       });
 
+      // Check patientsClient table for matching email and activate membership/link user
+      try {
+        const patientRes = await client.execute(
+          `select id from patientsClient where email = ? limit 1`, [primaryEmail]
+        );
+        if (patientRes && patientRes.rows[0]) {
+          const patientId = patientRes.rows[0].id;
+          await client.execute(
+            `update patientsClient set membership_paid = ?, updated_at = ? where id = ?`,
+            [1, new Date().toISOString(), patientId]
+          );
+          console.log(`✅ Activated membership for patient ${patientId} matching email ${primaryEmail}`);
+        }
+      } catch (err) {
+        console.error('Error activating membership for patient:', err);
+      }
+
       const result = await client.execute(
         `select * from usuarios where clerk_user_id=? limit 1`, [userData.id]
       )
-      
+
       // Notificar a admins de nuevo usuario
       await notifyAdminsOfNewUser(result.rows[0]);
-      
+
       return result.rows[0];
     }
   } catch (error) {
@@ -119,7 +155,7 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data']): Pro
 }
 
 export async function createUserFromAdminClerk(userData: ClerkUserEvent['data']): Promise<any> {
-  const primaryEmail = userData.email_addresses.find(email => 
+  const primaryEmail = userData.email_addresses.find(email =>
     email.verification.status === 'verified'
   )?.email_address || userData.email_addresses[0]?.email_address;
 
@@ -154,11 +190,28 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
         throw result;
       }
 
+      // If a patient exists with this email, activate their membership and link to this clerk user
+      try {
+        const patientRes = await client.execute(
+          `select id from patientsClient where email = ? limit 1`, [primaryEmail]
+        );
+        if (patientRes && patientRes.rows[0]) {
+          const patientId = patientRes.rows[0].id;
+          await client.execute(
+            `update patientsClient set membership_paid = ?, userId = ?, updated_at = ? where id = ?`,
+            [1, userData.id, new Date().toISOString(), patientId]
+          );
+          console.log(`✅ Activated membership for patient ${patientId} matching email ${primaryEmail}`);
+        }
+      } catch (err) {
+        console.error('Error activating membership for patient:', err);
+      }
+
       return result.rows[0];
     } else {
-      
+
       // Usuario no existe, crear nuevo
-      await client.execute(  
+      await client.execute(
         `
           insert into usuarios (
             clerk_user_id,
@@ -196,7 +249,7 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
           })
         ]
       )
-      
+
       // 📊 Registrar evento de creación
       await triggerUserAccessEvent({
         userId: userData.id,
@@ -204,12 +257,29 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
         action: 'login',
         route: '/register',
         role: 'org:admin',
-        metadata: { 
-          event: 'user_created_from_middleware', 
+        metadata: {
+          event: 'user_created_from_middleware',
           source: 'middleware_role_assignment',
           userAgent: 'middleware'
         }
       });
+
+      // Check patientsClient table for matching email and activate membership/link user
+      try {
+        const patientRes = await client.execute(
+          `select id from patientsClient where email = ? limit 1`, [primaryEmail]
+        );
+        if (patientRes && patientRes.rows[0]) {
+          const patientId = patientRes.rows[0].id;
+          await client.execute(
+            `update patientsClient set membership_paid = ?, userId = ?, updated_at = ? where id = ?`,
+            [1, userData.id, new Date().toISOString(), patientId]
+          );
+          console.log(`✅ Activated membership for patient ${patientId} matching email ${primaryEmail}`);
+        }
+      } catch (err) {
+        console.error('Error activating membership for patient:', err);
+      }
 
       const result = await client.execute(
         `select * from usuarios where clerk_user_id=? limit 1`, [userData.id]
@@ -278,7 +348,7 @@ export async function triggerUserAccessEvent(payload: {
     }
 
     // 2. Actualizar última actividad del usuario
-    if (payload.action === 'access' || payload.action === 'login') {      
+    if (payload.action === 'access' || payload.action === 'login') {
       const result = await client.execute(
         `
         update usuarios set 
@@ -336,7 +406,7 @@ async function detectSuspiciousActivity(payload: {
       )
 
       const uniqueIPs = [...new Set(result.rows?.map(log => log.ip_address).filter(Boolean))];
-      
+
       if (uniqueIPs.length > 3) {
         await createSecurityAlert({
           userId: payload.userId,
@@ -366,8 +436,8 @@ async function detectSuspiciousActivity(payload: {
           userId: payload.userId,
           alertType: 'repeated_denied_access',
           severity: 'high',
-          details: { 
-            attempts: result.rows.length, 
+          details: {
+            attempts: result.rows.length,
             route: payload.route,
             timeframe: '15_minutes',
             attemptedRoutes: result.rows.map(a => a.route)
@@ -384,8 +454,8 @@ async function detectSuspiciousActivity(payload: {
         userId: payload.userId,
         alertType: 'off_hours_access',
         severity: 'low',
-        details: { 
-          hour: currentHour, 
+        details: {
+          hour: currentHour,
           route: payload.route,
           timestamp: new Date().toISOString()
         }
@@ -423,7 +493,7 @@ async function createSecurityAlert(alert: {
 
     if (!result) {
       throw new Error('Error creando alerta de seguridad');
-    } else {      
+    } else {
       // Notificar a admins si es crítica o alta
       if (['critical', 'high'].includes(alert.severity)) {
         await notifyAdminsSecurityAlert(alert);
@@ -442,9 +512,9 @@ async function handleUserUpdated(userData: ClerkUserEvent['data']) {
 
   try {
     const result = await createUserFromClerk(userData);
-    
+
     // 📊 Registrar evento de actualización
-    const primaryEmail = userData.email_addresses.find(email => 
+    const primaryEmail = userData.email_addresses.find(email =>
       email.verification.status === 'verified'
     )?.email_address || userData.email_addresses[0]?.email_address;
 
@@ -455,7 +525,7 @@ async function handleUserUpdated(userData: ClerkUserEvent['data']) {
       route: '/profile',
       metadata: { event: 'user_updated', source: 'webhook' }
     });
-    
+
     return result;
   } catch (error) {
     console.error('Error en handleUserUpdated:', error);
@@ -499,7 +569,7 @@ async function handleUserDeleted(userId: string) {
 }
 
 async function notifyAdminsOfNewUser(user: any) {
-  try {    
+  try {
     const result = await client.execute(
       `
       insert into admin_notifications (
@@ -539,7 +609,7 @@ async function notifyAdminsOfNewUser(user: any) {
 
 async function notifyAdminsSecurityAlert(alert: any) {
   try {
-    
+
     const result = await client.execute(
       `
       insert into admin_notifications (
@@ -578,7 +648,7 @@ async function notifyAdminsSecurityAlert(alert: any) {
 
 export const POST: APIRoute = async ({ request }) => {
   const WEBHOOK_SECRET = import.meta.env.CLERK_WEBHOOK_SECRET;
-  
+
   if (!WEBHOOK_SECRET) {
     console.error('CLERK_WEBHOOK_SECRET no está configurado');
     return new Response('Webhook secret not configured', { status: 500 });
@@ -586,7 +656,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     console.log('🔗 Procesando webhook de Clerk...');
-    
+
     // Obtener headers necesarios para verificar el webhook
     const svix_id = request.headers.get('svix-id');
     const svix_timestamp = request.headers.get('svix-timestamp');
@@ -611,7 +681,7 @@ export const POST: APIRoute = async ({ request }) => {
         'svix-timestamp': svix_timestamp,
         'svix-signature': svix_signature,
       }) as ClerkUserEvent;
-      
+
       console.log(`✅ Webhook verificado correctamente - Tipo: ${evt.type}`);
     } catch (err) {
       console.error('Error verificando webhook:', err);
@@ -645,12 +715,12 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     console.log('✅ Webhook procesado exitosamente');
-    return new Response(JSON.stringify({ 
-      success: true, 
-      eventType: evt.type, 
+    return new Response(JSON.stringify({
+      success: true,
+      eventType: evt.type,
       processed: true,
       result: result ? 'User processed' : 'No result'
-    }), { 
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -660,7 +730,7 @@ export const POST: APIRoute = async ({ request }) => {
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error occurred',
       timestamp: new Date().toISOString()
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
