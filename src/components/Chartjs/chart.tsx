@@ -11,7 +11,7 @@ import {
 } from 'chart.js';
 import React, { useEffect, useState } from 'react';
 
-export const MyLine = ({ data }: { data: ChartData }) => {
+export const MyLine = () => {
   const [isRegistered, setIsRegistered] = useState(false);
 
   useEffect(() => {

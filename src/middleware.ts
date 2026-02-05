@@ -33,6 +33,21 @@ async function getUserRole(userId: string): Promise<string> {
   }
 }
 
+// Helper to handle background tasks in serverless environments
+function waitUntil(context: APIContext, promise: Promise<any>) {
+  // @ts-ignore - Vercel/Cloudflare specific
+  if (context.locals?.waitUntil) {
+    // @ts-ignore
+    context.locals.waitUntil(promise);
+  } else if (import.meta.env.DEV) {
+    // In dev, just let it run
+    promise.catch(e => console.error("Background task failed:", e));
+  } else {
+    // Fallback: try to run it but it might be cancelled. 
+    // For critical logs we might want to await, but for stats we skip.
+    promise.catch(e => console.error("Background task failed:", e));
+  }
+}
 
 function asyncLogAccessEvent(
   context: APIContext,
@@ -42,8 +57,8 @@ function asyncLogAccessEvent(
   route: string,
   metadata?: Record<string, any>
 ) {
-  // Return the promise so it can be awaited
-  return triggerUserAccessEvent({
+  // Return the promise so it can be awaited IF NEEDED, but mostly we will pass it to waitUntil
+  const promise = triggerUserAccessEvent({
     userId,
     email: '', // Se obtendrá en el webhook
     action,
@@ -61,6 +76,8 @@ function asyncLogAccessEvent(
     // Logging silencioso para no afectar el middleware
     console.warn('Error registrando evento (no crítico):', error?.message || error);
   });
+
+  return promise;
 }
 
 // Helper: parse cookies from header into an object
@@ -99,15 +116,11 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
   }
 
   if ((!userId && currentPath === '/') || currentPath === '/error' || currentPath.startsWith('/agenda/meet')) {
-    const response = await next();
-
-    return response;
+    return next();
   }
 
   if (currentPath === '/error') {
-    const response = await next();
-
-    return response;
+    return next();
   }
 
   // Omitir archivos estáticos y APIs
@@ -115,32 +128,33 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     currentPath.startsWith('/_') ||
     currentPath.includes('.') ||
     currentPath === '/favicon.ico') {
-    const response = await next();
-
-    return response;
+    return next();
   }
 
-  await asyncLogAccessEvent(
+  // ⚡ PERFORMANCE OPTIMIZATION: Do not await logging
+  waitUntil(context, asyncLogAccessEvent(
     context,
     userId ?? 'anonymous',
     'SIN_ROL',
     'access',
     currentPath,
     { sessionId, authenticated: true }
-  );
+  ));
 
   // Si el flujo de login viene de un juego, y ya está autenticado, validar acceso al juego
   if (isGameLogin && userId) {
     const allowed = await checkUserGameAccess(userId, gameId);
     if (!allowed) {
-      await asyncLogAccessEvent(
+      // Critical log: maybe await this one? Or just fire and return.
+      // Since we are redirecting, we should try to ensure it runs, but for speed we will use waitUntil too.
+      waitUntil(context, asyncLogAccessEvent(
         context,
         userId ?? 'anonymous',
         orgRole ?? 'SIN_ROL',
         'denied',
         currentPath,
         { reason: 'game_access_denied', gameId }
-      );
+      ));
       const res = redirectToRoute('/', 'No tienes acceso al juego');
       res.headers.set('Set-Cookie', 'auth_source=; Path=/; Max-Age=0;');
       return res;
@@ -152,23 +166,34 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
   // ----------------------------------------------------
   // 🚩 VALIDACIÓN DE PAGO (Acceso Restringido)
   // ----------------------------------------------------
-  const { canAccess, daysRemaining } = await checkUserPaymentAccess(userId ?? "");
+  // Optimization: Run checks in parallel if they don't depend on each other?
+  // But InsertUsers depends on org:admin check? No.
+
+  const paymentCheckPromise = checkUserPaymentAccess(userId ?? "");
+  let adminInsertPromise: Promise<void | string> = Promise.resolve();
+
+  if (orgRole === "org:admin") {
+    adminInsertPromise = handleInsertUsersAdmin(context, userId ?? "");
+  }
+
+  const [{ canAccess, daysRemaining }] = await Promise.all([
+    paymentCheckPromise,
+    adminInsertPromise
+  ]);
 
   if (!canAccess) {
-    await asyncLogAccessEvent(
+    waitUntil(context, asyncLogAccessEvent(
       context,
       userId ?? 'anonymous',
       orgRole ?? 'SIN_ROL',
       'denied',
       currentPath,
       { reason: 'payment_required', daysRemaining }
-    );
+    ));
     return redirectToRoute('/', `Acceso restringido - por favor complete su pago (${daysRemaining} días restantes)`);
   }
 
-  if (orgRole === "org:admin") {
-    await handleInsertUsersAdmin(context, userId ?? "");
-  }
+  // Note: handleInsertUsersAdmin was already awaited in parallel above if role is admin
 
   if (!orgRole) {
     // ✅ safely use await
@@ -179,14 +204,14 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     }
 
     if (!newAssignedRole) {
-      await asyncLogAccessEvent(
+      waitUntil(context, asyncLogAccessEvent(
         context,
         userId ?? 'anonymous',
         newAssignedRole,
         'denied',
         currentPath,
         { reason: 'role_assignment_failed' }
-      );
+      ));
       return redirectToRoute('/index', 'Error asignando rol, por favor intente de nuevo');
     }
   } else {
@@ -199,14 +224,14 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       return next();
     }
 
-    await asyncLogAccessEvent(
+    waitUntil(context, asyncLogAccessEvent(
       context,
       userId ?? 'anonymous',
       newAssignedRole,
       'redirect',
       '/dashboard',
       { fromRoute: currentPath, targetRole: 'admin', role: newAssignedRole }
-    );
+    ));
     const res = redirectToRoute('/dashboard', 'Redirigiendo a dashboard');
 
     return res;
@@ -218,28 +243,28 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     }
 
     console.log("🔄 Redirigiendo client a client");
-    await asyncLogAccessEvent(
+    waitUntil(context, asyncLogAccessEvent(
       context,
       userId ?? 'anonymous',
       newAssignedRole,
       'redirect',
       '/client',
       { fromRoute: currentPath, targetRole: 'client', role: newAssignedRole }
-    );
+    ));
     const resClient = redirectToRoute('/client', 'Redirigiendo a client');
 
     return resClient;
   }
 
   // Si llega aquí, rol no reconocido
-  await asyncLogAccessEvent(
+  waitUntil(context, asyncLogAccessEvent(
     context,
     userId ?? 'anonymous',
     newAssignedRole,
     'denied',
     currentPath,
     { reason: 'unrecognized_role', role: newAssignedRole }
-  );
+  ));
   const res = redirectToRoute('/', 'Rol de usuario no válido');
 
   return res;
