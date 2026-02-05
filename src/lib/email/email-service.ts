@@ -1,49 +1,94 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-// Configure transporter
-// In production, use environment variables: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com', // Default to Gmail for example
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
+// Initialize Resend with the key from environment variables
+const resend = new Resend(import.meta.env.VITE_RESEND_KEY);
 
-export async function sendBookingEmail(to: string, bookingDetails: any) {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.warn("SMTP credentials not found. Email sending skipped. Check .env variables.");
+import { generateICSContent, generateGoogleCalendarLink } from './calendar-utils';
+
+export async function sendBookingEmail(to: string | string[], bookingDetails: any) {
+    if (!import.meta.env.VITE_RESEND_KEY) {
+        console.warn("Resend API key not found (VITE_RESEND_KEY). Email sending skipped.");
         return false;
     }
 
     try {
-        const { date, startTime, meetingLink, secureToken, name } = bookingDetails;
+        // Extract details (fallback title if missing)
+        const { date, startTime, endTime, meetingLink, secureToken, title } = bookingDetails;
+        const eventTitle = title || 'Cita de Asesoría - Psicologic';
+        const description = `Unirse a la videollamada: ${meetingLink}`;
+        const location = 'Videollamada (Psicologic)';
 
-        const info = await transporter.sendMail({
-            from: `"Agenda Psicologic" <${process.env.SMTP_USER}>`, // sender address
-            to, // list of receivers
-            subject: "Confirmación de Cita - Psicologic", // Subject line
-            text: `Hola ${name},\n\nTu cita ha sido confirmada para el ${date} a las ${startTime}.\n\nPara unirte a la videollamada, usa este enlace seguro:\n${meetingLink}\n\nToken de Seguridad: ${secureToken}\n\nGracias.`, // plain text body
+        // Generate Calendar Artifacts
+        const icsContent = generateICSContent({
+            date,
+            startTime,
+            endTime,
+            title: eventTitle,
+            description,
+            location,
+            url: meetingLink
+        });
+
+        const googleCalendarLink = generateGoogleCalendarLink({
+            date,
+            startTime,
+            endTime,
+            title: eventTitle,
+            description,
+            location
+        });
+
+        // Convert string content to Buffer for attachment (Resend expects content as string or buffer, usually Buffer for files)
+        const icsBuffer = Buffer.from(icsContent);
+
+        const { data, error } = await resend.emails.send({
+            from: 'Psicologic <noreply@mail.innotechlabs.com>',
+            to: to,
+            subject: `Confirmación de Cita: ${eventTitle}`,
+            attachments: [
+                {
+                    filename: 'invite.ics',
+                    content: icsBuffer,
+                },
+            ],
             html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto;">
                     <h2 style="color: #8A2BE2;">¡Cita Confirmada!</h2>
-                    <p>Hola <strong>${name}</strong>,</p>
-                    <p>Tu cita de asesoría ha sido reservada con éxito.</p>
-                    <div style="background-color: #F5F5F5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>📅 Fecha:</strong> ${date}</p>
-                        <p style="margin: 5px 0;"><strong>⏰ Hora:</strong> ${startTime}</p>
-                        <p style="margin: 5px 0;"><strong>🔒 Token:</strong> <code style="background: #F5F5F5; padding: 2px 4px; border-radius: 4px;">${secureToken}</code></p>
+                    <p>Hola,</p>
+                    <p>Tu cita <strong>${eventTitle}</strong> ha sido reservada con éxito.</p>
+                    
+                    <div style="background-color: #F8F9FA; padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 5px solid #8A2BE2;">
+                        <p style="margin: 8px 0; font-size: 16px;"><strong>📅 Fecha:</strong> ${date}</p>
+                        <p style="margin: 8px 0; font-size: 16px;"><strong>⏰ Hora:</strong> ${startTime} - ${endTime || ''}</p>
+                        <p style="margin: 8px 0; font-size: 14px; color: #666;"><strong>🔒 Token:</strong> ${secureToken}</p>
                     </div>
-                    <p>Haz clic en el siguiente botón para unirte a la sala a la hora acordada:</p>
-                    <a href="${meetingLink}" style="display: inline-block; background-color: #8A2BE2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Unirse a la Videollamada</a>
-                    <p style="margin-top: 20px; font-size: 12px; color: #6b7280;">Si el botón no funciona, copia y pega este enlace: <br/>${meetingLink}</p>
+
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${meetingLink}" style="display: inline-block; background-color: #8A2BE2; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(138, 43, 226, 0.25);">Unirse a la Videollamada</a>
+                    </div>
+                    
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <a href="${googleCalendarLink}" style="display: inline-block; color: #444; text-decoration: none; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-size: 14px; background-color: white;">
+                            📅 Agregar a Google Calendar
+                        </a>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                    
+                    <p style="font-size: 12px; color: #888; text-align: center;">
+                        Si el botón no funciona, copia y pega este enlace: <br/>
+                        <a href="${meetingLink}" style="color: #8A2BE2;">${meetingLink}</a>
+                    </p>
                 </div>
             `,
         });
 
-        console.log("Message sent: %s", info.messageId);
+        if (error) {
+            console.error("Error sending email via Resend:", error);
+            return false;
+        }
+
+        console.log("Message sent via Resend:", data?.id);
         return true;
     } catch (error) {
         console.error("Error sending email:", error);

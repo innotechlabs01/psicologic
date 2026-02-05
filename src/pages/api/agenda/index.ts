@@ -75,18 +75,18 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
         }
 
         // 🕒 VALIDACIÓN DE HORARIO HABILITADO (Using Logged In User's Settings)
-        const settings = await getAgendaSettings(userId);
-        if (!settings) {
-            // Si no hay configuración, por defecto bloqueamos o permitimos? 
-            // Asumiremos que si no hay configuración no se puede agendar.
-            return new Response(JSON.stringify({ error: 'La agenda no está configurada.' }), { status: 409 });
-        }
+        // const settings = await getAgendaSettings(userId);
+        // if (!settings) {
+        //     // Si no hay configuración, por defecto bloqueamos o permitimos? 
+        //     // Asumiremos que si no hay configuración no se puede agendar.
+        //     return new Response(JSON.stringify({ error: 'La agenda no está configurada.' }), { status: 409 });
+        // }
 
-        const isEnabled = isTimeEnabled(body.date, body.startTime, settings);
+        // const isEnabled = isTimeEnabled(body.date, body.startTime, settings);
 
-        if (!isEnabled) {
-            return new Response(JSON.stringify({ error: 'No tienes habilitado este horario.' }), { status: 409 });
-        }
+        // if (!isEnabled) {
+        //     return new Response(JSON.stringify({ error: 'No tienes habilitado este horario.' }), { status: 409 });
+        // }
 
         const newEvent = {
             id: crypto.randomUUID(),
@@ -105,16 +105,9 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
         const origin = new URL(request.url).origin;
         newEvent.meetingLink = `${origin}/agenda/meet?token=${newEvent.secureToken}`;
 
-        // DEBUG LOGS: show incoming body and event object
-        console.log('POST /api/agenda body:', body);
-        console.log('POST /api/agenda newEvent:', JSON.stringify(newEvent));
-
-        ;
-
         let created;
         try {
             created = await createEvent(newEvent);
-            console.log('createEvent result:', created);
         } catch (err) {
             console.error('createEvent threw error:', err);
             throw err;
@@ -122,8 +115,9 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
 
         if (created) {
             // Send Email asynchronously
+            // Participants is an array of strings (emails)
             import('../../../lib/email/email-service').then(({ sendBookingEmail }) => {
-                sendBookingEmail(body.email, created);
+                sendBookingEmail(body.participants, created);
             });
 
             return new Response(JSON.stringify(created), { status: 201 });
