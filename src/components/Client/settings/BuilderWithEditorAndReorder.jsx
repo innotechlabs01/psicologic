@@ -30,6 +30,7 @@ Notas:
 */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { showToast } from '../../../utils/toast.js';
 
 // -------------------- Helpers --------------------
 function genId(prefix = 'c') {
@@ -167,14 +168,23 @@ export default function BuilderWithEditorAndReorder() {
   // Save action (calls server endpoint)
   async function saveForm() {
     try {
+      console.log('Intentando guardar template:', components);
       const res = await fetch('/api/settings/template/api', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'Historia Clínica', structure: { components } }),
       });
-      if (!res.ok) throw new Error('Error saving');
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Error saving');
+      }
+
       showToast('Template guardado', 'success');
+      console.log('Template guardado exitosamente');
     } catch (err) {
+      console.error('Error al guardar template:', err);
       showToast('Error guardando template: ' + (err?.message || String(err)), 'error');
     }
   }

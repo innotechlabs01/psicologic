@@ -2,8 +2,8 @@ import { createClient } from '@libsql/client';
 
 // Use environment variables or rely on framework injection if needed
 const client = createClient({
-    url: process.env.TURSO_DATABASE_URL || import.meta.env.TURSO_DATABASE_URL,
-    authToken: process.env.TURSO_AUTH_TOKEN || import.meta.env.TURSO_AUTH_TOKEN
+    url: import.meta.env.TURSO_DATABASE_URL,
+    authToken: import.meta.env.TURSO_AUTH_TOKEN
 });
 
 export interface AgendaEvent {
@@ -57,8 +57,6 @@ export async function createEvent(event: Omit<AgendaEvent, 'created_at' | 'updat
             }
         });
 
-        console.log("Insert result:", result);
-
         if (result.rowsAffected > 0) {
             return event;
         }
@@ -104,6 +102,48 @@ export async function getEventByToken(token: string): Promise<AgendaEvent | null
     } catch (error) {
         console.error("Error fetching event by token:", error);
         return null;
+    }
+}
+
+
+export async function deleteEvent(id: string, userId: string): Promise<boolean> {
+    try {
+        const result = await client.execute({
+            sql: `DELETE FROM agenda WHERE id = ? AND userId = ?`,
+            args: [id, userId]
+        });
+        return result.rowsAffected > 0;
+    } catch (error) {
+        console.error("Error deleting event:", error);
+        return false;
+    }
+}
+
+export async function updateEvent(event: Partial<AgendaEvent> & { id: string, userId: string }): Promise<boolean> {
+    try {
+        const { id, userId, title, startTime, endTime, date, participants } = event;
+
+        const result = await client.execute({
+            sql: `
+                UPDATE agenda 
+                SET title = ?, startTime = ?, endTime = ?, date = ?, participants = ?
+                WHERE id = ? AND userId = ?
+            `,
+            args: [
+                title,
+                startTime,
+                endTime,
+                date,
+                JSON.stringify(participants),
+                id,
+                userId
+            ]
+        });
+
+        return result.rowsAffected > 0;
+    } catch (error) {
+        console.error("Error updating event:", error);
+        return false;
     }
 }
 
