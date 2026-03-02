@@ -72,19 +72,19 @@ function ClinicalViewModal({ entry, onClose }) {
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
 
       {/* Contenedor del Modal - Estilo de Ficha Técnica */}
-      <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden animate-fadeIn border border-gray-100">
+      <div className="bg-card w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden animate-fadeIn border border-gray-100">
 
         {/* Encabezado Principal */}
-        <div className="px-8 py-5 border-b bg-white flex items-center justify-between sticky top-0 z-10">
+        <div className="px-8 py-5 border-b bg-card flex items-center justify-between sticky top-0 z-10">
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold text-gray-900">Ficha Clínica — {entry.name}</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">Ficha Clínica — {entry.name}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Registro creado el: {clinicHistory.created_at ? new Date(clinicHistory.created_at).toLocaleDateString() : 'Fecha no disponible'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 p-2 transition duration-150 rounded-full hover:bg-gray-100"
+            className="text-muted-foreground hover:text-foreground p-2 transition duration-150 rounded-full hover:bg-muted"
             aria-label="Cerrar"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -94,11 +94,11 @@ function ClinicalViewModal({ entry, onClose }) {
         </div>
 
         {/* Cuerpo de la Historia Clínica - Scrollable */}
-        <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto bg-gray-50">
+        <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto bg-muted/50">
           {answerEntries.length === 0 ? (
-            <div className="text-center py-10 text-gray-500">
+            <div className="text-center py-10 text-muted-foreground">
               <p>No hay respuestas registradas para esta entrada o el formato es incorrecto.</p>
-              <pre className="mt-4 p-4 bg-gray-100 rounded-lg text-xs text-left overflow-x-auto">
+              <pre className="mt-4 p-4 bg-muted rounded-lg text-xs text-left overflow-x-auto">
                 Datos brutos del paciente: {JSON.stringify(entry, null, 2)}
               </pre>
             </div>
@@ -113,7 +113,7 @@ function ClinicalViewModal({ entry, onClose }) {
                 return (
                   <section
                     key={key}
-                    className="bg-white border border-gray-200 rounded-lg p-5 shadow-md hover:shadow-lg transition duration-200"
+                    className="bg-card border border-border rounded-lg p-5 shadow-md hover:shadow-lg transition duration-200"
                   >
                     {/* Título */}
                     <h3 className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-2 border-b pb-1">
@@ -121,7 +121,7 @@ function ClinicalViewModal({ entry, onClose }) {
                     </h3>
 
                     {/* Contenido */}
-                    <div className="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed">
+                    <div className="text-foreground text-sm whitespace-pre-wrap leading-relaxed">
                       {typeof value === "boolean"
                         ? value ? "Sí" : "No"
                         : typeof value === "object"
@@ -137,7 +137,7 @@ function ClinicalViewModal({ entry, onClose }) {
         </div>
 
         {/* Pie de Página */}
-        <div className="px-8 py-4 border-t bg-white flex justify-end sticky bottom-0 z-10">
+        <div className="px-8 py-4 border-t bg-card flex justify-end sticky bottom-0 z-10">
           <button
             onClick={onClose}
             className="px-6 py-2.5 rounded-lg bg-gray-800 text-white font-medium hover:bg-gray-700 transition duration-150 shadow-md"
@@ -301,12 +301,12 @@ export default function PatientModule({ clerkUserId }) {
 
     return (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 ">
-        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+        <div className="bg-card w-full max-w-2xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           <h2 className="text-xl font-semibold ">Historia Clínica</h2>
 
           {templateStructure?.structure?.components?.map((field) => (
             <div key={field.id} className="space-y-1">
-              <label className="font-medium text-gray-700">{field.label}</label>
+              <label className="font-medium text-foreground">{field.label}</label>
 
               {field.type === "text" && (
                 <input
@@ -371,7 +371,7 @@ export default function PatientModule({ clerkUserId }) {
       {/* TABLE */}
       <table className="w-full border mt-6 text-sm font-medium text-black dark:text-white dark:bg-gray-800">
         <thead>
-          <tr className="bg-gray-100 text-left font-medium text-black dark:text-white dark:bg-gray-800">
+          <tr className="bg-muted text-left font-medium text-black dark:text-white dark:bg-gray-800">
             <th className="p-2 border">Nombre</th>
             <th className="p-2 border w-40">Acciones</th>
           </tr>
@@ -441,7 +441,7 @@ export default function PatientModule({ clerkUserId }) {
       {/* CREATE MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 ">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl  font-medium text-black dark:text-white dark:bg-gray-800">
+          <div className="bg-card w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl  font-medium text-black dark:text-white dark:bg-gray-800">
             <h2 className="text-xl font-semibold">Crear Paciente</h2>
 
             <input

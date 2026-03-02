@@ -3,10 +3,10 @@ import Footer from "../components/Footer/footer.astro";
 import HeaderClient from "../components/Header/headerClient.astro";
 
 import ToastRoot from "../components/Toast/ToastRoot";
-import SkeletonManager from "../components/Skeleton/SkeletonManager.astro";
 import { ClientRouter } from "astro:transitions";
+import { ThemeSync } from "../components/ThemeSync.tsx";
 
-const { title, skeletonType } = Astro.props;
+const { title } = Astro.props;
 ---
 
 <!doctype html>
@@ -16,11 +16,37 @@ const { title, skeletonType } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="/css/main.css" />
     <title>{title}</title>
     <ClientRouter />
+    <script is:inline>
+      (function() {
+        const getTheme = function() {
+          try {
+            const stored = localStorage.getItem('global-storage');
+            if (stored) {
+              const data = JSON.parse(stored);
+              const theme = data.state?.theme;
+              if (theme && theme !== 'system') return theme;
+            }
+          } catch (e) {}
+          return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        };
+        
+        const theme = getTheme();
+        const root = document.documentElement;
+        if (theme === 'dark') {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
-  <body class="min-h-screen bg-gray-100 dark:bg-gray-900">
+  <body class="min-h-screen bg-background text-foreground antialiased transition-colors duration-300">
+    <ThemeSync client:idle />
     <!-- Header con sidebar incluido -->
     <HeaderClient />
 
@@ -35,10 +61,7 @@ const { title, skeletonType } = Astro.props;
           <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2">
           </div>
           <script type="module" src="/js/toast.js"></script>
-          <ToastRoot client:load />
-
-          <!-- � Manager de Skeletons -->
-          <!-- <SkeletonManager type={skeletonType} /> -->
+          <ToastRoot client:idle />
 
           <slot />
         </div>
@@ -52,7 +75,6 @@ const { title, skeletonType } = Astro.props;
 <style>
   html,
   body {
-    background: white;
     margin: 0;
     width: 100%;
     height: 100%;

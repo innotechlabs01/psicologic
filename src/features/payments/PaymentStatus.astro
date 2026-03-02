@@ -1,0 +1,52 @@
+---
+const refPayco = Astro.url.searchParams.get('ref_payco');
+let estado = null;
+let mensaje = 'Consultando estado de la transacción...';
+let color = 'text-muted-foreground';
+let icono = '⏳';
+
+if (refPayco && refPayco !== 'undefined') {
+  const res = await fetch(`https://secure.epayco.co/validation/v1/reference/${refPayco}`);
+  const data = await res.json();
+
+  const respuesta = data.data?.x_response;
+  switch (respuesta) {
+    case '1':
+      mensaje = '✅ ¡Pago aprobado!';
+      color = 'text-green-600';
+      icono = '✔️';
+      break;
+    case '2':
+      mensaje = '❌ Pago rechazado.';
+      color = 'text-red-600';
+      icono = '❌';
+      break;
+    case '3':
+      mensaje = '⏳ Pago pendiente de validación.';
+      color = 'text-yellow-600';
+      icono = '⏳';
+      break;
+    case '4':
+      mensaje = '⚠️ Transacción fallida.';
+      color = 'text-orange-600';
+      icono = '⚠️';
+      break;
+    default:
+      mensaje = '🔍 Estado desconocido.';
+      color = 'text-muted-foreground';
+      icono = '❔';
+  }
+
+  estado = respuesta;
+}
+---
+
+{refPayco === null ?
+  <div></div>
+ : refPayco && refPayco !== 'undefined' ? (
+  <div></div>
+) : (
+  <div class="mt-6 p-4 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-700">
+    ⚠️ No se recibió referencia de pago. La transacción puede estar en proceso o falló.
+  </div>
+)}

@@ -1,11 +1,5 @@
-// /pages/api/payments.ts
-import { createClient } from "@libsql/client";
+import { db as client } from "../../../lib/turso/client";
 import type { APIRoute } from 'astro';
-
-const client = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
 
 export const GET: APIRoute = async ({ request }) => {
     try {
@@ -14,8 +8,8 @@ export const GET: APIRoute = async ({ request }) => {
             u.username ,
             u.email
             from payments py
-            INNER JOIN usuarios u on py.userId = u.clerk_user_id`); 
-        
+            INNER JOIN usuarios u on py.userId = u.clerk_user_id`);
+
         // Devolver los datos
         return new Response(JSON.stringify(result.rows), { // result.rows contendrá tus datos
             status: 200,

@@ -1,10 +1,4 @@
-import { createClient } from '@libsql/client';
-
-// Use environment variables or rely on framework injection if needed
-const client = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db as client } from "../client";
 
 export interface AgendaEvent {
     id: string;
@@ -74,7 +68,7 @@ export async function getEventsByDateRange(startDate: string, endDate: string, u
             args: [startDate, endDate, userId]
         });
 
-        return result.rows.map(row => ({
+        return result.rows.map((row: any) => ({
             ...row,
             participants: JSON.parse(row.participants as string)
         })) as unknown as AgendaEvent[];
@@ -169,7 +163,7 @@ export async function getSignalingMessages(meetingToken: string, afterId: number
             args: [meetingToken, afterId]
         });
 
-        return result.rows.map(row => ({
+        return result.rows.map((row: any) => ({
             ...row,
             payload: JSON.parse(row.payload as string)
         }));
@@ -264,4 +258,25 @@ export function isTimeEnabled(dateStr: string, startTime: string, settings: Agen
 
     // Simple string comparison for 'HH:MM' works lexicographically
     return startTime >= startLimit && startTime < endLimit;
+}
+
+export async function getTomorrowEvents(): Promise<AgendaEvent[]> {
+    try {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+        const result = await client.execute({
+            sql: `SELECT * FROM agenda WHERE date = ? AND status = 'confirmed'`,
+            args: [tomorrowStr]
+        });
+
+        return result.rows.map((row: any) => ({
+            ...row,
+            participants: JSON.parse(row.participants as string)
+        })) as unknown as AgendaEvent[];
+    } catch (error) {
+        console.error("Error fetching tomorrow events:", error);
+        return [];
+    }
 }

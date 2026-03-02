@@ -1,16 +1,35 @@
 ---
-import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
-import LayoutClient from '../../../layouts/LayoutClient.astro';
-import PatientModule from '../../../components/Client/patients/PatientModule.jsx';
-// @ts-ignore
+import LayoutClient from "../../../layouts/LayoutClient.astro";
+import DashboardWrapper from "../../../components/Dashboard/DashboardWrapper.astro";
+import ClinicalHistoryManager from "../../../features/clinical-history/components/ClinicalHistoryManager";
+import { SignedIn } from "@clerk/astro/components";
+
 const { userId: clerkUserId } = Astro.locals.auth();
+const patientId = Astro.url.searchParams.get('patient');
 ---
 
-<LayoutClient>
-  <DashboardWrapper
-    title="Historial de Clinicas"
-    subtitle="Consulta y Crea las historial de Clinicas"
-  >
-    <PatientModule client:load clerkUserId={clerkUserId} />
-  </DashboardWrapper>
+<LayoutClient title="Historial Clínico - Psicologic">
+  <SignedIn>
+    <DashboardWrapper 
+      title="Historial Clínico" 
+      subtitle="Consulta y crea las historias clínicas de tus pacientes"
+    >
+      {patientId ? (
+        <ClinicalHistoryManager client:visible patientId={patientId} />
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">Selecciona un paciente para ver su historial clínico</p>
+          <a 
+            href="/client/users" 
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Ver Pacientes
+          </a>
+        </div>
+      )}
+    </DashboardWrapper>
+  </SignedIn>
 </LayoutClient>

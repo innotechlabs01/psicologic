@@ -1,21 +1,17 @@
 ---
 import LayoutClient from "../../layouts/LayoutClient.astro";
-import VideoRoom from "../../components/Agenda/VideoRoom";
+import { VideoRoom } from "../../features/agenda/VideoRoom";
 
-const { token } = Astro.url.searchParams;
-// Determine user type simply by some logic or allow user to choose/default to 'client' if not authenticated?
-// For verified security, we should check session.
-// For this MVP, we assume anyone with link is a participant (could be host or client).
-// Let's grab 'role' from query param or default to client. Host should use a special link or logic.
+const token = Astro.url.searchParams.get("token");
 const role = Astro.url.searchParams.get("role") || "client";
 ---
 
-<LayoutClient title="Video Call">
+<LayoutClient title="Videollamada">
     <div class="h-screen w-full overflow-hidden">
         <VideoRoom
             client:only="react"
             meetingToken={token || "demo"}
-            userType={role as any}
+            userType={role as 'host' | 'client'}
         />
     </div>
 </LayoutClient>

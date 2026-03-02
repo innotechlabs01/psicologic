@@ -1,11 +1,5 @@
-import { createClient } from "@libsql/client";
+import { db } from '../../../lib/turso/client';
 import type { APIRoute } from 'astro';
-// import { randomUUID } from "node:crypto";
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
 
 export const POST: APIRoute = async ({ request }) => {
   const { idPatients, templateId, answers } = await request.json();

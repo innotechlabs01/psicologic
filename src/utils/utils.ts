@@ -1,16 +1,11 @@
 import { clerkClient } from "@clerk/astro/server";
 import { createUserFromAdminClerk, createUserFromClerk } from "../pages/api/webhooks/clerk";
 import type { APIContext } from "astro";
-import { createClient } from '@libsql/client';
 import { v4 as uuidv4 } from 'uuid';
 // Simple delay utility function
 import { delay } from "../lib/utils";
 import { is } from "date-fns/locale";
-// Initialize Supabase client with service role key
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db as client } from "../lib/turso/client";
 
 export async function handleUserWithoutRole(context: any, userId: string, isGameLogin: boolean): Promise<string> {
   try {

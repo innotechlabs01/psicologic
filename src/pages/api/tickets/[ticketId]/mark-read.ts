@@ -10,12 +10,7 @@
 */
 
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../../lib/turso/client';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
     const { ticketId } = params;
@@ -24,6 +19,6 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
         `UPDATE Messages SET leido_por_cliente = 1 WHERE ticket_id = ?`,
         [ticketId ?? '']
     );
-    
+
     return new Response(null, { status: 200 });
 }

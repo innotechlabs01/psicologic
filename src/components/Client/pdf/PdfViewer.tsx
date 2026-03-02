@@ -12,9 +12,9 @@ export default function PdfViewer({ url }: { url: string }) {
   const [numPages, setNumPages] = useState(0);
 
   return (
-    <div className="w-full h-full overflow-auto bg-gray-100 p-4">
+    <div className="w-full h-full overflow-auto bg-muted p-4">
       {isLoading && (
-        <div className="flex flex-col items-center justify-center p-10 text-gray-600">
+        <div className="flex flex-col items-center justify-center p-10 text-muted-foreground">
           <div className="animate-spin h-8 w-8 border-4 border-gray-400 border-t-transparent rounded-full mb-4"></div>
           <p className="text-lg font-medium">Cargando PDF...</p>
         </div>
@@ -28,7 +28,7 @@ export default function PdfViewer({ url }: { url: string }) {
           Array.from({ length: numPages }, (_, i) => (
             <PageDoc
               key={i}
-              className="shadow-lg mb-6 mx-auto bg-white"
+              className="shadow-lg mb-6 mx-auto bg-card"
             >
               <h1>My Document Title</h1>
               <p>This is the content of my first page.</p>

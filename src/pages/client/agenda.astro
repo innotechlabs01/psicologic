@@ -1,26 +1,439 @@
 ---
 import LayoutClient from "../../layouts/LayoutClient.astro";
-
 import { SignedIn } from "@clerk/astro/components";
-import { CalendarHeader } from "../../components/Agenda/Calendar/calendar-header";
-import { CalendarControls } from "../../components/Agenda/Calendar/calendar-controls";
-import { CalendarView } from "../../components/Agenda/Calendar/calendar-view";
+import { db } from "../../lib/turso/client";
+
+interface AgendaEvent {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  date: string;
+  participants: string;
+  meetingLink: string;
+  secureToken: string;
+  userId: string;
+  status: string;
+}
+
+const { userId } = Astro.locals.auth?.() || {};
+
+let events: AgendaEvent[] = [];
+let error = null;
+
+if (userId) {
+  try {
+    const result = await db.execute({
+      sql: `SELECT id, title, startTime, endTime, date, participants, meetingLink, secureToken, userId, status 
+            FROM agenda 
+            WHERE userId = ? AND status != 'cancelled'
+            ORDER BY date DESC, startTime DESC`,
+      args: [userId]
+    });
+    
+    events = result.rows.map((r: any) => ({
+      id: r[0],
+      title: r[1],
+      startTime: r[2],
+      endTime: r[3],
+      date: r[4],
+      participants: r[5],
+      meetingLink: r[6],
+      secureToken: r[7],
+      userId: r[8],
+      status: r[9]
+    }));
+  } catch (e: any) {
+    error = e.message;
+    console.error('Error loading agenda:', e);
+  }
+}
+
+const today = new Date().toISOString().split('T')[0];
 ---
 
-<LayoutClient>
+<LayoutClient title="Agenda - Psicologic">
   <SignedIn>
-    <div class="h-svh overflow-hidden lg:p-2 w-full">
-      <div
-        class="lg:border lg:rounded-md overflow-hidden flex flex-col items-center justify-start bg-container h-full w-full bg-background"
-      >
-        <div class="w-full">
-          <CalendarHeader client:load />
-          <CalendarControls client:load />
+    <div class="max-w-6xl mx-auto">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-foreground">Mi Agenda</h1>
+          <p class="text-sm text-muted-foreground">Gestiona tus citas y horarios</p>
         </div>
-        <div class="flex-1 overflow-hidden w-full flex flex-col">
-          <CalendarView client:load />
-        </div>
+        <button
+          id="new-event-btn"
+          class="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Nueva Cita
+        </button>
       </div>
+
+      {error ? (
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <p class="text-red-600">Error al cargar agenda: {error}</p>
+        </div>
+      ) : (
+        <div class="grid gap-4">
+          <!-- Upcoming Events -->
+          <div class="bg-card rounded-xl border border-border overflow-hidden">
+            <div class="p-4 border-b border-border flex items-center justify-between">
+              <h2 class="font-semibold">Próximas Citas</h2>
+              <span class="text-xs text-muted-foreground">{events.filter(e => e.date >= today).length} citas</span>
+            </div>
+            
+            {events.filter(e => e.date >= today).length === 0 ? (
+              <div class="p-12 text-center text-muted-foreground">
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p class="font-medium">No hay citas programadas</p>
+                <p class="text-sm mt-1">Agenda tu primera cita</p>
+              </div>
+            ) : (
+              <div class="divide-y divide-border">
+                {events.filter(e => e.date >= today).slice(0, 10).map((event) => {
+                  const participants = typeof event.participants === 'string' ? JSON.parse(event.participants) : event.participants;
+                  return (
+                    <div class="p-4 hover:bg-muted/30 transition-colors flex items-center justify-between gap-4" data-event-id={event.id}>
+                      <div class="flex items-center gap-4 min-w-0">
+                        <div class="w-14 h-14 rounded-lg bg-primary/10 flex flex-col items-center justify-center flex-shrink-0">
+                          <span class="text-xs font-medium text-primary uppercase">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
+                          <span class="text-lg font-bold text-primary">{new Date(event.date).getDate()}</span>
+                        </div>
+                        <div class="min-w-0">
+                          <h3 class="font-medium truncate">{event.title}</h3>
+                          <p class="text-sm text-muted-foreground">{event.startTime} - {event.endTime}</p>
+                          <p class="text-xs text-muted-foreground truncate">{Array.isArray(participants) ? participants[0] : participants}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1 flex-shrink-0">
+                        {event.meetingLink && event.date === today && (
+                          <a href={`${event.meetingLink}&role=host`} class="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary flex items-center gap-1 text-xs font-medium" title="Unirse a Videollamada">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Unirse
+                          </a>
+                        )}
+                        <span class={`px-2 py-1 rounded-full text-xs font-medium ${
+                          event.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {event.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                        </span>
+                        <button class="edit-event-btn p-2 rounded-lg hover:bg-primary/10 text-primary" title="Editar">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <button class="duplicate-event-btn p-2 rounded-lg hover:bg-blue-100 text-blue-600" title="Duplicar">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                        <button class="cancel-event-btn p-2 rounded-lg hover:bg-red-100 text-red-500" title="Cancelar">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <!-- Past Events -->
+          {events.filter(e => e.date < today).length > 0 && (
+            <div class="bg-card rounded-xl border border-border overflow-hidden opacity-75">
+              <div class="p-4 border-b border-border flex items-center justify-between">
+                <h2 class="font-semibold">Citas Pasadas</h2>
+                <span class="text-xs text-muted-foreground">{events.filter(e => e.date < today).length} citas</span>
+              </div>
+              <div class="divide-y divide-border max-h-64 overflow-y-auto">
+                {events.filter(e => e.date < today).slice(0, 5).map((event) => {
+                  const participants = typeof event.participants === 'string' ? JSON.parse(event.participants) : event.participants;
+                  return (
+                    <div class="p-3 flex items-center justify-between gap-4">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                          <span class="text-xs font-medium text-muted-foreground">{new Date(event.date).getDate()}</span>
+                        </div>
+                        <div class="min-w-0">
+                          <h3 class="text-sm font-medium truncate">{event.title}</h3>
+                          <p class="text-xs text-muted-foreground">{event.startTime} - {event.endTime}</p>
+                        </div>
+                      </div>
+                      <span class="text-xs text-muted-foreground">{event.status}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <!-- Modal -->
+      <dialog id="event-modal" class="p-0 rounded-2xl border border-border shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm w-full max-w-md">
+        <form id="event-form" class="p-6 space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-lg font-bold" id="modal-title">Nueva Cita</h3>
+              <p class="text-sm text-muted-foreground">Programa una nueva cita</p>
+            </div>
+            <button type="button" id="close-modal" class="text-muted-foreground hover:text-foreground">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <input type="hidden" id="event-id" name="eventId" />
+
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium block mb-1">Título de la Cita *</label>
+              <input name="title" id="event-title" required placeholder="Ej. Sesión de terapia" class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm font-medium block mb-1">Fecha *</label>
+                <input name="date" id="event-date" type="date" required class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+              </div>
+              <div>
+                <label class="text-sm font-medium block mb-1">Duración</label>
+                <select name="duration" id="event-duration" class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                  <option value="30">30 minutos</option>
+                  <option value="45">45 minutos</option>
+                  <option value="60" selected>1 hora</option>
+                  <option value="90">1.5 horas</option>
+                  <option value="120">2 horas</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm font-medium block mb-1">Hora Inicio *</label>
+                <input name="startTime" id="event-start" type="time" required class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+              </div>
+              <div>
+                <label class="text-sm font-medium block mb-1">Hora Fin</label>
+                <input name="endTime" id="event-end" type="time" class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+              </div>
+            </div>
+
+            <div>
+              <label class="text-sm font-medium block mb-1">Email del Paciente *</label>
+              <input name="participants" id="event-participants" type="email" required placeholder="paciente@email.com" class="w-full px-4 py-2 rounded-lg border border-border bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" id="cancel-btn" class="px-4 py-2 text-muted-foreground hover:text-foreground font-medium">Cancelar</button>
+            <button type="submit" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90">Guardar</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Confirm Dialog -->
+      <dialog id="confirm-dialog" class="p-0 rounded-xl border border-border shadow-2xl backdrop:bg-black/50 backdrop:backdrop-blur-sm w-full max-w-sm">
+        <div class="p-6 text-center">
+          <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold mb-2">Confirmar Cancelación</h3>
+          <p class="text-sm text-muted-foreground mb-6" id="confirm-message">¿Estás seguro de que deseas cancelar esta cita?</p>
+          <div class="flex justify-center gap-3">
+            <button id="confirm-cancel" class="px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600">Sí, Cancelar</button>
+            <button id="confirm-close" class="px-4 py-2 border border-border rounded-lg font-medium hover:bg-muted">No, Mantener</button>
+          </div>
+        </div>
+      </dialog>
     </div>
+
+    <script define:vars={{ today }}>
+      const modal = document.getElementById('event-modal');
+      const form = document.getElementById('event-form');
+      const confirmDialog = document.getElementById('confirm-dialog');
+      const newBtn = document.getElementById('new-event-btn');
+      const closeBtn = document.getElementById('close-modal');
+      const cancelBtn = document.getElementById('cancel-btn');
+      
+      let currentEditId = null;
+
+      newBtn?.addEventListener('click', () => {
+        currentEditId = null;
+        document.getElementById('modal-title').textContent = 'Nueva Cita';
+        document.getElementById('event-id').value = '';
+        form.reset();
+        document.getElementById('event-date').value = today;
+        modal.showModal();
+      });
+
+      const closeModal = () => modal.close();
+      closeBtn?.addEventListener('click', closeModal);
+      cancelBtn?.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+      document.getElementById('event-duration')?.addEventListener('change', (e) => {
+        const duration = parseInt(e.target.value);
+        const startInput = document.getElementById('event-start');
+        if (startInput?.value) {
+          const [hours, minutes] = startInput.value.split(':').map(Number);
+          const endTime = new Date(2000, 0, 1, hours, minutes + duration);
+          document.getElementById('event-end').value = endTime.toTimeString().slice(0, 5);
+        }
+      });
+
+      document.getElementById('event-start')?.addEventListener('change', (e) => {
+        const duration = parseInt(document.getElementById('event-duration')?.value || '60');
+        if (e.target?.value) {
+          const [hours, minutes] = e.target.value.split(':').map(Number);
+          const endTime = new Date(2000, 0, 1, hours, minutes + duration);
+          document.getElementById('event-end').value = endTime.toTimeString().slice(0, 5);
+        }
+      });
+
+      document.querySelectorAll('.edit-event-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const row = e.target.closest('[data-event-id]');
+          const eventId = row?.getAttribute('data-event-id');
+          if (!eventId) return;
+
+          try {
+            const res = await fetch(`/api/agenda?startDate=2020-01-01&endDate=2030-12-31`);
+            const events = await res.json();
+            const event = events.find(ev => ev.id === eventId);
+            if (event) {
+              currentEditId = eventId;
+              document.getElementById('modal-title').textContent = 'Editar Cita';
+              document.getElementById('event-id').value = eventId;
+              document.getElementById('event-title').value = event.title;
+              document.getElementById('event-date').value = event.date;
+              document.getElementById('event-start').value = event.startTime;
+              document.getElementById('event-end').value = event.endTime;
+              const participants = typeof event.participants === 'string' ? JSON.parse(event.participants) : event.participants;
+              document.getElementById('event-participants').value = Array.isArray(participants) ? participants[0] : participants;
+              modal.showModal();
+            }
+          } catch (err) {
+            console.error('Error loading event:', err);
+          }
+        });
+      });
+
+      document.querySelectorAll('.duplicate-event-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const row = e.target.closest('[data-event-id]');
+          const eventId = row?.getAttribute('data-event-id');
+          if (!eventId) return;
+
+          try {
+            const res = await fetch(`/api/agenda?startDate=2020-01-01&endDate=2030-12-31`);
+            const events = await res.json();
+            const event = events.find(ev => ev.id === eventId);
+            if (event) {
+              currentEditId = null;
+              document.getElementById('modal-title').textContent = 'Duplicar Cita';
+              document.getElementById('event-id').value = '';
+              document.getElementById('event-title').value = event.title;
+              const newDate = new Date(event.date);
+              newDate.setDate(newDate.getDate() + 7);
+              document.getElementById('event-date').value = newDate.toISOString().split('T')[0];
+              document.getElementById('event-start').value = event.startTime;
+              document.getElementById('event-end').value = event.endTime;
+              const participants = typeof event.participants === 'string' ? JSON.parse(event.participants) : event.participants;
+              document.getElementById('event-participants').value = Array.isArray(participants) ? participants[0] : participants;
+              modal.showModal();
+            }
+          } catch (err) {
+            console.error('Error duplicating event:', err);
+          }
+        });
+      });
+
+      let pendingCancelId = null;
+      document.querySelectorAll('.cancel-event-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const row = e.target.closest('[data-event-id]');
+          pendingCancelId = row?.getAttribute('data-event-id');
+          confirmDialog.showModal();
+        });
+      });
+
+      document.getElementById('confirm-close')?.addEventListener('click', () => {
+        confirmDialog.close();
+        pendingCancelId = null;
+      });
+
+      document.getElementById('confirm-cancel')?.addEventListener('click', async () => {
+        if (pendingCancelId) {
+          try {
+            await fetch(`/api/agenda/${pendingCancelId}`, {
+              method: 'DELETE'
+            });
+            window.location.reload();
+          } catch (err) {
+            console.error('Error cancelling event:', err);
+          }
+        }
+        confirmDialog.close();
+      });
+
+      confirmDialog.addEventListener('click', (e) => {
+        if (e.target === confirmDialog) {
+          confirmDialog.close();
+          pendingCancelId = null;
+        }
+      });
+
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = {
+          title: formData.get('title'),
+          date: formData.get('date'),
+          startTime: formData.get('startTime'),
+          endTime: formData.get('endTime') || formData.get('startTime'),
+          participants: [formData.get('participants')]
+        };
+
+        try {
+          let res;
+          if (currentEditId) {
+            res = await fetch(`/api/agenda/${currentEditId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+          } else {
+            res = await fetch('/api/agenda', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+          }
+
+          if (res.ok) {
+            closeModal();
+            window.location.reload();
+          } else {
+            const result = await res.json();
+            alert(result.error || 'Error al guardar');
+          }
+        } catch (err) {
+          alert('Error de conexión');
+        }
+      });
+    </script>
   </SignedIn>
 </LayoutClient>

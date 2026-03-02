@@ -1,12 +1,5 @@
-
-import { createClient } from "@libsql/client";
-import type { PaymentRecord } from "src/constants/interfaces";
-
-// Inicializar Supabase (se asume que estas variables de entorno están disponibles)
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,   // e.g. "libsql://your-db.turso.io"
-  authToken: import.meta.env.TURSO_AUTH_TOKEN, // from `turso db tokens create`
-});
+import { db as client } from "../lib/turso/client";
+import type { PaymentRecord } from "../constants/interfaces";
 
 /**
  * Valida el estado de pago del usuario y determina si debe tener acceso a la aplicación.

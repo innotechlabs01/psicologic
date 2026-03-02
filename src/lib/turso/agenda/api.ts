@@ -1,11 +1,4 @@
-// src/lib/supabase/Header/index.ts
-import { createClient } from '@libsql/client';
-
-// Initialize Supabase client with service role key
-const client = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db as client } from '../client';
 
 export async function SaveHorariosUsers({ userId, payload }: { userId: string, payload: any }): Promise<boolean> {
     try {
@@ -45,7 +38,7 @@ export async function SaveHorariosUsers({ userId, payload }: { userId: string, p
                     monday_start_at, monday_end_at,
                     tuesday_start_at, tuesday_end_at,
                     wednesday_start_at, wednesday_end_at,
-                    thurday_start_at, thursday_end_at,
+                    thursday_start_at, thursday_end_at,
                     friday_start_at, friday_end_at,
                     saturday_start_at, saturday_end_at,
                     sunday_start_at, sunday_end_at,

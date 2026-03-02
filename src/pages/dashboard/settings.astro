@@ -16,24 +16,24 @@ import { SignedIn } from "@clerk/astro/components";
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <!-- Menú de navegación lateral -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-fit">
+          <div class="bg-card rounded-lg shadow-sm p-6 border border-border h-fit">
             <nav class="space-y-2">
               <!-- <a href="#perfil" data-section="perfil" class="block px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium active-section">
                 👤 Perfil
               </a> -->
-              <a href="#juegos" data-section="juegos" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <a href="#juegos" data-section="juegos" class="block px-3 py-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
                 🎮 Juegos
               </a>
-              <a href="#seguridad" data-section="seguridad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <a href="#seguridad" data-section="seguridad" class="block px-3 py-2 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
                 🔒/🔓 Asociar juego al ususario
               </a>
-              <!-- <a href="#preferencias" data-section="preferencias" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <!-- <a href="#preferencias" data-section="preferencias" class="block px-3 py-2 rounded-md text-foreground dark:text-gray-300 hover:bg-muted/50 dark:hover:bg-gray-700">
                 🔧 Preferencias
               </a>
-              <a href="#notificaciones" data-section="notificaciones" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <a href="#notificaciones" data-section="notificaciones" class="block px-3 py-2 rounded-md text-foreground dark:text-gray-300 hover:bg-muted/50 dark:hover:bg-gray-700">
                 🔔 Notificaciones
               </a>
-              <a href="#privacidad" data-section="privacidad" class="block px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <a href="#privacidad" data-section="privacidad" class="block px-3 py-2 rounded-md text-foreground dark:text-gray-300 hover:bg-muted/50 dark:hover:bg-gray-700">
                 🛡️ Privacidad
               </a> -->
             </nav>
@@ -43,57 +43,57 @@ import { SignedIn } from "@clerk/astro/components";
           <div class="lg:col-span-2 space-y-6">
             
             <!-- Perfil -->
-            <div id="perfil" data-section="perfil" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="perfil" data-section="perfil" class="bg-card rounded-lg shadow-sm p-6 border border-border">
+              <h2 class="text-xl font-semibold text-foreground mb-4">
                 Información del Perfil
               </h2>
               <form class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                       Nombre
                     </label>
                     <input 
                       type="text" 
                       value="Juan" 
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      class="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                       Apellido
                     </label>
                     <input 
                       type="text" 
                       value="Díaz" 
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                      class="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                   </div>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                     Email
                   </label>
                   <input 
                     type="email" 
                     value="juan@ejemplo.com" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    class="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                     Biografía
                   </label>
                   <textarea 
                     rows="3" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    class="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Cuéntanos sobre ti..."
                   ></textarea>
                 </div>
                 <div class="flex justify-end">
                   <button 
                     type="submit" 
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                    class="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-medium transition-colors"
                   >
                     Guardar Cambios
                   </button>
@@ -102,76 +102,76 @@ import { SignedIn } from "@clerk/astro/components";
             </div>
             
             <!-- Seguridad -->
-            <div id="seguridad" data-section="seguridad" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="seguridad" data-section="seguridad" class="bg-card rounded-lg shadow-sm p-6 border border-border hidden">
+              <h2 class="text-xl font-semibold text-foreground mb-4">
                 🔓/🔒 Activar-Desactivar Modulos x Usuarios
               </h2>
               <div id="treeContainer" class="tree-root mt-4"></div>
             </div>
             
             <!-- Notificaciones -->
-            <div id="notificaciones" data-section="notificaciones" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="notificaciones" data-section="notificaciones" class="bg-card rounded-lg shadow-sm p-6 border border-border hidden">
+              <h2 class="text-xl font-semibold text-foreground mb-4">
                 Notificaciones
               </h2>
-              <p class="text-gray-600 dark:text-gray-400">
+              <p class="text-muted-foreground dark:text-muted-foreground">
                 Personaliza tus preferencias de notificaciones.
               </p>
             </div>
             
             <!-- Privacidad -->
-            <div id="privacidad" data-section="privacidad" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="privacidad" data-section="privacidad" class="bg-card rounded-lg shadow-sm p-6 border border-border hidden">
+              <h2 class="text-xl font-semibold text-foreground mb-4">
                 Privacidad
               </h2>
-              <p class="text-gray-600 dark:text-gray-400">
+              <p class="text-muted-foreground dark:text-muted-foreground">
                 Ajusta la configuración de privacidad de tu cuenta.
               </p>
             </div>
             
             <!-- Juegos -->
-            <div id="juegos" data-section="juegos" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="juegos" data-section="juegos" class="bg-card rounded-lg shadow-sm p-6 border border-border hidden">
+              <h2 class="text-xl font-semibold text-foreground mb-4">
                 Juegos - Creación
               </h2>
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                     Slug
                   </label>
                   <input 
                     id="txtSlugGame"
                     type="text" 
                     placeholder="Ingresa el slug del juego" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    class="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                     Nombre del juego
                   </label>
                   <input 
                     id="txtNameGame"
                     type="text" 
                     placeholder="Ingresa el nombre del juego" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    class="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="block text-sm font-medium text-foreground dark:text-gray-300 mb-1">
                     Descripción
                   </label>
                   <textarea 
                     id="txtDescriptionGame"
                     rows="3" 
                     placeholder="Ingresa una descripción del juego" 
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    class="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   ></textarea>
                 </div>
                 <div>
                   <button 
                     id="btnIdGame"
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                    class="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg font-medium transition-colors"
                   >
                     Crear Juego
                   </button>
@@ -190,27 +190,27 @@ import { SignedIn } from "@clerk/astro/components";
             </div>
             
             <!-- Preferencias -->
-            <div id="preferencias" data-section="preferencias" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 hidden">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div id="preferencias" data-section="preferencias" class="bg-card rounded-lg shadow-sm p-6 border border-border hidden">
+              <h2 class="text-xl font-semibold text-foreground mb-4">
                 Preferencias
               </h2>
               <div class="space-y-4">
                 <div class="flex items-center justify-between">
                   <div>
-                    <h3 class="font-medium text-gray-900 dark:text-white">Modo oscuro</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Cambiar el tema de la aplicación</p>
+                    <h3 class="font-medium text-foreground dark:text-white">Modo oscuro</h3>
+                    <p class="text-sm text-muted-foreground dark:text-muted-foreground">Cambiar el tema de la aplicación</p>
                   </div>
                   <button class="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600">
-                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-card transition-transform translate-x-1"></span>
                   </button>
                 </div>
                 <div class="flex items-center justify-between">
                   <div>
-                    <h3 class="font-medium text-gray-900 dark:text-white">Notificaciones por email</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Recibir actualizaciones por correo</p>
+                    <h3 class="font-medium text-foreground dark:text-white">Notificaciones por email</h3>
+                    <p class="text-sm text-muted-foreground dark:text-muted-foreground">Recibir actualizaciones por correo</p>
                   </div>
                   <button class="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+                    <span class="inline-block h-4 w-4 transform rounded-full bg-card transition-transform translate-x-6"></span>
                   </button>
                 </div>
               </div>

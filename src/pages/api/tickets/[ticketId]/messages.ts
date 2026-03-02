@@ -1,11 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-// Configuración de la conexión a Turso
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../../lib/turso/client';
 
 export const GET: APIRoute = async ({ request, params, locals }) => {
     // 1. Obtener ID del Ticket y Autenticar Usuario
@@ -23,7 +17,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
     let userResult, currentUserRole;
 
     try {
-        
+
         // 2. Obtener ID interno y Rol del usuario
         userResult = await db.execute({
             sql: "SELECT id, role FROM Usuarios WHERE clerk_user_id = ?",
@@ -39,7 +33,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
         userRecord = userResult.rows[0];
         currentUserId = userRecord.id;
         currentUserRole = String(userRecord.role ?? 'usuario_final');
-    
+
         const isAgent = currentUserRole === 'agente_soporte' || currentUserRole === 'org:admin';
 
         // 3. Verificar Autorización (Cliente O Agente)
@@ -58,9 +52,9 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
 
         const ticketRecord = ticketDetail.rows[0];
         const isClientOwner = ticketRecord.user_id === currentUserId;
-        
+
         // Autorización: Es el cliente propietario O es un agente.
-        const isAuthorized = isClientOwner || isAgent; 
+        const isAuthorized = isClientOwner || isAgent;
 
         if (!isAuthorized) {
             return new Response(

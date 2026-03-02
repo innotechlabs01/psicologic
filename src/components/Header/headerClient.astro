@@ -6,7 +6,7 @@ import { SignOutButton, SignedIn } from "@clerk/astro/components";
 <button 
   id="sidebar-toggle" 
   type="button" 
-  class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+  class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-muted-foreground rounded-lg sm:hidden hover:bg-muted focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-muted-foreground dark:hover:bg-gray-700 dark:focus:ring-gray-600"
   aria-controls="separator-sidebar" 
   aria-expanded="false"
 >
@@ -25,12 +25,12 @@ import { SignOutButton, SignedIn } from "@clerk/astro/components";
   class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 -translate-x-full sm:translate-x-0" 
   aria-label="Sidebar"
 >
-  <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+  <div class="h-full px-3 py-4 overflow-y-auto bg-muted/50 dark:bg-gray-800">
     <!-- Botón cerrar en móvil -->
     <div class="flex justify-end mb-4 sm:hidden">
       <button 
         id="sidebar-close" 
-        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        class="text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-gray-200"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -40,8 +40,8 @@ import { SignOutButton, SignedIn } from "@clerk/astro/components";
 
     <ul class="space-y-2 font-medium">
       <li>
-        <a href="/client" data-navigate class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link">
-          <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
+        <a href="/client" data-navigate class="flex items-center p-2 text-foreground rounded-lg dark:text-white hover:bg-muted dark:hover:bg-gray-700 group sidebar-link">
+          <svg class="w-5 h-5 text-muted-foreground transition duration-75 dark:text-muted-foreground group-hover:text-foreground dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 22 21">
             <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
           </svg>
           <span class="ms-3">Dashboard</span>
@@ -51,7 +51,7 @@ import { SignOutButton, SignedIn } from "@clerk/astro/components";
       <!-- Menu items will be dynamically inserted here -->
     </ul>
 
-    <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700">
+    <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-border dark:border-gray-700">
       <SignedIn>
         <li>
           <SignOutButton redirectUrl="/" asChild>

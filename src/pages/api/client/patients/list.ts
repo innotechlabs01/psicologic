@@ -1,10 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../../lib/turso/client';
 
 import { verifyClerkUser } from '../../../../utils/verifyClerkUser';
 
@@ -53,7 +48,7 @@ export const GET: APIRoute = async (context) => {
   const statusFilter = includeInactive ? '' : `AND (status IS NULL OR status != 'inactive')`;
   const sql = `SELECT id, name, document, email, marital_status, status, membership_paid, created_at FROM patientsClient WHERE userId = ? ${statusFilter} ${searchClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
   const res = await db.execute({ sql, args });
-  const rows = res.rows.map(r => ({ id: r[0], name: r[1], document: r[2], email: r[3], marital_status: r[4], status: r[5], membership_paid: r[6], created_at: r[7] }));
+  const rows = res.rows.map((r: any) => ({ id: r[0], name: r[1], document: r[2], email: r[3], marital_status: r[4], status: r[5], membership_paid: r[6], created_at: r[7] }));
 
   const countSql = `SELECT COUNT(*) FROM patientsClient WHERE userId = ? AND (status IS NULL OR status != 'inactive') ${searchClause}`;
   const countArgs = q ? [clerkUserId, q, q, q] : [clerkUserId];

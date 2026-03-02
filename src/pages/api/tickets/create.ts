@@ -1,13 +1,8 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../lib/turso/client';
 
 // Función auxiliar para generar un UUID simple (o puedes usar la función DEFAULT de tu tabla)
-const generateUUID = () => crypto.randomUUID().replace(/-/g, ''); 
+const generateUUID = () => crypto.randomUUID().replace(/-/g, '');
 
 export const POST: APIRoute = async ({ request, locals }) => {
     // 1. AUTENTICACIÓN Y OBTENCIÓN DEL USUARIO
@@ -23,7 +18,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     try {
         // En un escenario real, deberías buscar el 'id' interno del usuario
         // en tu tabla 'Usuarios' usando el 'clerk_user_id' (que es el 'userId' de Clerk).
-        
+
         // --- Paso intermedio: Obtener el ID interno de la tabla Usuarios ---
         const userResult = await db.execute({
             sql: "SELECT id, role FROM Usuarios WHERE clerk_user_id = ?",
@@ -37,7 +32,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
                 { status: 404 }
             );
         }
-        
+
         const internalUserId = userRecord.id;
 
         // Opcional: Verificar si el usuario ya tiene un ticket abierto.
@@ -48,12 +43,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
         });
 
         if (openTicketCheck.rows.length > 0) {
-             const existingTicketId = openTicketCheck.rows[0].ticket_id;
-             // Si ya tiene un ticket abierto, lo redirigimos a ese chat en curso.
-             return new Response(
+            const existingTicketId = openTicketCheck.rows[0].ticket_id;
+            // Si ya tiene un ticket abierto, lo redirigimos a ese chat en curso.
+            return new Response(
                 JSON.stringify({ message: "Ya tienes un chat activo.", ticket_id: existingTicketId }),
                 { status: 409 } // Conflicto
-             );
+            );
         }
 
         // 2. CREACIÓN DEL NUEVO TICKET
@@ -65,20 +60,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
                   (ticket_id, user_id, asunto, estado, fecha_creacion) 
                   VALUES (?, ?, ?, ?, ?)`,
             args: [
-                newTicketId, 
-                internalUserId, 
-                initialSubject, 
-                'Abierto', 
-                Date.now() 
+                newTicketId,
+                internalUserId,
+                initialSubject,
+                'Abierto',
+                Date.now()
             ]
         });
 
         // 3. RESPUESTA Y REDIRECCIÓN DEL FRONTEND
         return new Response(
-            JSON.stringify({ 
-                success: true, 
-                message: "Ticket creado exitosamente", 
-                ticket_id: newTicketId 
+            JSON.stringify({
+                success: true,
+                message: "Ticket creado exitosamente",
+                ticket_id: newTicketId
             }),
             { status: 201 }
         );
@@ -95,7 +90,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 // Puedes añadir una función GET si es necesario, pero POST es para la creación.
 export const GET: APIRoute = () => {
     return new Response(
-        JSON.stringify({ error: "Método no permitido" }), 
+        JSON.stringify({ error: "Método no permitido" }),
         { status: 405 }
     );
 };

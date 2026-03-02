@@ -3,14 +3,8 @@
 import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../../layouts/LayoutClient.astro';
 import { SignedIn } from "@clerk/astro/components";
-import ChatInterface from '@components/Chat/ChatInterface.jsx'; 
-import { createClient } from '@libsql/client';
-
-// Configuración de la conexión a Turso
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import ChatInterface from '../../../features/chat/components/ChatInterface.jsx'; 
+import { db } from '../../../lib/turso/client';
 
 // --- LÓGICA SSR: Cargar Ticket y Permisos ---
 const { userId: clerkUserId } = Astro.locals.auth();
@@ -70,7 +64,7 @@ const titleText = `Conversación: ${urlTicketId.substring(0, 8)}...`;
         subtitle="Conversación activa de soporte"
         >
             <div class="h-[75vh]">
-                {/* 🎯 Solo muestra la interfaz si la autorización fue exitosa */}
+                <!-- 🎯 Solo muestra la interfaz si la autorización fue exitosa -->
                 {isAuthorized && currentUserId && (
                     <ChatInterface 
                         ticketId={urlTicketId}

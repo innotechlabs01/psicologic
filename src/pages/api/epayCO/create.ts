@@ -13,16 +13,19 @@ export const POST: APIRoute = async ({ request }) => {
       country,
       lang,
       email_billing,
-      confirm,
-      response,
+      userId
     } = await request.json();
 
-    const { EPAYCO_PUBLIC_KEY, IsTest } = import.meta.env;
+    const publicKey = import.meta.env.EPAYCO_PUBLIC_KEY;
+    const pKey = import.meta.env.EPAYCO_P_KEY;
+    const isTest = import.meta.env.EPAYCO_TEST_MODE === 'true';
 
-    if (!EPAYCO_PUBLIC_KEY) {
-      return new Response(JSON.stringify({ error: 'Llave pública no configurada' }), { status: 500 });
+    if (!publicKey || !pKey) {
+      return new Response(JSON.stringify({ error: 'Epayco keys not configured' }), { status: 500 });
     }
 
+    const basePath = import.meta.env.BASE_PATH || '';
+    
     const checkoutData = {
       name,
       description,
@@ -35,17 +38,22 @@ export const POST: APIRoute = async ({ request }) => {
       lang,
       external: 'true',
       email_billing,
-      test: IsTest,
-      confirmacion: `${import.meta.env.BASE_PATH}${confirm}`,
-      response: `${import.meta.env.BASE_PATH}${response}`,
+      test: isTest,
+      confirmation: `${basePath}/api/epayco/confirmacion`,
+      response: `${basePath}/client/payment`,
+      merchantId: import.meta.env.EPAYCO_MERCHANT_ID || '',
     };
 
-    return new Response(JSON.stringify({ checkoutData, publicKey: EPAYCO_PUBLIC_KEY, isTest: IsTest }), {
+    return new Response(JSON.stringify({ 
+      checkoutData, 
+      publicKey, 
+      isTest 
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error en /create:', error);
-    return new Response(JSON.stringify({ error: 'Error interno' }), { status: 500 });
+    console.error('Error creating payment:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
   }
 };

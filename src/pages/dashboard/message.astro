@@ -6,14 +6,8 @@
 import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import { SignedIn } from "@clerk/astro/components";
-import { createClient } from '@libsql/client';
-import ChatInterface from '../../components/Chat/ChatInterfaceAdmin.jsx';
-
-// Configuración de la conexión a Turso
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import ChatInterface from '../../features/chat/components/ChatInterfaceAdmin.jsx';
+import { db } from '../../lib/turso/client';
 
 // 🇪🇸 Formato dd/mm/yyyy
 const formattedDate = (date: number) => {
@@ -73,7 +67,7 @@ if (clerkUserId) {
         
 
         // Mapear los resultados a un formato usable
-        activeTickets = ticketsResult.rows.map(row => ({
+        activeTickets = ticketsResult.rows.map((row: any) => ({
             id: row.ticket_id,
             userName: row.user_name,
             fecha: row.fecha_creacion ? formattedDate(parseInt(row.fecha_creacion?.toString() || '0')) : '',
@@ -96,16 +90,16 @@ if (clerkUserId) {
         title="Tickets Activos" 
         subtitle={`Total: ${activeTickets.length} conversaciones abiertas`}
         >
-            <div class="flex h-[75vh] bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden">
+            <div class="flex h-[75vh] bg-card text-card-foreground rounded-xl shadow-xl overflow-hidden border border-border">
                 
                 {/* 1. Panel Lateral de Conversaciones (Lista de Chats) */}
-                <div class="w-1/4 border-r dark:border-gray-700 overflow-y-auto bg-gray-50 dark:bg-gray-700">
-                    <h3 class="sticky top-0 p-4 text-lg font-semibold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                <div class="w-1/4 border-r border-border overflow-y-auto bg-muted">
+                    <h3 class="sticky top-0 p-4 text-lg font-semibold text-foreground border-b border-border bg-muted">
                         Conversaciones ({activeTickets.length})
                     </h3>
 
                     {activeTickets.length === 0 ? (
-                        <div class="p-4 text-center text-gray-500 dark:text-gray-400">
+                        <div class="p-4 text-center text-muted-foreground">
                             No hay tickets activos en este momento.
                         </div>
                     ) : (
@@ -114,18 +108,18 @@ if (clerkUserId) {
                                 href="#" 
                                 data-ticket-id={ticket.id}
                                 data-user-name={ticket.userName}
-                                class="ticket-link ticket-item flex items-center p-4 border-b dark:border-gray-700 hover:bg-indigo-100 dark:hover:bg-indigo-900 transition duration-150 cursor-pointer"
+                                class="ticket-link ticket-item flex items-center p-4 border-b border-border hover:bg-accent transition duration-150 cursor-pointer"
                                 aria-label={`Abrir chat con ${ticket.userName}`}
                             >
-                                <div class="flex-shrink-0 w-10 h-10 bg-indigo-500 dark:bg-indigo-400 rounded-full flex items-center justify-center text-white text-lg font-bold mr-3">
+                                <div class="flex-shrink-0 w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-lg font-bold mr-3">
                                     {ticket.userName.charAt(0)}
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-center">
-                                        <p class="font-bold text-gray-900 dark:text-gray-100 truncate">{ticket.userName}</p>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{ticket.fecha}</span>
+                                        <p class="font-bold text-foreground truncate">{ticket.userName}</p>
+                                        <span class="text-xs text-muted-foreground">{ticket.fecha}</span>
                                     </div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300 truncate mt-1">
+                                    <p class="text-sm text-muted-foreground truncate mt-1">
                                         {ticket.preview}
                                     </p>
                                 </div>
@@ -151,7 +145,7 @@ if (clerkUserId) {
     </SignedIn>
 </LayoutDashboard>
 
-{/* 3. SCRIPT DE CLIENTE (El "pegamento" que comunica Astro con React) */}
+<!-- 3. SCRIPT DE CLIENTE (El "pegamento" que comunica Astro con React) -->
 <script type="module">
     // Seleccionamos todos los enlaces de tickets
     const ticketLinks = document.querySelectorAll('.ticket-link');
@@ -167,11 +161,11 @@ if (clerkUserId) {
         
         // Remueve la selección de todos los tickets y selecciona el actual
         document.querySelectorAll('.ticket-item').forEach(link => 
-            link.classList.remove('bg-indigo-100', 'dark:bg-indigo-900', 'bg-opacity-50')
+            link.classList.remove('bg-accent')
         );
         const activeLink = document.querySelector(`[data-ticket-id="${ticketId}"]`);
         if (activeLink) {
-            activeLink.classList.add('bg-indigo-100', 'dark:bg-indigo-900', 'bg-opacity-50');
+            activeLink.classList.add('bg-accent');
         }
 
         // 🔔 Evento de notificación a React

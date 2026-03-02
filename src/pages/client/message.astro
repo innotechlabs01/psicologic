@@ -2,13 +2,7 @@
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
 import { SignedIn } from "@clerk/astro/components";
-import { createClient } from '@libsql/client';
-
-// Configuración de la conexión a Turso
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../lib/turso/client';
 
 // --- LÓGICA SSR (SERVER-SIDE RENDERING) PARA VERIFICAR EL TICKET ACTIVO ---
 
@@ -64,7 +58,7 @@ if (!ticketToShowId && activeTicketId) {
     ticketToShowId = String(activeTicketId);
 }
 
-const titleText = ticketToShowId ? `Conversación: ${ticketToShowId.substring(0, 8)}...` : "Iniciar Chat";
+const titleText = (ticketToShowId && typeof ticketToShowId === 'string') ? `Conversación: ${ticketToShowId.substring(0, 8)}...` : "Iniciar Chat";
 ---
 
 <LayoutClient title="💬 Chat">
@@ -74,9 +68,7 @@ const titleText = ticketToShowId ? `Conversación: ${ticketToShowId.substring(0,
         subtitle="Gestiona todas tus conversaciones desde aquí"
         >
             <div class="h-[75vh]">
-                {/* * Si hay un ticket para mostrar Y el usuario está autenticado, 
-                * se carga la interfaz interactiva.
-                */}
+                <!-- Visual interface for starting a new chat -->
                 <div class="p-6 text-center">
                     <h3 class="text-xl font-semibold mb-4 dark:text-white">¿Tienes un nuevo problema o pregunta?</h3>
                     <button 

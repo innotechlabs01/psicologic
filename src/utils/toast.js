@@ -15,7 +15,7 @@ export function showToast(message, type = 'success', duration = 4000) {
   toast.innerHTML = `
     <span>${message}</span>
     <button class="ml-auto font-bold text-white hover:text-gray-200" onclick="this.parentElement.remove()">×</button>
-    <div class="absolute bottom-0 left-0 h-1 bg-white opacity-30 animate-progress" style="width: 100%;"></div>
+    <div class="absolute bottom-0 left-0 h-1 bg-card opacity-30 animate-progress" style="width: 100%;"></div>
   `;
 
   const style = document.createElement('style');

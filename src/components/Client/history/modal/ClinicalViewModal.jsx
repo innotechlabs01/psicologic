@@ -31,16 +31,16 @@ export default async function ClinicalViewModal({ entry, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
 
-      <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 animate-fadeIn">
+      <div className="bg-card w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden border border-border animate-fadeIn">
 
         {/* HEADER */}
         <header className="px-10 py-7 bg-gradient-to-r from-gray-50 to-gray-100 border-b flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-foreground">
               Ficha Clínica — {entry.name}
             </h1>
 
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Registro creado el:{" "}
               {entry.created_at
                 ? new Date(entry.created_at).toLocaleDateString()
@@ -50,17 +50,17 @@ export default async function ClinicalViewModal({ entry, onClose }) {
 
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-900 transition p-3 rounded-full hover:bg-gray-200"
+            className="text-muted-foreground hover:text-foreground transition p-3 rounded-full hover:bg-gray-200"
           >
             ✕
           </button>
         </header>
 
         {/* BODY */}
-        <div className="p-10 max-h-[75vh] overflow-y-auto space-y-12 bg-gray-50">
+        <div className="p-10 max-h-[75vh] overflow-y-auto space-y-12 bg-muted/50">
 
           {Object.keys(normalizedSections).length === 0 && (
-            <p className="text-center text-gray-500 italic">
+            <p className="text-center text-muted-foreground italic">
               No hay información disponible para esta ficha clínica.
             </p>
           )}
@@ -76,7 +76,7 @@ export default async function ClinicalViewModal({ entry, onClose }) {
         </div>
 
         {/* FOOTER */}
-        <footer className="p-6 border-t flex justify-end bg-white">
+        <footer className="p-6 border-t flex justify-end bg-card">
           <button
             onClick={onClose}
             className="px-8 py-2.5 bg-gray-900 text-white rounded-lg shadow hover:bg-gray-800 transition"
@@ -94,7 +94,7 @@ export default async function ClinicalViewModal({ entry, onClose }) {
 function SectionBlock({ title, fields }) {
   return (
     <section className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 border-l-4 border-indigo-600 pl-4">
+      <h2 className="text-xl font-semibold text-foreground border-l-4 border-indigo-600 pl-4">
         {title}
       </h2>
 
@@ -111,13 +111,13 @@ function FieldCard({ field }) {
   const { label, type, value, options } = field;
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition">
+    <div className="bg-card p-5 rounded-xl shadow-sm border border-border hover:shadow-md transition">
 
       <h3 className="text-sm font-semibold text-indigo-700 tracking-wide uppercase mb-2 border-b pb-1">
         {label}
       </h3>
 
-      <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+      <div className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
         {renderValue(type, value, options)}
       </div>
     </div>
@@ -127,7 +127,7 @@ function FieldCard({ field }) {
 /* ---- Render inteligente según tipo ---- */
 function renderValue(type, value, options) {
   if (value == null || value === "") {
-    return <span className="text-gray-400 italic">Sin respuesta</span>;
+    return <span className="text-muted-foreground italic">Sin respuesta</span>;
   }
 
   switch (type) {

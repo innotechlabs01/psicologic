@@ -1,31 +1,26 @@
 // src/pages/api/webhooks/clerk.ts
 import type { APIContext, APIRoute } from 'astro';
 import { Webhook } from 'svix';
-import { createClient } from '@libsql/client';
 import { clerkClient } from '@clerk/astro/server';
 import type { ClerkUserEvent } from './interface';
-
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db } from '../../../lib/turso/client';
 
 // 🆕 FUNCIÓN PARA CREAR USUARIO DESDE CLERK (LLAMADA DESDE MIDDLEWARE)
 export async function createUserFromClerk(userData: ClerkUserEvent['data'], context?: APIContext, isGameLogin: boolean = false): Promise<any> {
 
-  const primaryEmail = userData.email_addresses.find(email =>
+  const primaryEmail = userData.email_addresses.find((email: any) =>
     email.verification.status === 'verified'
   )?.email_address || userData.email_addresses[0]?.email_address;
 
   try {
     // Primero verificar si el usuario ya existe
-    const result = await client.execute(
+    const result = await db.execute(
       `select id, status, role from usuarios where clerk_user_id=? limit 1`, [userData.id]
     )
 
     if (result.rows[0] || result.rows.length > 0) {
       // Usuario existe, actualizar información
-      const result = await client.execute(
+      const result = await db.execute(
         `update usuarios set 
           email=?,
           first_name=?,
@@ -50,12 +45,12 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data'], cont
 
       // If a patient exists with this email, activate their membership and link to this clerk user
       try {
-        const patientRes = await client.execute(
+        const patientRes = await db.execute(
           `select id from patientsClient where email = ? limit 1`, [primaryEmail]
         );
         if (patientRes && patientRes.rows[0]) {
           const patientId = patientRes.rows[0].id;
-          await client.execute(
+          await db.execute(
             `update patientsClient set membership_paid = ?, updated_at = ? where id = ?`,
             [1, new Date().toISOString(), patientId]
           );
@@ -69,7 +64,7 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data'], cont
     } else {
 
       // Usuario no existe, crear nuevo
-      await client.execute(
+      await db.execute(
         `
           insert into usuarios (
             clerk_user_id,
@@ -124,12 +119,12 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data'], cont
 
       // Check patientsClient table for matching email and activate membership/link user
       try {
-        const patientRes = await client.execute(
+        const patientRes = await db.execute(
           `select id from patientsClient where email = ? limit 1`, [primaryEmail]
         );
         if (patientRes && patientRes.rows[0]) {
           const patientId = patientRes.rows[0].id;
-          await client.execute(
+          await db.execute(
             `update patientsClient set membership_paid = ?, updated_at = ? where id = ?`,
             [1, new Date().toISOString(), patientId]
           );
@@ -139,7 +134,7 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data'], cont
         console.error('Error activating membership for patient:', err);
       }
 
-      const result = await client.execute(
+      const result = await db.execute(
         `select * from usuarios where clerk_user_id=? limit 1`, [userData.id]
       )
 
@@ -155,19 +150,19 @@ export async function createUserFromClerk(userData: ClerkUserEvent['data'], cont
 }
 
 export async function createUserFromAdminClerk(userData: ClerkUserEvent['data']): Promise<any> {
-  const primaryEmail = userData.email_addresses.find(email =>
+  const primaryEmail = userData.email_addresses.find((email: any) =>
     email.verification.status === 'verified'
   )?.email_address || userData.email_addresses[0]?.email_address;
 
   try {
     // Primero verificar si el usuario ya existe
-    const result = await client.execute(
+    const result = await db.execute(
       `select id, status, role from usuarios where clerk_user_id=? limit 1`, [userData.id]
     )
 
     if (result.rows[0] || result.rows.length > 0) {
       // Usuario existe, actualizar información
-      const result = await client.execute(
+      const result = await db.execute(
         `update usuarios set 
           email=?,
           first_name=?,
@@ -192,12 +187,12 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
 
       // If a patient exists with this email, activate their membership and link to this clerk user
       try {
-        const patientRes = await client.execute(
+        const patientRes = await db.execute(
           `select id from patientsClient where email = ? limit 1`, [primaryEmail]
         );
         if (patientRes && patientRes.rows[0]) {
           const patientId = patientRes.rows[0].id;
-          await client.execute(
+          await db.execute(
             `update patientsClient set membership_paid = ?, userId = ?, updated_at = ? where id = ?`,
             [1, userData.id, new Date().toISOString(), patientId]
           );
@@ -211,7 +206,7 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
     } else {
 
       // Usuario no existe, crear nuevo
-      await client.execute(
+      await db.execute(
         `
           insert into usuarios (
             clerk_user_id,
@@ -266,12 +261,12 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
 
       // Check patientsClient table for matching email and activate membership/link user
       try {
-        const patientRes = await client.execute(
+        const patientRes = await db.execute(
           `select id from patientsClient where email = ? limit 1`, [primaryEmail]
         );
         if (patientRes && patientRes.rows[0]) {
           const patientId = patientRes.rows[0].id;
-          await client.execute(
+          await db.execute(
             `update patientsClient set membership_paid = ?, userId = ?, updated_at = ? where id = ?`,
             [1, userData.id, new Date().toISOString(), patientId]
           );
@@ -281,7 +276,7 @@ export async function createUserFromAdminClerk(userData: ClerkUserEvent['data'])
         console.error('Error activating membership for patient:', err);
       }
 
-      const result = await client.execute(
+      const result = await db.execute(
         `select * from usuarios where clerk_user_id=? limit 1`, [userData.id]
       )
 
@@ -312,7 +307,7 @@ export async function triggerUserAccessEvent(payload: {
     }
 
     // 1. Registrar en tabla de access_logs
-    const result = await client.execute(
+    const result = await db.execute(
       `
       insert into access_logs (
         clerk_user_id,
@@ -349,7 +344,7 @@ export async function triggerUserAccessEvent(payload: {
 
     // 2. Actualizar última actividad del usuario
     if (payload.action === 'access' || payload.action === 'login') {
-      const result = await client.execute(
+      const result = await db.execute(
         `
         update usuarios set 
           last_login = ?,
@@ -393,7 +388,7 @@ async function detectSuspiciousActivity(payload: {
   try {
     // Verificar múltiples IPs en corto tiempo
     if (payload.ip && payload.userId !== 'anonymous') {
-      const result = await client.execute(
+      const result = await db.execute(
         `
         select ip_address from access_logs
         where clerk_user_id = ? and timestamp >= ?
@@ -405,7 +400,7 @@ async function detectSuspiciousActivity(payload: {
         ]
       )
 
-      const uniqueIPs = [...new Set(result.rows?.map(log => log.ip_address).filter(Boolean))];
+      const uniqueIPs = [...new Set(result.rows?.map((log: any) => log.ip_address).filter(Boolean))];
 
       if (uniqueIPs.length > 3) {
         await createSecurityAlert({
@@ -419,7 +414,7 @@ async function detectSuspiciousActivity(payload: {
 
     // Verificar intentos de acceso denegado repetidos
     if (payload.action === 'denied' && payload.userId !== 'anonymous') {
-      const result = await client.execute(
+      const result = await db.execute(
         `
         select id, route, timestamp from access_logs
         where clerk_user_id = ? and action = 'denied' and timestamp >= ?
@@ -440,7 +435,7 @@ async function detectSuspiciousActivity(payload: {
             attempts: result.rows.length,
             route: payload.route,
             timeframe: '15_minutes',
-            attemptedRoutes: result.rows.map(a => a.route)
+            attemptedRoutes: result.rows.map((a: any) => a.route)
           }
         });
       }
@@ -476,7 +471,7 @@ async function createSecurityAlert(alert: {
 }) {
   try {
 
-    const result = await client.execute(
+    const result = await db.execute(
       `
       insert into security_alerts (clerk_user_id, alert_type, severity, details, status, created_at)
       values (?, ?, ?, ?, 'active', ?)
@@ -514,7 +509,7 @@ async function handleUserUpdated(userData: ClerkUserEvent['data']) {
     const result = await createUserFromClerk(userData);
 
     // 📊 Registrar evento de actualización
-    const primaryEmail = userData.email_addresses.find(email =>
+    const primaryEmail = userData.email_addresses.find((email: any) =>
       email.verification.status === 'verified'
     )?.email_address || userData.email_addresses[0]?.email_address;
 
@@ -535,7 +530,7 @@ async function handleUserUpdated(userData: ClerkUserEvent['data']) {
 
 async function handleUserDeleted(userId: string) {
   try {
-    const result = await client.execute(
+    const result = await db.execute(
       `
       update usuarios
       set status = 'deleted',
@@ -570,7 +565,7 @@ async function handleUserDeleted(userId: string) {
 
 async function notifyAdminsOfNewUser(user: any) {
   try {
-    const result = await client.execute(
+    const result = await db.execute(
       `
       insert into admin_notifications (
         type,
@@ -610,7 +605,7 @@ async function notifyAdminsOfNewUser(user: any) {
 async function notifyAdminsSecurityAlert(alert: any) {
   try {
 
-    const result = await client.execute(
+    const result = await db.execute(
       `
       insert into admin_notifications (
         type,

@@ -1,0 +1,193 @@
+---
+// src/components/Payment/PaymentHistory.astro
+interface Transaction {
+  id: number;
+  amount: string;
+  status: string;
+  payment_method: string;
+  transaction_date: string;
+  subscription_period_start: string;
+  subscription_period_end: string;
+}
+
+interface Props {
+  transactions: Transaction[];
+}
+
+const { transactions } = Astro.props;
+
+const formatDate = (date: string) => {
+  return date;
+};
+
+const formatAmount = (amount: string) => {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+  }).format(parseFloat(amount));
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "approved":
+      return "bg-green-100 text-green-800";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "rejected":
+      return "bg-red-100 text-red-800";
+    case "cancelled":
+      return "bg-muted text-foreground";
+    default:
+      return "bg-muted text-foreground";
+  }
+};
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case "approved":
+      return "Aprobado";
+    case "pending":
+      return "Pendiente";
+    case "rejected":
+      return "Rechazado";
+    case "cancelled":
+      return "Cancelado";
+    default:
+      return status;
+  }
+};
+
+const getPaymentMethodText = (method: string) => {
+  switch (method) {
+    case "credit_card":
+      return "Tarjeta de Crédito";
+    case "debit_card":
+      return "Tarjeta de Débito";
+    case "bank_transfer":
+      return "Transferencia";
+    case "pse":
+      return "PSE";
+    default:
+      return method || "N/A";
+  }
+};
+---
+
+<div class="bg-card shadow-md rounded-lg overflow-hidden">
+  <div class="px-6 py-4 border-b border-border">
+    <h3 class="text-lg leading-6 font-medium text-foreground">
+      Historial de Pagos
+    </h3>
+    <p class="mt-1 max-w-2xl text-sm text-muted-foreground">
+      Registro completo de todas las transacciones realizadas
+    </p>
+  </div>
+
+  {
+    transactions.length === 0 ? (
+      <div class="px-6 py-12 text-center">
+        <svg
+          class="mx-auto h-12 w-12 text-muted-foreground"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 48 48"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M34 40h10v-4a6 6 0 00-10.712-3.714M34 40H14m20 0v-4a9.971 9.971 0 00-.712-3.714M14 40H4v-4a6 6 0 0110.713-3.714M14 40v-4c0-1.313.253-2.566.713-3.714m0 0A10.003 10.003 0 0124 26c4.21 0 7.813 2.602 9.288 6.286M30 14a6 6 0 11-12 0 6 6 0 0112 0zm12 6a4 4 0 11-8 0 4 4 0 018 0zm-28 0a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-foreground">
+          Sin transacciones
+        </h3>
+        <p class="mt-2 text-sm text-muted-foreground">
+          No has realizado ningún pago aún. ¡Comienza tu suscripción hoy!
+        </p>
+      </div>
+    ) : (
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-muted/50">
+            <tr>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Fecha
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Monto
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Estado
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Método
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+              >
+                Período
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-card divide-y divide-gray-200">
+            {transactions.map((transaction) => (
+              <tr class="hover:bg-muted/50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  {formatDate(transaction.transaction_date).toLocaleString()}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
+                  {formatAmount(transaction.amount)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span
+                    class={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(transaction.status)}`}
+                  >
+                    {getStatusText(transaction.status)}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-foreground">
+                  {getPaymentMethodText(transaction.payment_method)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  <div class="flex flex-col">
+                    <span class="text-xs">
+                      {formatDate(transaction.subscription_period_start)}
+                    </span>
+                    <span class="text-xs text-muted-foreground">hasta</span>
+                    <span class="text-xs">
+                      {formatDate(transaction.subscription_period_end)}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
+  {
+    transactions.length > 0 && (
+      <div class="bg-muted/50 px-6 py-3">
+        <p class="text-sm text-muted-foreground">
+          Total de {transactions.length} transacciones
+        </p>
+      </div>
+    )
+  }
+</div>

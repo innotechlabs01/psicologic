@@ -4,45 +4,9 @@ import LayoutDashboard from "../layouts/LayoutDashboard.astro";
 import { SignedIn } from "@clerk/astro/components";
 import { MyLine } from "../components/Chartjs/chart.tsx";
 
-// ⚡️ SSR Data Fetching
-let dashboardData = {
-  countUser: 0,
-  countTicket: 0,
-  countChatActive: 0,
-  countChatClose: 0,
-};
+import { DashboardStats } from "../features/dashboard/components/DashboardStats.tsx";
 
-try {
-  // Fetch data directly on server
-  // Since we are on the same server, we can call the DB logic directly or fetch from localhost
-  // But calling fetch to its own API during SSR can be tricky with auth headers.
-  // Ideally we should import the logic.
-  // For now, let's keep using fetch but we need the absolute URL or use the logic directly.
-  // Recommendation: Import the DB logic directly if possible or make the API call with full URL.
-  // However, simpler for now: just call the API endpoint if it's public/protected by cookies passed along?
-  // Astro middleware handles auth.
-
-  // Better approach: Import the controller/logic if available.
-  // If not, we'll assume the API is reachable.
-  // NOTE: Calling own API in Astro SSR typically requires full URL.
-  // process.env.VERCEL_URL might help, or just request.url origin.
-
-  const origin = Astro.url.origin;
-  // We need to pass the cookie for auth to work if the API caches it?
-  // Actually the API probably uses the same database so we could just query DB here.
-  // But to avoid code duplication let's try to fetch.
-  // If this fails, we fall back to client side or 0.
-
-  const response = await fetch(`${origin}/api/dashboard`, {
-    headers: Astro.request.headers,
-  });
-
-  if (response.ok) {
-    dashboardData = await response.json();
-  }
-} catch (e) {
-  console.error("Failed to fetch dashboard data server-side", e);
-}
+// SSR Data Fetching removed to favor client-side skeletons for stats
 ---
 
 <LayoutDashboard title="🔒 Dashboard">
@@ -53,143 +17,12 @@ try {
     >
       <!-- Contenido principal del dashboard -->
       <div class="space-y-6">
-        <!-- Grid de tarjetas estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Usuarios Nuevos
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="newUsersCount"
-                >
-                  {dashboardData.countUser}
-                </p>
-              </div>
-              <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-blue-600 dark:text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  ></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Mensajes Pendientes
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="ticketsCount"
-                >
-                  {dashboardData.countTicket}
-                </p>
-              </div>
-              <div class="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-yellow-600 dark:text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Chats Activos
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="chatActiveCount"
-                >
-                  {dashboardData.countChatActive}
-                </p>
-              </div>
-              <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-purple-600 dark:text-purple-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  ></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Chats Cerrados
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="chatCloseCount"
-                >
-                  {dashboardData.countChatClose}
-                </p>
-              </div>
-              <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-green-600 dark:text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardStats client:visible />
       </div>
       <div
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
+        class="bg-card dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-border dark:border-gray-700"
       >
-        <MyLine client:only />
+        <MyLine client:visible />
       </div>
     </DashboardWrapper>
   </SignedIn>

@@ -1,0 +1,41 @@
+---
+import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
+import { SignedIn } from "@clerk/astro/components";
+import AdminDashboard from '../../features/admin/components/AdminDashboard';
+import { db } from '../../lib/turso/client';
+
+const { userId: clerkUserId } = Astro.locals.auth();
+
+let currentUserRole = 'usuario_final';
+
+if (clerkUserId) {
+  const userResult = await db.execute({
+    sql: "SELECT role FROM Usuarios WHERE clerk_user_id = ?",
+    args: [clerkUserId]
+  });
+
+  if (userResult.rows.length > 0) {
+    currentUserRole = String(userResult.rows[0].role ?? 'usuario_final');
+  }
+
+  const isAgentAuthorized = currentUserRole === 'agente_soporte' || currentUserRole === 'org:admin';
+
+  if (!isAgentAuthorized) {
+    return Astro.redirect('/dashboard');
+  }
+} else {
+  return Astro.redirect('/');
+}
+---
+
+<LayoutDashboard title="Admin - Panel de Control">
+  <SignedIn>
+    <DashboardWrapper 
+      title="Panel de Administración" 
+      subtitle="Gestiona usuarios, tickets, feedback y configuración"
+    >
+      <AdminDashboard client:load currentUserRole={currentUserRole as string} />
+    </DashboardWrapper>
+  </SignedIn>
+</LayoutDashboard>

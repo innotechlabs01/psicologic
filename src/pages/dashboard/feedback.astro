@@ -1,94 +1,17 @@
-<!-- ---
+---
+import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
+import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import { SignedIn } from "@clerk/astro/components";
-import LayoutClient from "../../layouts/LayoutClient.astro";
-import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
+import FeedbackDashboard from '../../components/feedback/FeedbackDashboard';
 ---
 
-<LayoutClient>
-    <SignedIn>
-        <DashboardWrapper title="💬 Feedback" subtitle="Gestiona todos los feedbacks desde aquí">
-            <!-- Grid para mostrar feedbacks
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Los feedbacks se cargan dinámicamente aquí 
-            </div>
-            <!-- Resumen con gráfico
-            <div class="mt-8 p-6 bg-white rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-4 text-gray-800">Resumen de Sentimientos</h3>
-                <canvas id="moodChart"></canvas>
-            </div>
-        </DashboardWrapper>
-    </SignedIn>
-</LayoutClient>
-
-<script>
-    import { createClient } from '@libsql/client';
-    import Chart from 'chart.js/auto';
-
-    const client = createClient({
-        url: import.meta.env.TURSO_DATABASE_URL,
-        authToken: import.meta.env.TURSO_AUTH_TOKEN
-    });
-
-    async function loadFeedbacks() {
-        const { rows } = await client.execute(
-            `select * from feedback order by created_at desc`
-        );
-
-        if (rows.length === 0) {
-            console.error('Error loading feedbacks: No feedbacks found');
-            return;
-        }
-
-        // Renderizar tarjetas de feedback
-        const grid = document.querySelector('.grid-cols-1');
-        grid.innerHTML = '';
-        rows.forEach(fb => {
-            const card = document.createElement('div');
-            card.className = 'p-6 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300';
-            card.innerHTML = `
-                <div class="flex items-center mb-4">
-                    <span class="text-3xl mr-2">${fb.mood}</span>
-                    <span class="font-semibold text-indigo-600">Rating: ${fb.rating}/10</span>
-                </div>
-                <p class="text-gray-700">${fb.comment}</p>
-                <p class="text-sm text-gray-500 mt-2">Fecha: ${new Date(fb.created_at).toLocaleString()}</p>
-            `;
-            grid.appendChild(card);
-        });
-
-        // Gráfico de moods
-        const moods = rows.reduce((acc, fb) => {
-            acc[fb.mood] = (acc[fb.mood] || 0) + 1;
-            return acc;
-        }, {});
-
-        ```chartjs
-        {
-            "type": "doughnut",
-            "data": {
-                "labels": Object.keys(moods),
-                "datasets": [{
-                    "data": Object.values(moods),
-                    "backgroundColor": ["#4ADE80", "#FBBF24", "#F87171", "#8A2BE2", "#6EE7B7"],
-                    "borderColor": ["#2D8C4F", "#D97706", "#B91C1C", "#8A2BE2", "#10B981"],
-                    "borderWidth": 1
-                }]
-            },
-            "options": {
-                "responsive": true,
-                "plugins": {
-                    "legend": {
-                        "position": "top",
-                        "labels": {
-                            "color": "#0A1F44",
-                            "font": {
-                                "size": 14
-                            }
-                        }
-                    }
-                }
-            }
-        }```
-    }
-document.addEventListener('DOMContentLoaded', loadFeedbacks);
-</script> -->
+<LayoutDashboard title="💬 Feedback">
+  <SignedIn>
+    <DashboardWrapper 
+      title="Feedback" 
+      subtitle="Gestiona todos los feedbacks desde aquí"
+    >
+      <FeedbackDashboard client:load />
+    </DashboardWrapper>
+  </SignedIn>
+</LayoutDashboard>

@@ -55,7 +55,7 @@ const PALETTE = [
 function PaletteItem({ item }) {
   return (
     <div
-      className="cursor-grab select-none rounded-md border p-2 mb-2 bg-white hover:shadow"
+      className="cursor-grab select-none rounded-md border p-2 mb-2 bg-card hover:shadow"
       draggable
       onDragStart={(e) => {
         // Payload for creating a new component
@@ -210,10 +210,10 @@ export default function BuilderWithEditorAndReorder() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold">Template - Historias Clínicas</h2>
         <div className="flex gap-2">
-          <button className="px-3 py-2 bg-white border rounded" onClick={() => addComponent('text')}>+ Texto</button>
-          <button className="px-3 py-2 bg-white border rounded" onClick={() => addComponent('input')}>+ Input</button>
-          <button className="px-3 py-2 bg-white border rounded" onClick={() => addComponent('checkbox')}>+ Checkbox</button>
-          <button className="px-3 py-2 bg-white border rounded" onClick={() => addComponent('select')}>+ Select</button>
+          <button className="px-3 py-2 bg-card border rounded" onClick={() => addComponent('text')}>+ Texto</button>
+          <button className="px-3 py-2 bg-card border rounded" onClick={() => addComponent('input')}>+ Input</button>
+          <button className="px-3 py-2 bg-card border rounded" onClick={() => addComponent('checkbox')}>+ Checkbox</button>
+          <button className="px-3 py-2 bg-card border rounded" onClick={() => addComponent('select')}>+ Select</button>
           <button className="px-3 py-2 bg-indigo-600 text-white rounded" onClick={saveForm}>Guardar</button>
         </div>
       </div>
@@ -221,7 +221,7 @@ export default function BuilderWithEditorAndReorder() {
       <div className="grid grid-cols-12 gap-6">
         {/* Sidebar */}
         <aside className="col-span-3">
-          <div className="bg-white rounded shadow p-4">
+          <div className="bg-card rounded shadow p-4">
             <h3 className="font-semibold mb-3">Componentes</h3>
             {PALETTE.map((p) => (<PaletteItem key={p.type} item={p} />))}
 
@@ -235,12 +235,12 @@ export default function BuilderWithEditorAndReorder() {
 
         {/* Canvas */}
         <main className="col-span-6">
-          <div className="bg-white rounded shadow p-4">
+          <div className="bg-card rounded shadow p-4">
             <h3 className="font-semibold mb-3">Lienzo</h3>
 
-            <div ref={canvasRef} className="p-4 rounded-md border-dashed border-2 border-gray-200 min-h-[300px] bg-gray-50">
+            <div ref={canvasRef} className="p-4 rounded-md border-dashed border-2 border-border min-h-[300px] bg-muted/50">
               {components.length === 0 && (
-                <div className="text-center text-gray-400 py-16">Arrastra componentes desde la izquierda o haz click en "+ Añadir"</div>
+                <div className="text-center text-muted-foreground py-16">Arrastra componentes desde la izquierda o haz click en "+ Añadir"</div>
               )}
 
               <div className="space-y-3">
@@ -252,10 +252,10 @@ export default function BuilderWithEditorAndReorder() {
                     onDragOver={handleItemDragOver}
                     onDrop={(e) => handleItemDrop(e, idx)}
                     onClick={(e) => { e.stopPropagation(); setSelectedId(c.id); }}
-                    className={`flex items-start gap-3 p-3 rounded-md border bg-white hover:shadow cursor-move ${selectedId === c.id ? 'ring-2 ring-indigo-400' : ''}`}
+                    className={`flex items-start gap-3 p-3 rounded-md border bg-card hover:shadow cursor-move ${selectedId === c.id ? 'ring-2 ring-indigo-400' : ''}`}
                   >
                     <div className="w-full">
-                      <div className="text-sm text-gray-600">{c.type.toUpperCase()} — <span className="font-mono text-xs">{c.id}</span></div>
+                      <div className="text-sm text-muted-foreground">{c.type.toUpperCase()} — <span className="font-mono text-xs">{c.id}</span></div>
                       <div className="mt-2">
                         {c.type === 'text' && <div className="text-base">{c.label}</div>}
                         {c.type === 'input' && (
@@ -271,7 +271,7 @@ export default function BuilderWithEditorAndReorder() {
                         )}
                       </div>
                     </div>
-                    <div className="text-xs text-gray-400">☰</div>
+                    <div className="text-xs text-muted-foreground">☰</div>
                   </div>
                 ))}
               </div>
@@ -282,11 +282,11 @@ export default function BuilderWithEditorAndReorder() {
 
         {/* Inspector */}
         <aside className="col-span-3">
-          <div className="bg-white rounded shadow p-4 sticky top-6">
+          <div className="bg-card rounded shadow p-4 sticky top-6">
             {!selectedComp && (
               <div>
                 <h4 className="font-semibold">Inspector</h4>
-                <p className="text-sm text-gray-500">Selecciona un componente para editar sus propiedades</p>
+                <p className="text-sm text-muted-foreground">Selecciona un componente para editar sus propiedades</p>
               </div>
             )}
 
@@ -299,27 +299,27 @@ export default function BuilderWithEditorAndReorder() {
 
                 <div className="mt-3 space-y-3">
                   <div>
-                    <label className="block text-xs text-gray-500">Label</label>
+                    <label className="block text-xs text-muted-foreground">Label</label>
                     <input value={selectedComp.label} onChange={(e) => updateComponent(selectedComp.id, { label: e.target.value })} className="w-full border rounded p-2" />
                   </div>
 
                   {selectedComp.type === 'input' && (
                     <div>
-                      <label className="block text-xs text-gray-500">Placeholder</label>
+                      <label className="block text-xs text-muted-foreground">Placeholder</label>
                       <input value={selectedComp.placeholder} onChange={(e) => updateComponent(selectedComp.id, { placeholder: e.target.value })} className="w-full border rounded p-2" />
                     </div>
                   )}
 
                   {selectedComp.type === 'select' && (
                     <div>
-                      <label className="block text-xs text-gray-500">Opciones (separadas por coma)</label>
+                      <label className="block text-xs text-muted-foreground">Opciones (separadas por coma)</label>
                       <input value={selectedComp.options.join(', ')} onChange={(e) => updateComponent(selectedComp.id, { options: e.target.value.split(',').map(s => s.trim()) })} className="w-full border rounded p-2" />
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs text-gray-500">ID</label>
-                    <div className="font-mono text-sm p-2 border rounded bg-gray-50">{selectedComp.id}</div>
+                    <label className="block text-xs text-muted-foreground">ID</label>
+                    <div className="font-mono text-sm p-2 border rounded bg-muted/50">{selectedComp.id}</div>
                   </div>
                 </div>
               </div>

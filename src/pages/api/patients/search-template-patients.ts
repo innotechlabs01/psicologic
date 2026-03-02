@@ -1,10 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../lib/turso/client';
 
 // Tipo para que TS no se queje
 type SectionMap = Record<string, {

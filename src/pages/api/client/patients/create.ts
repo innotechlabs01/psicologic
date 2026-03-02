@@ -1,12 +1,6 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
+import { db } from "../../../../lib/turso/client";
 import { v4 as uuidv4 } from 'uuid';
-
-const db = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
-
 import { validateName, validateCedula, validateEmail, sanitizeString } from '../../../../utils/validators';
 import { verifyClerkUser } from '../../../../utils/verifyClerkUser';
 
@@ -38,7 +32,7 @@ export const POST: APIRoute = async (context) => {
     const now = new Date().toISOString();
 
     await db.execute({ sql: 'INSERT INTO patientsClient (id, name, document, email, marital_status, membership_paid, status, userId, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', args: [id, name, cedula, email || '', marital_status || '', 0, 'active', clerkUserId, now, now] });
-  
+
     return new Response(JSON.stringify({ ok: true, id }), { status: 200 });
   } catch (err) {
     console.error('create patient error', err);

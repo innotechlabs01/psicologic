@@ -2,244 +2,37 @@
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
 import { SignedIn } from "@clerk/astro/components";
-import PaymentStatus from '../../components/Payment/js/PaymentStatus.jsx';
-import PaymentHistory from '@components/Payment/PaymentHistory.astro';
-const refPayco = Astro.url.searchParams.get('ref_payco');
+import UserPaymentDashboard from '../../features/payments/components/UserPaymentDashboard';
 
-import PaymentStats from '@components/Payment/PaymentStats.astro';
-
-// Obtener usuario actual usando getAuth
 const { userId } = Astro.locals.auth();
+
 if (!userId) {
   return Astro.redirect('/login');
 }
 
-const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
-const paymentData = await response.json();
+const response = await fetch(`${Astro.url.origin}/api/epayCO/payment-info`, {
+  headers: {
+    'Authorization': `Bearer ${userId}`
+  }
+});
 
-// Definir monto de pago según tipo de usuario
-const isGameUser = Boolean(paymentData?.paymentInfo?.isGameUser);
+const paymentData = await response.json();
+const isGameUser = paymentData?.paymentInfo?.isGameUser === true;
 const paymentAmount = isGameUser ? '5000' : '140000';
-
 ---
-<LayoutClient title="💳 Payment">
+
+<LayoutClient title="Centro de Pagos - Psicologic">
     <SignedIn>
         <DashboardWrapper 
             title="Centro de Pagos" 
             subtitle="Gestiona tu suscripción y revisa el historial de pagos"
         >
-        <!-- Información Adicional -->
-        <div class="mt-8 bg-blue-50 rounded-lg p-6">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-blue-800">
-                        Información sobre tu suscripción
-                    </h3>
-                    <div class="mt-2 text-sm text-blue-700">
-                        <ul class="space-y-1">
-                            <li>• Los pagos se procesan de forma segura a través de EpayCO</li>
-                            <li>• Tu suscripción se renueva cada 30 días</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {
-            paymentData.paymentInfo.daysToNext > 7
-            ? (<div>
-                <p class="mover-p">Suscripción esta activa. Te quedan {paymentData.paymentInfo.daysToNext} días para renovar.</p> 
-               </div>)
-            : (
-                <button id="payment-button" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                    Pagar con EpayCo
-                </button>
-                <PaymentStatus client:load refPayco={refPayco} userId={userId} />
-            )
-        }
-        
-
-        <!-- Estadísticas de Pago -->
-        <PaymentStats 
-            {...paymentData.paymentInfo}
-        />
-
-        <!-- Historial de Transacciones -->
-        <PaymentHistory 
-            transactions={paymentData.paymentHistory} 
-        />
-        </DashboardWrapper>
-    </SignedIn>
-</LayoutClient>
-
-<script type="text/javascript" src="https://checkout.epayco.co/checkout.js" />
-
-<script type="module">
-  // Server-provided amount based on user type
-  const PAYMENT_AMOUNT = "{paymentAmount}";
-  const button = document.getElementById('payment-button');
-
-  button?.addEventListener('click', async () => {
-    try {
-      const response = await fetch('/api/epayCO/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Producto ejemplo',
-          description: 'Descripción del producto',
-          invoice: `test-${Date.now()}`,
-          currency: 'cop',
-          amount: PAYMENT_AMOUNT,
-          tax_base: '0',
-          tax: '0',
-          country: 'co',
-          lang: 'es',
-          external: 'false',
-          email_billing: 'cliente@correo.com',
-          confirm: '/api/epayCO/confirmacion',
-          response: '/client/payment', // ← tu página controlada
-        }),
-      });
-
-      const { checkoutData, publicKey, isTest } = await response.json();
-
-      const handler = ePayco.checkout.configure({
-        key: publicKey,
-        test: isTest,
-      });
-
-      handler.open(checkoutData);
-    } catch (error) {
-      console.error('Error al iniciar pago:', error);
-      alert('No se pudo iniciar el pago.');
-    }
-  });
-</script>
-
-
-
-
-
-<!-- ---
-// src/pages/client/payment.astro
-import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
-import LayoutClient from '../../layouts/LayoutClient.astro';
-import PaymentStats from '../../components/Payment/PaymentStats.astro';
-import PaymentHistory from '../../components/Payment/PaymentHistory.astro';
-import PaymentButton from '../../components/Payment/PaymentButton.astro';
-import { SignedIn } from "@clerk/astro/components";
-import { getAuth } from "@clerk/astro/server";
-import { clerkClient } from "@clerk/clerk-sdk-node";
-
-// Obtener usuario actual usando getAuth
-const { userId } = await getAuth();
-if (!userId) {
-  return Astro.redirect('/login');
-}
-
-// Obtener datos de usuario de Clerk
-const user = await clerkClient.users.getUser(userId);
-const userData = {
-  emailAddress: user.emailAddresses[0].emailAddress,
-  firstName: user.firstName || '',
-  lastName: user.lastName || ''
-};
-
-// Obtener datos de pago
-const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
-const paymentData = await response.json();
--->
-
-<LayoutClient title="💳 Payment">
-    <SignedIn>
-        <DashboardWrapper 
-            title="Centro de Pagos" 
-            subtitle="Gestiona tu suscripción y revisa el historial de pagos"
-        >
-            <!-- Botón de Pago/Renovación 
-            <PaymentButton 
+            <UserPaymentDashboard 
+                client:load 
+                paymentData={paymentData} 
                 userId={userId}
-                userEmail={userData.emailAddress}
-                userName={`${userData.firstName} ${userData.lastName}`}
-                isSubscriptionActive={paymentData.paymentInfo.is_subscription_active}
-                daysToNext={paymentData.paymentInfo.days_to_next_payment}
+                paymentAmount={paymentAmount}
             />
-
-            <!-- Estadísticas de Pago
-            <PaymentStats 
-                {...paymentData.paymentInfo}
-            />
-
-            <!-- Historial de Transacciones
-            <PaymentHistory 
-                transactions={paymentData.paymentHistory} 
-            />
-
-            <!-- Información Adicional -->
-            <!-- <div class="mt-8 bg-blue-50 rounded-lg p-6">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-blue-800">
-                            Información sobre tu suscripción
-                        </h3>
-                        <div class="mt-2 text-sm text-blue-700">
-                            <ul class="space-y-1">
-                                <li>• Los pagos se procesan de forma segura a través de MercadoPago</li>
-                                <li>• Tu suscripción se renueva automáticamente cada 30 días</li>
-                                <li>• Puedes cancelar tu suscripción en cualquier momento</li>
-                                <li>• El acceso premium se mantiene hasta la fecha de vencimiento</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Soporte 
-            <div class="mt-6 text-center">
-                <p class="text-sm text-gray-500">
-                    ¿Necesitas ayuda con tu suscripción? 
-                    <a href="mailto:soporte@tuapp.com" class="text-blue-600 hover:text-blue-500 font-medium">
-                        Contacta a nuestro equipo de soporte
-                    </a>
-                </p>
-            </div>
         </DashboardWrapper>
     </SignedIn>
 </LayoutClient>
-
-<script>
-    // Script para cargar datos del usuario en tiempo real
-    // document.addEventListener('DOMContentLoaded', async function() {
-    //     try {
-    //         // En producción, obtienes el userId de Clerk
-    //         // const userId = await window.Clerk?.user?.id;
-            
-    //         // Por ahora usamos un ID de ejemplo
-    //         const userId = 'user_example_id';
-            
-    //         if (userId) {
-    //             const response = await fetch(`/api/payment/status/${userId}`);
-    //             const data = await response.json();
-                
-    //             if (data.success) {
-    //                 // Aquí actualizarías la UI con los datos reales
-    //                 console.log('Datos de pago cargados:', data);
-                    
-    //                 // En una implementación completa, actualizarías los componentes
-    //                 // con los datos reales del usuario
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.error('Error al cargar datos de pago:', error);
-    //     }
-    // });
-</script> -->

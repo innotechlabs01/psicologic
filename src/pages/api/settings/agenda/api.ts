@@ -1,11 +1,5 @@
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
-
 import type { APIRoute } from 'astro';
+import { db } from '../../../../lib/turso/client';
 import { SaveHorariosUsers } from '../../../../lib/turso/agenda/api';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {

@@ -4,7 +4,7 @@ import { SignInButton } from "@clerk/astro/components";
 ---
 
 <div
-  class="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4"
+  class="flex min-h-screen flex-col items-center justify-center bg-background px-4"
 >
   <img
     src={innoTechLogoWhite.src}
@@ -15,13 +15,13 @@ import { SignInButton } from "@clerk/astro/components";
   <div class="flex w-full max-w-3xl flex-col gap-10">
     <!-- Card principal -->
     <div
-      class="relative rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
+      class="relative rounded-2xl border border-border bg-card p-8 shadow-sm"
     >
-      <h1 class="mb-4 text-center text-3xl font-bold text-zinc-900">
-        Bienvenido a <span class="text-blue-600">Psicologic Platform</span>
+      <h1 class="mb-4 text-center text-3xl font-bold text-foreground">
+        Bienvenido a <span class="text-primary">Psicologic Platform</span>
       </h1>
 
-      <p class="mb-8 text-center text-lg text-zinc-600">
+      <p class="mb-8 text-center text-lg text-muted-foreground">
         Una plataforma moderna diseñada para facilitar tu trabajo profesional,
         mejorar la salud mental y potenciar el bienestar emocional de las
         personas.
@@ -30,8 +30,8 @@ import { SignInButton } from "@clerk/astro/components";
       <div class="flex justify-center">
         <div
           class="flex h-12 w-44 items-center justify-center rounded-xl
-          bg-gradient-to-tr from-blue-500 via-blue-600 to-blue-700
-          text-lg font-semibold text-white transition-all
+          bg-primary text-primary-foreground
+          text-lg font-semibold transition-all
           hover:scale-105 hover:shadow-lg"
         >
           <SignInButton mode="modal" />
@@ -41,13 +41,13 @@ import { SignInButton } from "@clerk/astro/components";
 
     <!-- Card secundaria -->
     <div
-      class="relative rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
+      class="relative rounded-2xl border border-border bg-card p-8 shadow-sm"
     >
-      <h2 class="mb-4 text-2xl font-bold text-zinc-900">
+      <h2 class="mb-4 text-2xl font-bold text-foreground">
         Para jugadores de Psicologic Platform
       </h2>
 
-      <p class="mb-8 text-lg text-zinc-600 leading-relaxed">
+      <p class="mb-8 text-lg text-muted-foreground leading-relaxed">
         Nuestro objetivo es brindar apoyo, acompañamiento y herramientas que
         ayuden a fortalecer habilidades emocionales, sociales y de pareja a
         través de juegos y actividades lúdicas.

@@ -1,14 +1,9 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client'
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-})
+import { db } from '../../../lib/turso/client';
 
 import { v4 as uuidv4 } from 'uuid';
 
-export const POST:APIRoute = async (context) => {
+export const POST: APIRoute = async (context) => {
   const { request } = context;
   const body = await request.json();
   const id = uuidv4();

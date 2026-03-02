@@ -4,20 +4,14 @@ import { createUserFromClerk, triggerUserAccessEvent } from "./pages/api/webhook
 import type { APIContext } from "astro";
 import { checkUserGameAccess } from "./utils/checkUserGameAccess";
 
-import { createClient } from "@libsql/client";
 import { handleUserWithoutRole, handleInsertUsersAdmin } from "./utils/utils";
 import { checkUserPaymentAccess } from "./utils/chechUserPaymentAccess";
-
-// ⚡️ Initialize Turso
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db } from "./lib/turso/client";
 
 // Function to get role by userId
 async function getUserRole(userId: string): Promise<string> {
   try {
-    const result = await client.execute(
+    const result = await db.execute(
       ` select role from usuarios where clerk_user_id = ?
       `, [userId]
     );
@@ -91,12 +85,17 @@ function parseCookies(cookieHeader?: string) {
   }, {});
 }
 
-function redirectToRoute(route: string, message: string, status: number = 302) {
+function redirectToRoute(route: string, message: string, status: number = 302, errorType: string = 'info') {
   console.log(`🔄 REDIRECT: ${message} -> ${route} (Status: ${status})`);
+  
+  // Codificar el mensaje y tipo de error para pasar vía URL
+  const separator = route.includes('?') ? '&' : '?';
+  const errorUrl = `${route}${separator}error_msg=${encodeURIComponent(message)}&error_type=${encodeURIComponent(errorType)}`;
+  
   return new Response(null, {
     status,
     headers: {
-      Location: route,
+      Location: errorUrl,
     },
   });
 }
@@ -112,7 +111,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
   const gameId = isGameLogin ? authSource.split(':')[1] : null;
 
   if (!userId && (currentPath.startsWith('/client') || currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin') || (currentPath.startsWith('/agenda') && !currentPath.startsWith('/agenda/meet')))) {
-    return redirectToRoute('/', 'Debes iniciar sesión');
+    return redirectToRoute('/', 'Debes iniciar sesión para acceder a esta sección', 302, 'warning');
   }
 
   if ((!userId && currentPath === '/') || currentPath === '/error' || currentPath.startsWith('/agenda/meet')) {
@@ -155,7 +154,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
         currentPath,
         { reason: 'game_access_denied', gameId }
       ));
-      const res = redirectToRoute('/', 'No tienes acceso al juego');
+      const res = redirectToRoute('/', 'No tienes acceso a este juego. Contacta al administrador.', 302, 'error');
       res.headers.set('Set-Cookie', 'auth_source=; Path=/; Max-Age=0;');
       return res;
     }
@@ -190,7 +189,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       currentPath,
       { reason: 'payment_required', daysRemaining }
     ));
-    return redirectToRoute('/', `Acceso restringido - por favor complete su pago (${daysRemaining} días restantes)`);
+    return redirectToRoute('/', `Tu suscripción ha vencido. Por favor completa tu pago para continuar (${daysRemaining} días restantes)`, 302, 'error');
   }
 
   // Note: handleInsertUsersAdmin was already awaited in parallel above if role is admin
@@ -212,7 +211,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
         currentPath,
         { reason: 'role_assignment_failed' }
       ));
-      return redirectToRoute('/index', 'Error asignando rol, por favor intente de nuevo');
+      return redirectToRoute('/', 'Error al asignar tu rol. Por favor intenta de nuevo o contacta soporte.', 302, 'error');
     }
   } else {
     newAssignedRole = orgRole;
@@ -232,7 +231,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       '/dashboard',
       { fromRoute: currentPath, targetRole: 'admin', role: newAssignedRole }
     ));
-    const res = redirectToRoute('/dashboard', 'Redirigiendo a dashboard');
+    const res = redirectToRoute('/dashboard', 'Redirigiendo a tu panel de administrador', 302, 'info');
 
     return res;
   }
@@ -251,7 +250,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       '/client',
       { fromRoute: currentPath, targetRole: 'client', role: newAssignedRole }
     ));
-    const resClient = redirectToRoute('/client', 'Redirigiendo a client');
+    const resClient = redirectToRoute('/client', 'Redirigiendo a tu panel de cliente', 302, 'info');
 
     return resClient;
   }
@@ -265,7 +264,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     currentPath,
     { reason: 'unrecognized_role', role: newAssignedRole }
   ));
-  const res = redirectToRoute('/', 'Rol de usuario no válido');
+  const res = redirectToRoute('/', 'Tu rol de usuario no es válido. Contacta al administrador.', 302, 'error');
 
   return res;
 });

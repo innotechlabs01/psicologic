@@ -1,10 +1,6 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
 
-const db = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from "../../../../lib/turso/client";
 
 import { validateName, validateCedula, validateEmail, sanitizeString } from '../../../../utils/validators';
 import { verifyClerkUser } from '../../../../utils/verifyClerkUser';
@@ -25,7 +21,7 @@ export const PATCH: APIRoute = async (context) => {
     if (!id) return new Response(JSON.stringify({ ok: false, error: 'missing_id' }), { status: 400 });
 
     const body = await context.request.json();
-    const allowedFields = ['name','document','email','marital_status','status','membership_paid'];
+    const allowedFields = ['name', 'document', 'email', 'marital_status', 'status', 'membership_paid'];
     const updateParts: string[] = [];
     const args: any[] = [];
 
@@ -58,7 +54,7 @@ export const PATCH: APIRoute = async (context) => {
     }
     if (body.status !== undefined) {
       const s = sanitizeString(body.status);
-      if (!['active','inactive'].includes(s)) return new Response(JSON.stringify({ ok: false, error: 'invalid_status' }), { status: 400 });
+      if (!['active', 'inactive'].includes(s)) return new Response(JSON.stringify({ ok: false, error: 'invalid_status' }), { status: 400 });
       updateParts.push('status = ?');
       args.push(s);
     }

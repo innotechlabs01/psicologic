@@ -2,63 +2,107 @@
 const { title, subtitle } = Astro.props;
 ---
 
-<!-- Componente wrapper que garantiza alineación consistente -->
-<div class="container mx-auto space-y-6">
+<!-- Componente wrapper que garantiza alineación consistente con estética premium -->
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
   
-  <!-- Header consistente para todas las páginas -->
+  <!-- Page Header -->
   {title && (
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        {title}
-      </h1>
-      {subtitle && (
-        <p class="text-gray-600 dark:text-gray-400">
-          {subtitle}
-        </p>
-      )}
+    <div class="relative overflow-hidden bg-card/50 backdrop-blur-xl rounded-2xl shadow-sm p-8 border border-border/50">
+      <div class="relative z-10">
+        <h1 class="text-4xl font-serif font-bold text-foreground tracking-tight mb-2 italic">
+          {title}
+        </h1>
+        {subtitle && (
+          <p class="text-lg text-muted-foreground max-w-2xl font-sans">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      
+      <!-- Decorative background element -->
+      <div class="absolute -top-12 -right-12 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
     </div>
   )}
   
   <!-- Contenido de la página -->
-  <slot />
+  <div class="relative overflow-visible">
+    <slot />
+  </div>
 </div>
 
 <style>
-  @reference "tailwindcss";
-  /* Estilos para mantener consistencia */
+  /* Estilos para mantener consistencia usando variables CSS nativas (compatible con Tailwind v4) */
   :global(.dashboard-card) {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700;
+    background-color: var(--card);
+    color: var(--card-foreground);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    padding: 1.5rem;
+    border: 1px solid var(--border);
   }
   
   :global(.dashboard-grid) {
-    @apply grid gap-6;
+    display: grid;
+    gap: 1.5rem;
   }
   
   :global(.dashboard-grid-cols-1) {
-    @apply grid-cols-1;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
   }
   
-  :global(.dashboard-grid-cols-2) {
-    @apply md:grid-cols-2;
+  @media (min-width: 768px) {
+    :global(.dashboard-grid-cols-2) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
   
-  :global(.dashboard-grid-cols-3) {
-    @apply lg:grid-cols-3;
-  }
-  
-  :global(.dashboard-grid-cols-4) {
-    @apply lg:grid-cols-4;
+  @media (min-width: 1024px) {
+    :global(.dashboard-grid-cols-3) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    :global(.dashboard-grid-cols-4) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
   
   :global(.dashboard-button-primary) {
-    @apply bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+    border: none;
+    cursor: pointer;
+  }
+  :global(.dashboard-button-primary:hover) {
+    opacity: 0.9;
   }
   
   :global(.dashboard-button-secondary) {
-    @apply bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white px-4 py-2 rounded-lg font-medium transition-colors;
+    background-color: var(--secondary);
+    color: var(--secondary-foreground);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+    border: none;
+    cursor: pointer;
+  }
+  :global(.dashboard-button-secondary:hover) {
+    opacity: 0.8;
   }
   
   :global(.dashboard-input) {
-    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--input);
+    border-radius: 0.5rem;
+    background-color: var(--background);
+    color: var(--foreground);
+    outline: none;
+  }
+  :global(.dashboard-input:focus) {
+    box-shadow: 0 0 0 2px var(--ring);
   }
 </style>

@@ -1,12 +1,7 @@
-import { createClient } from '@libsql/client';
 import type { APIRoute } from 'astro';
+import { db } from '../../../lib/turso/client';
 
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
-
-export const GET:APIRoute = async (context) => {
+export const GET: APIRoute = async (context) => {
     try {
         const { locals } = context;
         const { isAuthenticated, userId } = locals.auth();
@@ -23,23 +18,23 @@ export const GET:APIRoute = async (context) => {
             args: [],
         });
 
-        return new Response(JSON.stringify({ 
+        return new Response(JSON.stringify({
             games: games.rows || []
         }), {
             status: 200,
-            headers: { 
-                'Content-Type': 'application/json' 
+            headers: {
+                'Content-Type': 'application/json'
             },
         });
 
     } catch (error) {
         console.error('Error al obtener juegos:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Fallo interno al obtener los juegos.' 
+        return new Response(JSON.stringify({
+            error: 'Fallo interno al obtener los juegos.'
         }), {
             status: 500,
-            headers: { 
-                'Content-Type': 'application/json' 
+            headers: {
+                'Content-Type': 'application/json'
             },
         });
     }

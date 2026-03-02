@@ -1,13 +1,8 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../../lib/turso/client';
 
 // Función auxiliar para generar un UUID simple
-const generateUUID = () => crypto.randomUUID().replace(/-/g, ''); 
+const generateUUID = () => crypto.randomUUID().replace(/-/g, '');
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
     // 1. OBTENCIÓN DE DATOS Y AUTENTICACIÓN
@@ -20,7 +15,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             { status: 401 }
         );
     }
-    
+
     let body;
     try {
         body = await request.json();
@@ -32,7 +27,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
 
     const { content, type, urlAdjunto } = body; // Recibidos del componente React
-    
+
     // Validar el tipo de mensaje
     if (!['texto', 'imagen', 'archivo'].includes(type)) {
         return new Response(
@@ -42,7 +37,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     }
     // 2. OBTENER ID INTERNO DEL REMITENTE Y ESTADO DEL TICKET
     try {
-        
+
         // Buscar el ID interno del usuario en tu tabla Usuarios
         const userResult = await db.execute({
             sql: "SELECT id FROM Usuarios WHERE clerk_user_id = ?",
@@ -56,8 +51,8 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
                 { status: 404 }
             );
         }
-        
-        
+
+
         // Verificar el estado del ticket: NO SE PUEDE ENVIAR MENSAJES A TICKETS CERRADOS
         const ticketResult = await db.execute({
             sql: "SELECT estado FROM Tickets WHERE ticket_id = ?",
@@ -77,7 +72,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
                 { status: 403 }
             );
         }
-        
+
         // 3. INSERCIÓN DEL NUEVO MENSAJE
         const newMsgId = generateUUID();
         const now = Date.now(); // Usar timestamp en milisegundos
@@ -87,11 +82,11 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
                   (message_id, ticket_id, sender_id, contenido, tipo, url_adjunto, fecha_envio) 
                   VALUES (?, ?, ?, ?, ?, ?, ?)`,
             args: [
-                newMsgId, 
-                ticketId, 
-                senderId, 
+                newMsgId,
+                ticketId,
+                senderId,
                 content || null, // Contenido puede ser NULL si solo es una imagen/archivo
-                type, 
+                type,
                 urlAdjunto || null, // URL es NULL si es solo texto
                 now
             ]
@@ -99,10 +94,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
         // 4. RESPUESTA EXITOSA
         return new Response(
-            JSON.stringify({ 
-                success: true, 
-                message: "Mensaje enviado", 
-                message_id: newMsgId 
+            JSON.stringify({
+                success: true,
+                message: "Mensaje enviado",
+                message_id: newMsgId
             }),
             { status: 201 }
         );

@@ -1,10 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../../lib/turso/client';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
     // 1. OBTENCIÓN DE DATOS Y AUTENTICACIÓN
@@ -17,7 +12,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
             { status: 401 }
         );
     }
-    
+
     // 2. VERIFICACIÓN DE ROL Y OBTENCIÓN DE ID INTERNO
     try {
         const userResult = await db.execute({
@@ -32,7 +27,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
                 { status: 404 }
             );
         }
-        
+
         const { role, id: agentId } = userRecord;
 
         // **CRUCIAL:** Solo los agentes pueden cerrar el chat.
@@ -42,9 +37,9 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
                 { status: 403 }
             );
         }
-        
+
         // 3. ACTUALIZACIÓN DEL ESTADO DEL TICKET
-        const now = Date.now(); 
+        const now = Date.now();
 
         const updateResult = await db.execute({
             sql: `UPDATE Tickets 
@@ -66,9 +61,9 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
         // 4. RESPUESTA EXITOSA
         return new Response(
-            JSON.stringify({ 
-                success: true, 
-                message: "Conversación cerrada exitosamente." 
+            JSON.stringify({
+                success: true,
+                message: "Conversación cerrada exitosamente."
             }),
             { status: 200 }
         );

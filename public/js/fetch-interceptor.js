@@ -18,8 +18,10 @@
     try {
       const res = await originalFetch(...args);
       return res;
+    } catch (error) {
+      throw error;
     } finally {
-      activeFetches--;
+      activeFetches = Math.max(0, activeFetches - 1);
       updateLoader();
     }
   };

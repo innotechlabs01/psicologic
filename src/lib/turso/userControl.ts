@@ -1,10 +1,4 @@
-// src/lib/supabase/userControl.ts
-import { createClient } from '@libsql/client';
-
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db as client } from './client';
 
 export interface User {
   id: string;
@@ -38,7 +32,7 @@ export async function getUserByClerkId(clerkUserId: string): Promise<User | null
       return null;
     }
 
-    return result.rows[0] as unknown as User;  
+    return result.rows[0] as unknown as User;
   } catch (error) {
     console.error('Error en getUserByClerkId:', error);
     return null;
@@ -72,7 +66,7 @@ export async function approveUser(userId: string, approvedBy: string): Promise<b
 
     // Crear notificación
     await createNotification(userId, 'status_change', 'Usuario aprobado exitosamente');
-    
+
     return true;
   } catch (error) {
     console.error('Error en approveUser:', error);
@@ -101,7 +95,7 @@ export async function rejectUser(userId: string, rejectedBy: string): Promise<bo
 
     // Crear notificación
     await createNotification(userId, 'status_change', 'Usuario rechazado');
-    
+
     return true;
   } catch (error) {
     console.error('Error en rejectUser:', error);
@@ -131,7 +125,7 @@ export async function suspendUser(userId: string, suspendedBy: string): Promise<
 
     // Crear notificación
     await createNotification(userId, 'status_change', 'Usuario suspendido');
-    
+
     return true;
   } catch (error) {
     console.error('Error en suspendUser:', error);
@@ -141,7 +135,7 @@ export async function suspendUser(userId: string, suspendedBy: string): Promise<
 
 // Cambiar rol de usuario
 export async function changeUserRole(
-  userId: string, 
+  userId: string,
   newRole: 'org:admin' | 'org:members' | 'org:client',
   changedBy: string
 ): Promise<boolean> {
@@ -163,7 +157,7 @@ export async function changeUserRole(
 
     // Crear notificación
     await createNotification(userId, 'role_change', `Rol cambiado a ${newRole}`);
-    
+
     return true;
   } catch (error) {
     console.error('Error en changeUserRole:', error);

@@ -35,7 +35,16 @@ export default defineConfig({
     build: {
       target: 'es2020',
       minify: 'esbuild',
-      cssCodeSplit: true
+      cssCodeSplit: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover'],
+            'vendor-clerk': ['@clerk/astro'],
+          }
+        }
+      }
     },
 
     ssr: {
@@ -46,8 +55,9 @@ export default defineConfig({
     }
   },
 
-  // ⚡ Prefetch inteligente
   prefetch: {
-    defaultStrategy: 'viewport'
+    defaultStrategy: 'viewport',
+    prefetchAll: true,
+    defaultExcludedBehavior: 'internal'
   }
 })

@@ -1,7 +1,7 @@
 .pdf-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.65);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -9,7 +9,7 @@
 }
 
 .pdf-modal {
-  background: #fff;
+  background: var(--card);
   width: 90%;
   max-width: 900px;
   max-height: 90vh;
@@ -48,15 +48,16 @@
   justify-content: center;
   gap: 16px;
   padding: 10px 0 20px;
-  background: #f9fafb;
+  background: var(--muted);
 }
 
 .pdf-pagination button {
   padding: 6px 14px;
-  border: 1px solid #ccc;
-  background: white;
+  border: 1px solid var(--border);
+  background: var(--card);
   border-radius: 6px;
   cursor: pointer;
+  color: var(--foreground);
 }
 
 .pdf-pagination button:disabled {

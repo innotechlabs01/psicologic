@@ -1,9 +1,4 @@
-import { createClient } from "@libsql/client";
-
-const client = createClient({
-    url: process.env.TURSO_DATABASE_URL || import.meta.env.TURSO_DATABASE_URL,
-    authToken: process.env.TURSO_AUTH_TOKEN || import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db as client } from "./client";
 
 const WINDOW_SIZE_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 5; // 5 requests per minute

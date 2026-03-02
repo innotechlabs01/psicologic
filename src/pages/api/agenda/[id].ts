@@ -1,36 +1,9 @@
 import type { APIRoute } from 'astro';
-import { deleteEvent, updateEvent, getAgendaSettings } from '../../../lib/turso/agenda/agenda-db';
-
-export const DELETE: APIRoute = async ({ params, locals }) => {
-    const { id } = params;
-
-    // 🔒 AUTH CHECK
-    const { userId } = locals.auth();
-    if (!userId) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
-    if (!id) {
-        return new Response(JSON.stringify({ error: 'Missing event ID' }), { status: 400 });
-    }
-
-    try {
-        const success = await deleteEvent(id, userId);
-        if (success) {
-            return new Response(JSON.stringify({ success: true }), { status: 200 });
-        } else {
-            return new Response(JSON.stringify({ error: 'Event not found or could not be deleted' }), { status: 404 });
-        }
-    } catch (error) {
-        console.error('Error deleting event:', error);
-        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
-    }
-};
+import { deleteEvent, updateEvent } from '../../../lib/turso/agenda/agenda-db';
 
 export const PUT: APIRoute = async ({ request, params, locals }) => {
     const { id } = params;
 
-    // 🔒 AUTH CHECK
     const { userId } = locals.auth();
     if (!userId) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
@@ -43,7 +16,6 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
     try {
         const body = await request.json();
 
-        // Basic validation
         if (!body.title || !body.date || !body.startTime || !body.endTime) {
             return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
         }
@@ -68,6 +40,33 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
 
     } catch (error) {
         console.error('Error updating event:', error);
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+    }
+};
+
+export const PATCH = PUT;
+
+export const DELETE: APIRoute = async ({ params, locals }) => {
+    const { id } = params;
+
+    const { userId } = locals.auth();
+    if (!userId) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    }
+
+    if (!id) {
+        return new Response(JSON.stringify({ error: 'Missing event ID' }), { status: 400 });
+    }
+
+    try {
+        const success = await deleteEvent(id, userId);
+        if (success) {
+            return new Response(JSON.stringify({ success: true }), { status: 200 });
+        } else {
+            return new Response(JSON.stringify({ error: 'Event not found or could not be deleted' }), { status: 404 });
+        }
+    } catch (error) {
+        console.error('Error deleting event:', error);
         return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
     }
 };

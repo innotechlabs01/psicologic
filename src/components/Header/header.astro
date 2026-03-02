@@ -1,34 +1,29 @@
 ---
-import { SignOutButton, SignedIn } from "@clerk/astro/components";
+import { SignedIn, SignOutButton } from "@clerk/astro/components";
+import { SidebarToggle } from "../ui/SidebarToggle";
+import { ThemeToggle } from "../ui/ThemeToggle";
 
-const response = await fetch(`${Astro.url.origin}/api/headers/api`);
-const data = await response.json();
-const unreadCount = data.unreadCount;
+const { userId } = Astro.locals.auth?.() || {};
+const unreadCount = 0; // Initialize for client-side update
 ---
 
-<!-- Botón toggle para móvil -->
-<button
-  id="sidebar-toggle"
-  type="button"
-  class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-  aria-controls="separator-sidebar"
-  aria-expanded="false"
->
-  <span class="sr-only">Open sidebar</span>
-  <svg
-    class="w-6 h-6"
-    aria-hidden="true"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      clip-rule="evenodd"
-      fill-rule="evenodd"
-      d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-    ></path>
-  </svg>
-</button>
+<div class="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border h-16 flex items-center justify-between px-4 sm:px-6">
+  <div class="flex items-center gap-3">
+    <SidebarToggle client:idle />
+    <a href="/dashboard" class="flex items-center gap-2">
+      <span class="text-xl font-serif font-bold text-primary italic tracking-tight">Psicologic</span>
+    </a>
+  </div>
+  
+  <div class="flex items-center gap-4">
+    <ThemeToggle client:idle />
+    <SignedIn>
+      <div class="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+        <span class="text-xs font-bold text-primary">U</span>
+      </div>
+    </SignedIn>
+  </div>
+</div>
 
 <!-- Overlay para cerrar el sidebar en móvil -->
 <div
@@ -43,12 +38,12 @@ const unreadCount = data.unreadCount;
   class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 -translate-x-full sm:translate-x-0"
   aria-label="Sidebar"
 >
-  <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+  <div class="h-full px-3 py-4 overflow-y-auto bg-sidebar border-r border-sidebar-border">
     <!-- Botón cerrar en móvil (opcional) -->
     <div class="flex justify-end mb-4 sm:hidden">
       <button
         id="sidebar-close"
-        class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        class="text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-gray-200"
       >
         <svg
           class="w-6 h-6"
@@ -69,10 +64,10 @@ const unreadCount = data.unreadCount;
       <li>
         <a
           href="/dashboard"
-          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+          class="flex items-center p-2 text-sidebar-foreground rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group sidebar-link transition-colors duration-200"
         >
           <svg
-            class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            class="shrink-0 w-5 h-5 text-sidebar-foreground/70 transition duration-75 group-hover:text-sidebar-accent-foreground"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
@@ -91,10 +86,10 @@ const unreadCount = data.unreadCount;
       <li style="display: none;">
         <a
           href="/admin/users"
-          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+          class="flex items-center p-2 text-sidebar-foreground rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group sidebar-link transition-colors duration-200"
         >
           <svg
-            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            class="shrink-0 w-5 h-5 text-muted-foreground transition duration-75 dark:text-muted-foreground group-hover:text-foreground dark:group-hover:text-white"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
@@ -111,10 +106,10 @@ const unreadCount = data.unreadCount;
         <a
           href="/dashboard/message"
           id="messages-link"
-          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+          class="flex items-center p-2 text-sidebar-foreground rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group sidebar-link transition-colors duration-200"
         >
           <svg
-            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            class="shrink-0 w-5 h-5 text-muted-foreground transition duration-75 dark:text-muted-foreground group-hover:text-foreground dark:group-hover:text-white"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
@@ -150,10 +145,10 @@ const unreadCount = data.unreadCount;
       <li>
         <a
           href="/dashboard/payments"
-          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+          class="flex items-center p-2 text-sidebar-foreground rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group sidebar-link transition-colors duration-200"
         >
           <svg
-            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            class="shrink-0 w-5 h-5 text-muted-foreground transition duration-75 dark:text-muted-foreground group-hover:text-foreground dark:group-hover:text-white"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
@@ -169,10 +164,10 @@ const unreadCount = data.unreadCount;
       <li>
         <a
           href="/dashboard/settings"
-          class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
+          class="flex items-center p-2 text-sidebar-foreground rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group sidebar-link transition-colors duration-200"
         >
           <svg
-            class="shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+            class="shrink-0 w-5 h-5 text-muted-foreground transition duration-75 dark:text-muted-foreground group-hover:text-foreground dark:group-hover:text-white"
             aria-hidden="true"
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
@@ -188,7 +183,7 @@ const unreadCount = data.unreadCount;
     </ul>
 
     <ul
-      class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700"
+      class="pt-4 mt-4 space-y-2 font-medium border-t border-sidebar-border"
     >
       <li>
         <SignOutButton redirectUrl="/" asChild>

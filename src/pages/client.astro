@@ -2,19 +2,72 @@
 import LayoutClient from '../layouts/LayoutClient.astro'
 import { SignedIn } from "@clerk/astro/components";
 import DashboardWrapper from '../components/Dashboard/DashboardWrapper.astro';
+import { ClientDashboard } from "../features/client/components/ClientDashboard";
+
+const { error_msg, error_type } = Astro.url.searchParams;
+const errorMessage = error_msg || '';
+const errorType = error_type || 'info';
 ---
 
-<LayoutClient title=" 🔒 Client">
-	<SignedIn>
-		<DashboardWrapper title="Área de Cliente"
-	subtitle="Bienvenido a tu área de cliente">
-
-
-		<main class="max-w-xl mx-auto py-12">
-			<h1 class="text-black text-3xl font-bold dark:text-black"> Tus retos Client</h1>
-			<p class="text-black dark:text-black mt-4">Bienvenido a tu área personal. Aquí podrás ver y gestionar tus retos.</p>
-		</main>
-
-		</DashboardWrapper>
-	</SignedIn>
+<LayoutClient title="🔒 Panel de Cliente">
+  {errorMessage && (
+    <div 
+      id="middleware-error-toast" 
+      data-message={errorMessage} 
+      data-type={errorType}
+    ></div>
+  )}
+  
+  <SignedIn>
+    <DashboardWrapper 
+      title="Mi Panel"
+      subtitle="Bienvenido a tu área personal"
+    >
+      <ClientDashboard client:visible />
+    </DashboardWrapper>
+  </SignedIn>
+  
+  <script>
+    const toastEl = document.getElementById('middleware-error-toast');
+    if (toastEl) {
+      const message = toastEl.dataset.message;
+      const type = toastEl.dataset.type || 'info';
+      
+      if (message) {
+        const container = document.getElementById('toast-container');
+        if (container) {
+          const toast = document.createElement('div');
+          toast.className = `
+            relative px-4 py-3 rounded shadow text-sm font-medium flex items-center gap-2 overflow-hidden
+            ${type === 'success' ? 'bg-green-500 text-white' : ''}
+            ${type === 'error' ? 'bg-red-500 text-white' : ''}
+            ${type === 'info' ? 'bg-blue-500 text-white' : ''}
+            ${type === 'warning' ? 'bg-yellow-500 text-black' : ''}
+          `;
+          
+          const icons = {
+            success: '✓',
+            error: '✕',
+            warning: '⚠',
+            info: 'ℹ'
+          };
+          
+          toast.innerHTML = `
+            <span class="text-lg">${icons[type] || 'ℹ'}</span>
+            <span>${message}</span>
+            <button class="ml-auto font-bold hover:opacity-80" onclick="this.parentElement.remove(); window.history.replaceState({}, '', window.location.pathname)">×</button>
+          `;
+          
+          container.appendChild(toast);
+          
+          setTimeout(() => {
+            if (toast.parentElement) {
+              toast.remove();
+              window.history.replaceState({}, '', window.location.pathname);
+            }
+          }, 8000);
+        }
+      }
+    }
+  </script>
 </LayoutClient>
