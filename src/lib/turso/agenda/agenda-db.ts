@@ -2,8 +2,8 @@ import { createClient } from '@libsql/client';
 
 // Use environment variables or rely on framework injection if needed
 const client = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN
+    url: import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL || "",
+    authToken: import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || ""
 });
 
 export interface AgendaEvent {
@@ -130,11 +130,11 @@ export async function updateEvent(event: Partial<AgendaEvent> & { id: string, us
                 WHERE id = ? AND userId = ?
             `,
             args: [
-                title,
-                startTime,
-                endTime,
-                date,
-                JSON.stringify(participants),
+                title ?? null,
+                startTime ?? null,
+                endTime ?? null,
+                date ?? null,
+                participants !== undefined ? JSON.stringify(participants) : null,
                 id,
                 userId
             ]
@@ -151,13 +151,19 @@ export async function updateEvent(event: Partial<AgendaEvent> & { id: string, us
 
 export async function addSignalingMessage(meetingToken: string, type: string, payload: any, sender: 'host' | 'client') {
     try {
+        if (!meetingToken || !type || !payload || !sender) {
+            console.error("Missing fields in addSignalingMessage");
+            return false;
+        }
+
+        const payloadStr = JSON.stringify(payload);
         await client.execute({
             sql: `INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)`,
-            args: [meetingToken, type, JSON.stringify(payload), sender]
+            args: [meetingToken, type, payloadStr, sender]
         });
         return true;
     } catch (error) {
-        console.error("Error adding signaling:", error);
+        console.error("DB Error adding signaling:", error);
         return false;
     }
 }
@@ -169,12 +175,19 @@ export async function getSignalingMessages(meetingToken: string, afterId: number
             args: [meetingToken, afterId]
         });
 
-        return result.rows.map(row => ({
-            ...row,
-            payload: JSON.parse(row.payload as string)
-        }));
+        return result.rows.map(row => {
+            try {
+                return {
+                    ...row,
+                    payload: typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload
+                };
+            } catch (e) {
+                console.error("Error parsing signaling payload:", row.id);
+                return null;
+            }
+        }).filter(msg => msg !== null);
     } catch (error) {
-        console.error("Error getting signaling:", error);
+        console.error("DB Error getting signaling:", error);
         return [];
     }
 }
