@@ -123,19 +123,15 @@ export async function updateEvent(event: Partial<AgendaEvent> & { id: string, us
     try {
         const { id, userId, title, startTime, endTime, date, participants } = event;
 
-        const sql = `
-            UPDATE agenda 
-            SET title = ?, startTime = ?, endTime = ?, date = ?, participants = ?
-            WHERE id = ? AND userId = ?
-        `;
+        const sql = "UPDATE agenda SET title = ?, startTime = ?, endTime = ?, date = ?, participants = ? WHERE id = ? AND userId = ?";
         const args = [
-            title ?? null,
-            startTime ?? null,
-            endTime ?? null,
-            date ?? null,
-            participants !== undefined ? JSON.stringify(participants) : null,
-            id,
-            userId
+            (title ?? null) as string | null,
+            (startTime ?? null) as string | null,
+            (endTime ?? null) as string | null,
+            (date ?? null) as string | null,
+            (participants !== undefined ? JSON.stringify(participants) : null) as string | null,
+            id as string,
+            userId as string
         ];
 
         const result = await client.execute({ sql, args });
@@ -158,8 +154,9 @@ export async function addSignalingMessage(meetingToken: string, type: string, pa
 
         const payloadStr = JSON.stringify(payload);
 
-        const sql = `INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)`;
-        const args = [meetingToken, type, payloadStr, sender];
+        // Manual cleanup to ensure it's a valid string for the DB
+        const sql = "INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)";
+        const args = [meetingToken as string, type as string, payloadStr as string, sender as string];
 
         await client.execute({ sql, args });
         return true;
