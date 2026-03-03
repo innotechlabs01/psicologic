@@ -20,7 +20,6 @@ interface UseWebRTCReturn {
 
 export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebRTCReturn {
     const [status, setStatus] = useState<"connecting" | "connected" | "disconnected" | "error">("connecting");
-    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [isAudioMuted, setIsAudioMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
 
@@ -30,59 +29,144 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
     const lastSignalId = useRef(0);
     const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const iceCandidateQueue = useRef<RTCIceCandidateInit[]>([]);
+    const hasInitiatedConnection = useRef(false);
+    const waitingForOffer = useRef(userType === "client");
 
     const sendSignal = useCallback(async (type: string, payload: any) => {
-        await fetch("/api/agenda/signaling", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ meetingToken, type, payload, sender: userType }),
-        });
+        try {
+            const response = await fetch("/api/agenda/signaling", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ meetingToken, type, payload, sender: userType }),
+                cache: "no-store",
+            });
+            const result = await response.json();
+            console.log(`[Signaling] Sent ${type} to ${userType}, result:`, result);
+            return result;
+        } catch (err) {
+            console.error("[Signaling] Error sending signal:", err);
+        }
     }, [meetingToken, userType]);
 
     const handleSignal = useCallback(async (signal: any) => {
         const pc = peerConnection.current;
-        if (!pc) return;
+        if (!pc) {
+            console.error("[Signaling] No peer connection available");
+            return;
+        }
 
-        if (signal.type === "offer" && userType === "client") {
-            await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            await sendSignal("answer", answer);
-        } else if (signal.type === "answer" && userType === "host") {
-            await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
-        } else if (signal.type === "ice-candidate") {
-            await pc.addIceCandidate(new RTCIceCandidate(signal.payload));
+        console.log(`[Signaling] Handling ${signal.type} from ${signal.sender}`);
+
+        try {
+            if (signal.type === "offer" && userType === "client") {
+                console.log("[Signaling] Processing offer from host");
+                await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
+                
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                
+                waitingForOffer.current = false;
+                
+                console.log("[Signaling] Sending answer to host");
+                await sendSignal("answer", answer);
+            } 
+            else if (signal.type === "answer" && userType === "host") {
+                console.log("[Signaling] Processing answer from client");
+                await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
+            } 
+            else if (signal.type === "ice-candidate") {
+                console.log("[Signaling] Processing ICE candidate from", signal.sender);
+                if (pc.remoteDescription && pc.remoteDescription.type) {
+                    await pc.addIceCandidate(new RTCIceCandidate(signal.payload));
+                } else {
+                    iceCandidateQueue.current.push(signal.payload);
+                    console.log("[Signaling] Queued ICE candidate, queue length:", iceCandidateQueue.current.length);
+                }
+            }
+            else if (signal.type === "client-ready" && userType === "host") {
+                console.log("[Signaling] Client is ready, initiating connection");
+                if (!hasInitiatedConnection.current) {
+                    hasInitiatedConnection.current = true;
+                    await initiateConnection(pc);
+                }
+            }
+        } catch (err) {
+            console.error("[Signaling] Error handling signal:", signal.type, err);
+            throw err;
         }
     }, [userType, sendSignal]);
 
+    const initiateConnection = async (pc: RTCPeerConnection) => {
+        if (userType !== "host") return;
+        
+        try {
+            console.log("[WebRTC] Creating and sending offer");
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await sendSignal("offer", offer);
+        } catch (err) {
+            console.error("[WebRTC] Error creating offer:", err);
+        }
+    };
+
+    const processIceCandidateQueue = async (pc: RTCPeerConnection) => {
+        while (iceCandidateQueue.current.length > 0) {
+            const candidate = iceCandidateQueue.current.shift();
+            if (candidate) {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    console.log("[Signaling] Processed queued ICE candidate");
+                } catch (err) {
+                    console.error("[Signaling] Error adding queued ICE candidate:", err);
+                }
+            }
+        }
+    };
+
     const startPolling = useCallback(() => {
+        if (pollingInterval.current) clearInterval(pollingInterval.current);
+
         pollingInterval.current = setInterval(async () => {
             try {
                 const res = await fetch(
-                    `/api/agenda/signaling?token=${meetingToken}&afterId=${lastSignalId.current}`
+                    `/api/agenda/signaling?token=${meetingToken}&afterId=${lastSignalId.current}`,
+                    { cache: "no-store" }
                 );
+                if (!res.ok) return;
                 const signals = await res.json();
 
                 for (const signal of signals) {
                     if (signal.id > lastSignalId.current) {
-                        lastSignalId.current = signal.id;
                         if (signal.sender !== userType) {
-                            await handleSignal(signal);
+                            console.log(`[Polling] Received ${signal.type} from ${signal.sender}, id: ${signal.id}`);
+                            try {
+                                await handleSignal(signal);
+                                lastSignalId.current = signal.id;
+                            } catch (e) {
+                                console.warn("[Polling] Failed to process signal:", signal.id, e);
+                            }
+                        } else {
+                            lastSignalId.current = signal.id;
                         }
                     }
                 }
-            } catch {
-                // Polling error — silently retry
+            } catch (err) {
+                console.warn("[Polling] Error:", err);
             }
         }, 1000);
     }, [meetingToken, userType, handleSignal]);
 
-    // Initialize WebRTC
     useEffect(() => {
         const init = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                setLocalStream(stream);
+                console.log("[WebRTC] Initializing as", userType);
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 }, 
+                    audio: true 
+                });
+                console.log("[WebRTC] Got local media stream");
                 streamRef.current = stream;
 
                 if (localVideoRef.current) {
@@ -90,38 +174,79 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
                 }
 
                 const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+                    iceServers: [
+                        { urls: "stun:stun.l.google.com:19302" },
+                        { urls: "stun:stun1.l.google.com:19302" },
+                        { urls: "stun:stun2.l.google.com:19302" },
+                        { urls: "stun:stun3.l.google.com:19302" },
+                        { urls: "stun:stun4.l.google.com:19302" },
+                    ],
                 });
 
                 stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
                 pc.ontrack = (event) => {
+                    console.log("[WebRTC] Track received:", event.track.kind);
                     if (remoteVideoRef.current) {
-                        remoteVideoRef.current.srcObject = event.streams[0];
+                        if (event.streams && event.streams[0]) {
+                            remoteVideoRef.current.srcObject = event.streams[0];
+                            console.log("[WebRTC] Set remote stream from event.streams");
+                        } else {
+                            let inboundStream = remoteVideoRef.current.srcObject as MediaStream;
+                            if (!inboundStream || !(inboundStream instanceof MediaStream)) {
+                                inboundStream = new MediaStream();
+                                remoteVideoRef.current.srcObject = inboundStream;
+                            }
+                            inboundStream.addTrack(event.track);
+                            console.log("[WebRTC] Added track to fallback stream");
+                        }
                     }
                 };
 
                 pc.onicecandidate = async (event) => {
                     if (event.candidate) {
+                        console.log("[WebRTC] ICE candidate generated");
                         await sendSignal("ice-candidate", event.candidate);
                     }
                 };
 
+                pc.oniceconnectionstatechange = () => {
+                    console.log("[WebRTC] ICE Connection state:", pc.iceConnectionState);
+                    if (pc.iceConnectionState === "connected" || pc.connectionState === "connected") {
+                        setStatus("connected");
+                        console.log("[WebRTC] Connected!");
+                    }
+                    if (pc.iceConnectionState === "disconnected") setStatus("disconnected");
+                    if (pc.iceConnectionState === "failed") {
+                        setStatus("error");
+                        console.error("[WebRTC] ICE connection failed. Check NAT/Firewall.");
+                    }
+                };
+
                 pc.onconnectionstatechange = () => {
-                    if (pc.connectionState === "connected") setStatus("connected");
+                    console.log("[WebRTC] Connection state:", pc.connectionState);
+                    if (pc.connectionState === "connected") {
+                        setStatus("connected");
+                        console.log("[WebRTC] Connected via onconnectionstatechange!");
+                    }
                     if (pc.connectionState === "disconnected") setStatus("disconnected");
-                    if (pc.connectionState === "failed") setStatus("error");
+                    if (pc.connectionState === "failed") {
+                        setStatus("error");
+                        console.error("[WebRTC] Connection failed. Check NAT/Firewall.");
+                    }
                 };
 
                 peerConnection.current = pc;
+                
                 startPolling();
 
-                if (userType === "host") {
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-                    await sendSignal("offer", offer);
+                if (userType === "client") {
+                    console.log("[WebRTC] Client ready, notifying host");
+                    await sendSignal("client-ready", { timestamp: Date.now() });
                 }
-            } catch {
+
+            } catch (err) {
+                console.error("[WebRTC] Initialization failed:", err);
                 setStatus("error");
             }
         };

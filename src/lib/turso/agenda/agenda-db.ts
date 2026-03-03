@@ -2,8 +2,8 @@ import { createClient } from '@libsql/client';
 
 // Use environment variables or rely on framework injection if needed
 const client = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN
+    url: import.meta.env.TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL || "",
+    authToken: import.meta.env.TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN || ""
 });
 
 export interface AgendaEvent {
@@ -123,22 +123,18 @@ export async function updateEvent(event: Partial<AgendaEvent> & { id: string, us
     try {
         const { id, userId, title, startTime, endTime, date, participants } = event;
 
-        const result = await client.execute({
-            sql: `
-                UPDATE agenda 
-                SET title = ?, startTime = ?, endTime = ?, date = ?, participants = ?
-                WHERE id = ? AND userId = ?
-            `,
-            args: [
-                title,
-                startTime,
-                endTime,
-                date,
-                JSON.stringify(participants),
-                id,
-                userId
-            ]
-        });
+        const sql = "UPDATE agenda SET title = ?, startTime = ?, endTime = ?, date = ?, participants = ? WHERE id = ? AND userId = ?";
+        const args = [
+            (title ?? null) as string | null,
+            (startTime ?? null) as string | null,
+            (endTime ?? null) as string | null,
+            (date ?? null) as string | null,
+            (participants !== undefined ? JSON.stringify(participants) : null) as string | null,
+            id as string,
+            userId as string
+        ];
+
+        const result = await client.execute({ sql, args });
 
         return result.rowsAffected > 0;
     } catch (error) {
@@ -151,14 +147,23 @@ export async function updateEvent(event: Partial<AgendaEvent> & { id: string, us
 
 export async function addSignalingMessage(meetingToken: string, type: string, payload: any, sender: 'host' | 'client') {
     try {
-        await client.execute({
-            sql: `INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)`,
-            args: [meetingToken, type, JSON.stringify(payload), sender]
-        });
+        if (!meetingToken || !type || !payload || !sender) {
+            console.error("Missing fields in addSignalingMessage");
+            return false;
+        }
+
+        const payloadStr = JSON.stringify(payload);
+
+        // Manual cleanup to ensure it's a valid string for the DB
+        const sql = "INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)";
+        const args = [meetingToken as string, type as string, payloadStr as string, sender as string];
+
+        await client.execute({ sql, args });
         return true;
     } catch (error) {
-        console.error("Error adding signaling:", error);
-        return false;
+        console.error("DB Error adding signaling:", error);
+        // Throw the error so the API route can catch it and show details
+        throw error;
     }
 }
 
@@ -169,12 +174,19 @@ export async function getSignalingMessages(meetingToken: string, afterId: number
             args: [meetingToken, afterId]
         });
 
-        return result.rows.map(row => ({
-            ...row,
-            payload: JSON.parse(row.payload as string)
-        }));
+        return result.rows.map(row => {
+            try {
+                return {
+                    ...row,
+                    payload: typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload
+                };
+            } catch (e) {
+                console.error("Error parsing signaling payload:", row.id);
+                return null;
+            }
+        }).filter(msg => msg !== null);
     } catch (error) {
-        console.error("Error getting signaling:", error);
+        console.error("DB Error getting signaling:", error);
         return [];
     }
 }
