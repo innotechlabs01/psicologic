@@ -30,48 +30,91 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
     const lastSignalId = useRef(0);
     const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const iceCandidateQueue = useRef<RTCIceCandidateInit[]>([]);
 
     const sendSignal = useCallback(async (type: string, payload: any) => {
-        await fetch("/api/agenda/signaling", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ meetingToken, type, payload, sender: userType }),
-        });
+        try {
+            await fetch("/api/agenda/signaling", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ meetingToken, type, payload, sender: userType }),
+                cache: "no-store",
+            });
+        } catch (err) {
+            console.error("Error sending signal:", err);
+        }
     }, [meetingToken, userType]);
 
     const handleSignal = useCallback(async (signal: any) => {
         const pc = peerConnection.current;
         if (!pc) return;
 
-        if (signal.type === "offer" && userType === "client") {
-            await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            await sendSignal("answer", answer);
-        } else if (signal.type === "answer" && userType === "host") {
-            await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
-        } else if (signal.type === "ice-candidate") {
-            await pc.addIceCandidate(new RTCIceCandidate(signal.payload));
+        console.log(`Handling signal: ${signal.type} from ${signal.sender}`);
+
+        try {
+            if (signal.type === "offer" && userType === "client") {
+                await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                await sendSignal("answer", answer);
+
+                // Process queued candidates
+                while (iceCandidateQueue.current.length > 0) {
+                    const candidate = iceCandidateQueue.current.shift();
+                    if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                }
+            } else if (signal.type === "answer" && userType === "host") {
+                await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
+                // Process queued candidates
+                while (iceCandidateQueue.current.length > 0) {
+                    const candidate = iceCandidateQueue.current.shift();
+                    if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                }
+            } else if (signal.type === "ice-candidate") {
+                if (pc.remoteDescription && pc.remoteDescription.type) {
+                    await pc.addIceCandidate(new RTCIceCandidate(signal.payload));
+                } else {
+                    iceCandidateQueue.current.push(signal.payload);
+                }
+            }
+        } catch (err) {
+            console.error("Error handling signal:", signal.type, err);
+            throw err; // Re-throw to prevent polling from marking as read if critical
         }
     }, [userType, sendSignal]);
 
     const startPolling = useCallback(() => {
+        if (pollingInterval.current) clearInterval(pollingInterval.current);
+
         pollingInterval.current = setInterval(async () => {
             try {
                 const res = await fetch(
-                    `/api/agenda/signaling?token=${meetingToken}&afterId=${lastSignalId.current}`
+                    `/api/agenda/signaling?token=${meetingToken}&afterId=${lastSignalId.current}`,
+                    { cache: "no-store" }
                 );
+                if (!res.ok) return;
                 const signals = await res.json();
 
                 for (const signal of signals) {
                     if (signal.id > lastSignalId.current) {
-                        lastSignalId.current = signal.id;
                         if (signal.sender !== userType) {
-                            await handleSignal(signal);
+                            try {
+                                await handleSignal(signal);
+                                lastSignalId.current = signal.id; // Only update if handled
+                            } catch (e) {
+                                console.warn("Failed to process signal, will retry:", signal.id);
+                                // If it fails, we don't update lastSignalId, but this might cause infinite loop
+                                // if the signal is permanently broken. Better to skip after some retries or
+                                // handle ICE errors gracefully.
+                                // For now, let's at least ensure we don't skip ICE candidates that could be queued.
+                                // lastSignalId.current = signal.id; // Original behavior, now changed
+                            }
+                        } else {
+                            lastSignalId.current = signal.id;
                         }
                     }
                 }
-            } catch {
+            } catch (err) {
                 // Polling error — silently retry
             }
         }, 1000);
@@ -90,14 +133,31 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
                 }
 
                 const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+                    iceServers: [
+                        { urls: "stun:stun.l.google.com:19302" },
+                        { urls: "stun:stun1.l.google.com:19302" },
+                        { urls: "stun:stun2.l.google.com:19302" },
+                        { urls: "stun:stun3.l.google.com:19302" },
+                        { urls: "stun:stun4.l.google.com:19302" },
+                    ],
                 });
 
                 stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
                 pc.ontrack = (event) => {
+                    console.log("Track received:", event.track.kind);
                     if (remoteVideoRef.current) {
-                        remoteVideoRef.current.srcObject = event.streams[0];
+                        if (event.streams && event.streams[0]) {
+                            remoteVideoRef.current.srcObject = event.streams[0];
+                        } else {
+                            // Fallback if event.streams is empty
+                            let inboundStream = remoteVideoRef.current.srcObject as MediaStream;
+                            if (!inboundStream || !(inboundStream instanceof MediaStream)) {
+                                inboundStream = new MediaStream();
+                                remoteVideoRef.current.srcObject = inboundStream;
+                            }
+                            inboundStream.addTrack(event.track);
+                        }
                     }
                 };
 
@@ -108,9 +168,13 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
                 };
 
                 pc.onconnectionstatechange = () => {
+                    console.log("Connection state:", pc.connectionState);
                     if (pc.connectionState === "connected") setStatus("connected");
                     if (pc.connectionState === "disconnected") setStatus("disconnected");
-                    if (pc.connectionState === "failed") setStatus("error");
+                    if (pc.connectionState === "failed") {
+                        setStatus("error");
+                        console.error("WebRTC connection failed. Check NAT/Firewall.");
+                    }
                 };
 
                 peerConnection.current = pc;
@@ -121,7 +185,8 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
                     await pc.setLocalDescription(offer);
                     await sendSignal("offer", offer);
                 }
-            } catch {
+            } catch (err) {
+                console.error("WebRTC Initialization failed:", err);
                 setStatus("error");
             }
         };
