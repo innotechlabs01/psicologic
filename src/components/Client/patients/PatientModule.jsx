@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import ClinicPdfModal from "../pdf/PdfPreviewModal.tsx";
-
+import ClinicalViewModal from "../history/modal/ClinicalViewModal.jsx";
 import { showToast } from "../../../utils/toast";
 
 function formatLabel(str) {
@@ -26,132 +26,6 @@ async function fetchFullClinicalEntry(clinicalEntryId) {
   return await response.json();
 }
 
-// Componente ClinicalViewModal (Integrado)
-function ClinicalViewModal({ entry, onClose }) {
-
-  // Si 'entry' es null o undefined (mientras se carga), mostramos un estado de carga.
-  if (!entry) {
-    return (
-      <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div className="text-white text-xl flex items-center space-x-3">
-          <svg className="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Cargando historia clínica...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Obtener historial clínico y secciones generales de forma segura.
-  const clinicHistory = entry.clinicHistory ?? {};
-  const generalSections = entry.sections?.General ?? {};
-
-  // Intentar parsear las respuestas del JSON, con fallback seguro.
-  let answers = {};
-
-  try {
-    // generalSections puede ser string JSON o un objeto
-    const raw = typeof generalSections === "string"
-      ? generalSections
-      : JSON.stringify(generalSections);
-
-    answers = JSON.parse(raw);
-
-  } catch (error) {
-    console.error("No se pudo convertir 'generalSections' a JSON válido:", error);
-    answers = {}; // fallback seguro si falla el parseo
-  }
-
-  // Convertir el objeto de respuestas en pares [clave, valor]
-  const answerEntries = Object.entries(answers);
-
-  return (
-    // Overlay y Fondo
-    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-
-      {/* Contenedor del Modal - Estilo de Ficha Técnica */}
-      <div className="bg-white w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden animate-fadeIn border border-gray-100">
-
-        {/* Encabezado Principal */}
-        <div className="px-8 py-5 border-b bg-white flex items-center justify-between sticky top-0 z-10">
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-bold text-gray-900">Ficha Clínica — {entry.name}</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Registro creado el: {clinicHistory.created_at ? new Date(clinicHistory.created_at).toLocaleDateString() : 'Fecha no disponible'}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 p-2 transition duration-150 rounded-full hover:bg-gray-100"
-            aria-label="Cerrar"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Cuerpo de la Historia Clínica - Scrollable */}
-        <div className="p-8 space-y-8 max-h-[75vh] overflow-y-auto bg-gray-50">
-          {answerEntries.length === 0 ? (
-            <div className="text-center py-10 text-gray-500">
-              <p>No hay respuestas registradas para esta entrada o el formato es incorrecto.</p>
-              <pre className="mt-4 p-4 bg-gray-100 rounded-lg text-xs text-left overflow-x-auto">
-                Datos brutos del paciente: {JSON.stringify(entry, null, 2)}
-              </pre>
-            </div>
-          ) : (
-            // Contenedor de las Secciones/Respuestas
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {answerEntries.map(([key, obj]) => {
-                // obj = { label, type, value }
-                const label = obj?.label ?? formatLabel(key);
-                const value = obj?.value ?? "Sin respuesta";
-
-                return (
-                  <section
-                    key={key}
-                    className="bg-white border border-gray-200 rounded-lg p-5 shadow-md hover:shadow-lg transition duration-200"
-                  >
-                    {/* Título */}
-                    <h3 className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-2 border-b pb-1">
-                      {label}
-                    </h3>
-
-                    {/* Contenido */}
-                    <div className="text-gray-800 text-sm whitespace-pre-wrap leading-relaxed">
-                      {typeof value === "boolean"
-                        ? value ? "Sí" : "No"
-                        : typeof value === "object"
-                          ? JSON.stringify(value, null, 2)
-                          : value}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-          )}
-
-        </div>
-
-        {/* Pie de Página */}
-        <div className="px-8 py-4 border-t bg-white flex justify-end sticky bottom-0 z-10">
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 rounded-lg bg-gray-800 text-white font-medium hover:bg-gray-700 transition duration-150 shadow-md"
-          >
-            Cerrar Vista
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-// --- End ClinicalViewModal Component ---
-
-
 export default function PatientModule({ clerkUserId }) {
   const [search, setSearch] = useState("");
   const [patients, setPatients] = useState([]);
@@ -159,7 +33,6 @@ export default function PatientModule({ clerkUserId }) {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [showPreviewModalPDF, setShowPreviewModalPDF] = useState(false);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createData, setCreateData] = useState({ name: "", document: "", email: "", phone: "" });
@@ -167,37 +40,51 @@ export default function PatientModule({ clerkUserId }) {
   const [templateStructure, setTemplateStructure] = useState(null);
   const [templateAnswers, setTemplateAnswers] = useState({});
 
-  // 1. Estado para el paciente seleccionado (activador de la vista)
   const [activeEntryView, setActiveEntryView] = useState(null);
-  // 2. Nuevo estado para los datos COMPLETOS de la ficha, cargados de la API.
   const [fullModalEntry, setFullModalEntry] = useState(null);
 
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [pdfEntry, setPdfEntry] = useState(null);
 
-  // Carga inicial de pacientes
+  // Estados para validación de template
+  const [hasTemplate, setHasTemplate] = useState(null); // null = cargando, true/false
+  const [templateData, setTemplateData] = useState(null);
+
+  // Carga inicial y validación de template
   useEffect(() => {
+    checkTemplate();
     loadPatients();
   }, [page, rowsPerPage, clerkUserId]);
 
+  const checkTemplate = async () => {
+    try {
+      const res = await fetch(`/api/patients/template-default?id=${clerkUserId}`);
+      const json = await res.json();
+      if (json.ok) {
+        setHasTemplate(true);
+        setTemplateData(json);
+      } else {
+        setHasTemplate(false);
+      }
+    } catch (error) {
+      console.error("Error checking template:", error);
+      setHasTemplate(false);
+    }
+  };
+
   useEffect(() => {
     if (activeEntryView) {
-      // Establecer fullModalEntry a null para que el modal muestre el loading
       setFullModalEntry(null);
 
       async function loadEntryData() {
         try {
-          // Cargar los datos completos de la API
           const data = await fetchFullClinicalEntry(activeEntryView.id);
-
-          // Combinar los datos básicos (name, etc.) con los datos clínicos (clinicHistory)
           setFullModalEntry({
             ...activeEntryView,
             ...data,
           });
         } catch (error) {
           console.error("Error al cargar la ficha clínica:", error);
-          // Si falla, cerramos la vista.
           setActiveEntryView(null);
         }
       }
@@ -206,7 +93,6 @@ export default function PatientModule({ clerkUserId }) {
   }, [activeEntryView]);
 
   const loadPatients = useCallback(async () => {
-    // Usamos useCallback y pasamos clerkUserId como dependencia para evitar advertencias
     const res = await fetch(`/api/patients/patients?page=${page}&limit=${rowsPerPage}&userId=${clerkUserId}`);
     const json = await res.json();
 
@@ -218,134 +104,81 @@ export default function PatientModule({ clerkUserId }) {
     return patients.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
   }
 
-  async function generatePDF(patientId) {
-    try {
-      const response = await fetch(`/api/pdf?id=${patientId}`, {
-        method: "GET",
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo generar el PDF");
-      }
-
-      // Convertimos la respuesta en un blob
-      const blob = await response.blob();
-
-      // Creamos una URL temporal
-      const url = window.URL.createObjectURL(blob);
-
-      // Abrir en una nueva pestaña
-      window.open(url, "_blank");
-
-      // Si quieres provocar descarga automática, descomenta:
-      // const a = document.createElement("a");
-      // a.href = url;
-      // a.download = `HistoriaClinica-${patientId}.pdf`;
-      // a.click();
-
-    } catch (err) {
-      console.error("Error generando PDF:", err);
-    }
-  }
-
-
   async function saveNewPatient() {
-    const tRes = await fetch(`/api/patients/template-default?id=${clerkUserId}`);
-    const tJson = await tRes.json();
-
-    if (!tJson.ok) {
-      setShowCreateModal(false);
-      showToast(`${tJson.message}`, 'error')
-      return null // 👈 corta el flujo
+    if (!hasTemplate) {
+      showToast("Debes configurar un template antes de crear pacientes", "warning");
+      window.location.href = "/client/settings/template";
+      return;
     }
 
-    // Lógica de guardar paciente y obtener template... (sin cambios)
-    const res = await fetch("/api/patients/patient-create", {
-      method: "POST",
-      body: JSON.stringify({ ...createData, clerkUserId }),
-      headers: { "Content-Type": "application/json" },
-    });
-    const json = await res.json();
+    try {
+      const res = await fetch("/api/patients/patient-create", {
+        method: "POST",
+        body: JSON.stringify({ ...createData, clerkUserId }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const json = await res.json();
 
-    setSelectedPatient(json.id);
-    setTemplateStructure(tJson);
-    setShowCreateModal(false);
+      if (!res.ok) throw new Error(json.message || "Error al crear paciente");
+
+      setSelectedPatient(json.id);
+      setTemplateStructure(templateData);
+      setShowCreateModal(false);
+      showToast("Paciente creado. Complete la historia clínica.", "success");
+    } catch (error) {
+      showToast(error.message, "error");
+    }
   }
 
   async function submitTemplate() {
-    // Lógica de envío de plantilla... (sin cambios)
     const saveEntity = {
       idPatients: selectedPatient,
       templateId: templateStructure.id,
       answers: templateAnswers,
     };
 
-    await fetch("/api/patients/save-entry", {
-      method: "POST",
-      body: JSON.stringify(saveEntity),
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      const res = await fetch("/api/patients/save-entry", {
+        method: "POST",
+        body: JSON.stringify(saveEntity),
+        headers: { "Content-Type": "application/json" },
+      });
 
-    await loadPatients();
-    setTemplateStructure(null);
+      if (!res.ok) throw new Error("Error al guardar historia clínica");
+
+      showToast("Historia clínica guardada correctamente", "success");
+      await loadPatients();
+      setTemplateStructure(null);
+      setTemplateAnswers({});
+    } catch (error) {
+      showToast(error.message, "error");
+    }
   }
 
-  // Función para cerrar el modal de vista
   const handleCloseViewModal = useCallback(() => {
     setActiveEntryView(null);
     setFullModalEntry(null);
   }, []);
 
-  function renderTemplateForm() {
-    if (!templateStructure?.structure?.components) return null;
-
+  // Si no hay template, mostramos un aviso prominente
+  if (hasTemplate === false) {
     return (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 ">
-        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-          <h2 className="text-xl font-semibold ">Historia Clínica</h2>
-
-          {templateStructure?.structure?.components?.map((field) => (
-            <div key={field.id} className="space-y-1">
-              <label className="font-medium text-gray-700">{field.label}</label>
-
-              {field.type === "text" && (
-                <input
-                  className="border p-2 rounded w-full"
-                  onChange={(e) => setTemplateAnswers({ ...templateAnswers, [field.id]: e.target.value })}
-                />
-              )}
-
-              {field.type === "textarea" && (
-                <textarea
-                  className="border p-2 rounded w-full"
-                  onChange={(e) => setTemplateAnswers({ ...templateAnswers, [field.id]: e.target.value })}
-                />
-              )}
-
-              {field.type === "bool" && (
-                <select
-                  className="border p-2 rounded w-full"
-                  onChange={(e) =>
-                    setTemplateAnswers({ ...templateAnswers, [field.id]: e.target.value === "true" })
-                  }
-                >
-                  <option value="">Seleccione…</option>
-                  <option value="true">Sí</option>
-                  <option value="false">No</option>
-                </select>
-              )}
-            </div>
-          ))}
-
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setTemplateStructure(null)} className="px-4 py-2 bg-gray-600 text-white rounded">
-              Cancelar
-            </button>
-            <button onClick={submitTemplate} className="px-4 py-2 bg-blue-600 text-white rounded">
-              Guardar
-            </button>
-          </div>
+      <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-dashed border-gray-300">
+        <div className="bg-indigo-100 p-4 rounded-full mb-4">
+          <svg className="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
         </div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Planilla no configurada</h2>
+        <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-6">
+          Para comenzar a registrar historias clínicas, primero debes definir y activar una plantilla en la configuración del sistema.
+        </p>
+        <a
+          href="/client/settings/template"
+          className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+        >
+          Configurar Plantilla
+        </a>
       </div>
     );
   }
@@ -353,134 +186,185 @@ export default function PatientModule({ clerkUserId }) {
   return (
     <div className="p-6 space-y-6 font-medium text-black dark:text-white dark:bg-gray-800">
       <div className="flex items-center gap-4">
-        <input
-          className="border p-2 rounded w-64"
-          placeholder="Buscar paciente..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="relative flex-1 max-w-md">
+          <input
+            className="border p-2.5 pl-10 rounded-xl w-full focus:ring-2 focus:ring-indigo-500 outline-none transition"
+            placeholder="Buscar paciente por nombre..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <svg className="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
 
         <button
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition font-semibold flex items-center gap-2 shadow-md"
           onClick={() => setShowCreateModal(true)}
         >
-          Crear
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Crear Paciente
         </button>
       </div>
 
       {/* TABLE */}
-      <table className="w-full border mt-6 text-sm font-medium text-black dark:text-white dark:bg-gray-800">
-        <thead>
-          <tr className="bg-gray-100 text-left font-medium text-black dark:text-white dark:bg-gray-800">
-            <th className="p-2 border">Nombre</th>
-            <th className="p-2 border w-40">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredPatients().length === 0 ? (
-            // ⬇️ Caso 1: Array vacío (length es 0)
+      <div className="overflow-hidden border rounded-2xl shadow-sm bg-white dark:bg-gray-900">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-b">
             <tr>
-              <td colSpan={2} className="border p-2 text-center">
-                **No se encontraron pacientes**
-              </td>
+              <th className="p-4 font-semibold">Paciente</th>
+              <th className="p-4 font-semibold">Documento</th>
+              <th className="p-4 font-semibold text-right">Acciones</th>
             </tr>
-          ) : (
-            // ⬇️ Caso 2: Array con datos (length > 0)
-            filteredPatients().map((p) => (
-              <tr key={p.id}>
-                <td className="border p-2">{p.name}</td>
-                <td className="border p-2 flex gap-2">
-                  <button
-                    className="px-2 py-1 bg-gray-900 text-white rounded"
-                    // Al hacer clic, establecemos el paciente básico. El useEffect se encarga de cargar los datos completos.
-                    onClick={() => setActiveEntryView(p)}
-                  >
-                    Vista
-                  </button>
-                  <button
-                    className="px-2 py-1 bg-blue-600 text-white rounded"
-                    onClick={async () => {
-                      setPdfModalOpen(true);
-                      // Cargar los datos completos si no los tienes
-                      const data = await fetchFullClinicalEntry(p.id);
-                      setPdfEntry({ ...p, ...data });
-                    }}
-                  >
-                    PDF
-                  </button>
+          </thead>
+          <tbody className="divide-y">
+            {filteredPatients().length === 0 ? (
+              <tr>
+                <td colSpan={3} className="p-8 text-center text-gray-500 italic">
+                  No se encontraron pacientes registrados
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-
-      {/* Pagination */}
-      <div className="flex gap-4 mt-4 items-center">
-        <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1 border rounded">
-          Prev
-        </button>
-        <span>
-          Página {page} / {totalPages}
-        </span>
-        <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1 border rounded">
-          Next
-        </button>
-
-        <select
-          value={rowsPerPage}
-          onChange={(e) => setRowsPerPage(Number(e.target.value))}
-          className="ml-4 border p-1 rounded"
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-        </select>
+            ) : (
+              filteredPatients().map((p) => (
+                <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                  <td className="p-4 font-semibold text-gray-900 dark:text-white">
+                    <div className="flex flex-col">
+                      <span>{p.name}</span>
+                      <span className="text-xs font-normal text-gray-500">{p.email}</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-gray-600 dark:text-gray-400">{p.document || '---'}</td>
+                  <td className="p-4 text-right flex justify-end gap-2">
+                    <button
+                      className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition text-xs font-bold"
+                      onClick={() => setActiveEntryView(p)}
+                    >
+                      Ver Historia
+                    </button>
+                    <button
+                      className="px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-lg transition text-xs font-bold"
+                      onClick={async () => {
+                        setPdfModalOpen(true);
+                        const data = await fetchFullClinicalEntry(p.id);
+                        setPdfEntry({ ...p, ...data });
+                      }}
+                    >
+                      Descargar PDF
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* CREATE MODAL */}
+      {/* Pagination */}
+      <div className="flex justify-between items-center bg-white dark:bg-gray-900 p-4 rounded-2xl border shadow-sm">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <span>Mostrar</span>
+          <select
+            value={rowsPerPage}
+            onChange={(e) => setRowsPerPage(Number(e.target.value))}
+            className="border rounded-lg px-2 py-1 outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+          </select>
+          <span>pacientes</span>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="p-2 border rounded-lg disabled:opacity-30 hover:bg-gray-50 transition"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <span className="text-sm font-semibold">
+            {page} de {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="p-2 border rounded-lg disabled:opacity-30 hover:bg-gray-50 transition"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* CREATE PATIENT MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 ">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-2xl  font-medium text-black dark:text-white dark:bg-gray-800">
-            <h2 className="text-xl font-semibold">Crear Paciente</h2>
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl p-8 space-y-6 shadow-2xl scale-in">
+            <div className="border-b pb-4">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nuevo Paciente</h2>
+              <p className="text-sm text-gray-500 mt-1">Ingresa los datos básicos para iniciar la historia clínica.</p>
+            </div>
 
-            <input
-              className="border p-2 rounded w-full"
-              placeholder="Nombre"
-              type="text"
-              required
-              onChange={(e) => setCreateData({ ...createData, name: e.target.value })}
-            />
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-400 uppercase">Nombre Completo</label>
+                <input
+                  className="w-full border p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  type="text"
+                  placeholder="Ej: Juan Pérez"
+                  onChange={(e) => setCreateData({ ...createData, name: e.target.value })}
+                />
+              </div>
 
-            <input
-              className="border p-2 rounded w-full"
-              placeholder="Documento"
-              type="number"
-              required
-              onChange={(e) => setCreateData({ ...createData, document: e.target.value })}
-            />
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-400 uppercase">Documento de Identidad</label>
+                <input
+                  className="w-full border p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  type="number"
+                  placeholder="Ej: 12345678"
+                  onChange={(e) => setCreateData({ ...createData, document: e.target.value })}
+                />
+              </div>
 
-            <input
-              className="border p-2 rounded w-full"
-              placeholder="Email"
-              type="email"
-              required
-              onChange={(e) => setCreateData({ ...createData, email: e.target.value })}
-            />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Email</label>
+                  <input
+                    className="w-full border p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    type="email"
+                    placeholder="juan@email.com"
+                    onChange={(e) => setCreateData({ ...createData, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Teléfono</label>
+                  <input
+                    className="w-full border p-2.5 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    type="text"
+                    placeholder="Ej: 3001234567"
+                    onChange={(e) => setCreateData({ ...createData, phone: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
 
-            <input
-              className="border p-2 rounded w-full"
-              placeholder="Teléfono"
-              type="number"
-              required
-              onChange={(e) => setCreateData({ ...createData, phone: e.target.value })}
-            />
-
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 bg-gray-600 text-white rounded">
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-6 py-2.5 text-gray-500 hover:text-gray-700 font-semibold transition"
+              >
                 Cancelar
               </button>
-              <button onClick={saveNewPatient} className="px-4 py-2 bg-blue-600 text-white rounded">
+              <button
+                onClick={saveNewPatient}
+                className="px-8 py-2.5 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+              >
                 Siguiente
               </button>
             </div>
@@ -488,15 +372,97 @@ export default function PatientModule({ clerkUserId }) {
         </div>
       )}
 
-      {/* TEMPLATE FORM */}
-      {renderTemplateForm()}
+      {/* TEMPLATE FORM MODAL */}
+      {templateStructure && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-3xl rounded-2xl shadow-2xl p-8 space-y-6 max-h-[90vh] overflow-y-auto scale-in">
+            <div className="flex justify-between items-center border-b pb-4 sticky top-0 bg-white dark:bg-gray-800 z-10">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Registrar Historia Clínica</h2>
+                <p className="text-sm text-gray-500">Paciente: {createData.name}</p>
+              </div>
+              <button onClick={() => setTemplateStructure(null)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {templateStructure?.structure?.components?.map((field) => (
+                <div key={field.id} className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 block">{field.label}</label>
+
+                  {field.type === "text" && field.label.length <= 40 && (
+                    <input
+                      className="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 transition"
+                      placeholder={field.placeholder || "Escriba aquí..."}
+                      onChange={(e) => setTemplateAnswers({ ...templateAnswers, [field.id]: e.target.value })}
+                    />
+                  )}
+
+                  {(field.type === "textarea" || (field.type === "text" && field.label.length > 40) || field.type === "input") && (
+                    <textarea
+                      className="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 transition min-h-[100px]"
+                      placeholder={field.placeholder || "Detalle la información..."}
+                      onChange={(e) => setTemplateAnswers({ ...templateAnswers, [field.id]: e.target.value })}
+                    />
+                  )}
+
+                  {(field.type === "checkbox" || field.type === "bool") && (
+                    <div className="flex gap-4">
+                      {["Sí", "No"].map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => setTemplateAnswers({ ...templateAnswers, [field.id]: opt === "Sí" })}
+                          className={`flex-1 py-3 px-4 rounded-xl border text-sm font-semibold transition ${templateAnswers[field.id] === (opt === "Sí")
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-white dark:bg-gray-700 text-gray-600 border-gray-200 hover:border-indigo-300"
+                            }`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {field.type === "select" && (
+                    <select
+                      className="w-full border p-3 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 transition"
+                      onChange={(e) => setTemplateAnswers({ ...templateAnswers, [field.id]: e.target.value })}
+                    >
+                      <option value="">Seleccione una opción...</option>
+                      {field.options?.map((opt, i) => (
+                        <option key={i} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t font-bold">
+              <button
+                onClick={() => setTemplateStructure(null)}
+                className="px-6 py-3 text-gray-500 hover:text-gray-700"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitTemplate}
+                className="px-10 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+              >
+                Guardar Historia
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* VIEW ENTRY MODAL */}
       {activeEntryView && (
         <ClinicalViewModal
-          // Pasamos los datos completos que pueden ser NULL mientras se carga
           entry={fullModalEntry}
-          // Usamos el handler para cerrar
           onClose={handleCloseViewModal}
         />
       )}

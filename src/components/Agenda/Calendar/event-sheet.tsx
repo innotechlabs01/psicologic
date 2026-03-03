@@ -7,14 +7,9 @@ import {
     Layers,
     Trash2,
     X,
-    ArrowUpRight,
-    CheckCircle2,
     Bell,
     Calendar as CalendarIcon,
-    Phone,
     Users,
-    FilePlus,
-    Link as LinkIcon,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import {
@@ -32,10 +27,16 @@ import {
     DialogHeader,
     DialogTitle,
 } from "../ui/dialog";
-import { Avatar, AvatarImage } from "../ui/avatar";
-import type { Event } from "../mock-data/events";
+import type { Event } from "../../../types/agenda";
 import { useState } from "react";
-import { Kbd } from "../ui/kbd";
+import { CreateEventDialog } from "./create-event-dialog";
+import { useAgendaCache } from "../../../hooks/useAgendaCache";
+import { toast } from "react-toastify";
+import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useCalendarStore } from "../store/calendar-store";
+import { EventParticipants } from "./event-participants";
+import { EventMeetingSection } from "./event-meeting-section";
 
 interface EventSheetProps {
     event: Event | null;
@@ -55,70 +56,36 @@ function formatDate(dateStr: string): string {
     return format(date, "EEEE, MMMM dd");
 }
 
-function getMeetingCode(link?: string): string {
-    if (!link) return "";
-    const match = link.match(/\/[a-z-]+$/);
-    if (match) {
-        return match[0].slice(1).replace(/-/g, " ").toUpperCase();
-    }
-    return "dra-jhgg-mvn";
-}
-
-function getParticipantName(participantId: string): string {
-    return participantId.charAt(0).toUpperCase() + participantId.slice(1);
-}
-
-function getParticipantEmail(participantId: string): string {
-    return `${participantId}@gmail.com`;
-}
-
-function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
-}
-
-import { CreateEventDialog } from "./create-event-dialog";
-import { useAgendaCache } from "../../../hooks/useAgendaCache";
-import { toast } from "react-toastify";
-import { Calendar } from "../ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { cn } from "../../../lib/utils";
-
 export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
-    const [rsvpStatus, setRsvpStatus] = useState<"yes" | "no" | "maybe" | null>(
-        null
-    );
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const { invalidateCache } = useAgendaCache();
+    const { applyFilters } = useCalendarStore();
     const [duplicateDate, setDuplicateDate] = useState<Date | undefined>(undefined);
     const [duplicateOpen, setDuplicateOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     if (!event) return null;
 
+    const triggerRefresh = () => {
+        invalidateCache();
+        applyFilters({});
+    };
+
     const executeDelete = async () => {
         try {
-            const res = await fetch(`/api/agenda/${event.id}`, {
-                method: 'DELETE',
-            });
-
+            const res = await fetch(`/api/agenda/${event.id}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success("Cita eliminada correctamente");
-                invalidateCache();
                 setDeleteDialogOpen(false);
                 onOpenChange(false);
-                window.location.reload();
+                triggerRefresh();
             } else {
                 toast.error("Error al eliminar la cita");
             }
         } catch (error) {
-            console.error("Failed to delete event", error);
             toast.error("Error al eliminar la cita");
             setDeleteDialogOpen(false);
         }
-    };
-
-    const handleDelete = () => {
-        setDeleteDialogOpen(true);
     };
 
     const handleDuplicate = async () => {
@@ -146,15 +113,13 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
 
             if (res.ok) {
                 toast.success("Cita duplicada correctamente");
-                invalidateCache();
                 setDuplicateOpen(false);
                 onOpenChange(false);
-                window.location.reload();
+                triggerRefresh();
             } else {
                 toast.error("Error al duplicar la cita");
             }
-        } catch (error) {
-            console.error("Failed to duplicate event", error);
+        } catch {
             toast.error("Error al duplicar la cita");
         }
     };
@@ -162,19 +127,16 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
     const dateStr = formatDate(event.date);
     const startTimeStr = formatTime(event.startTime);
     const endTimeStr = formatTime(event.endTime);
-    const timezone = event.timezone || "GMT+7 Pontianak";
-    const meetingCode = getMeetingCode(event.meetingLink);
+    const timezone = event.timezone || "America/Bogota";
 
     const organizer = event.participants[0] || "user1";
-    const organizerName = organizer;
-    const organizerEmail = organizer;
     const otherParticipants = event.participants.slice(1);
 
     const mockParticipants = [
         {
             id: organizer,
-            name: organizerName,
-            email: organizerEmail,
+            name: organizer,
+            email: organizer,
             isOrganizer: true,
             rsvp: "yes" as const,
             isYou: false,
@@ -187,7 +149,6 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             rsvp: "yes" as const,
             isYou: false,
         })),
-
     ];
 
     const yesCount = mockParticipants.filter((p) => p.rsvp === "yes").length;
@@ -236,21 +197,13 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                                     >
                                         <Pen className="size-4 text-muted-foreground" />
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="size-8 hover:bg-muted"
-                                    >
+                                    <Button variant="ghost" size="icon" className="size-8 hover:bg-muted">
                                         <FileText className="size-4 text-muted-foreground" />
                                     </Button>
 
                                     <Popover open={duplicateOpen} onOpenChange={setDuplicateOpen}>
                                         <PopoverTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="size-8 hover:bg-muted"
-                                            >
+                                            <Button variant="ghost" size="icon" className="size-8 hover:bg-muted">
                                                 <Layers className="size-4 text-muted-foreground" />
                                             </Button>
                                         </PopoverTrigger>
@@ -264,40 +217,28 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                                                     initialFocus
                                                 />
                                                 <div className="mt-3 flex justify-end gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => setDuplicateOpen(false)}
-                                                    >
+                                                    <Button size="sm" variant="ghost" onClick={() => setDuplicateOpen(false)}>
                                                         Cancelar
                                                     </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={handleDuplicate}
-                                                        disabled={!duplicateDate}
-                                                    >
+                                                    <Button size="sm" onClick={handleDuplicate} disabled={!duplicateDate}>
                                                         Duplicar
                                                     </Button>
                                                 </div>
                                             </div>
                                         </PopoverContent>
                                     </Popover>
+
                                     <Button
                                         variant="ghost"
                                         size="icon"
                                         className="size-8 hover:bg-muted"
-                                        onClick={handleDelete}
+                                        onClick={() => setDeleteDialogOpen(true)}
                                     >
                                         <Trash2 className="size-4 text-muted-foreground" />
-
                                     </Button>
                                 </div>
                                 <SheetClose asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="size-6 rounded-full bg-muted hover:bg-muted"
-                                    >
+                                    <Button variant="ghost" size="icon" className="size-6 rounded-full bg-muted hover:bg-muted">
                                         <X className="size-4 text-muted-foreground" />
                                     </Button>
                                 </SheetClose>
@@ -310,195 +251,38 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                                 <div className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
                                     <span>{dateStr}</span>
                                     <span className="size-1 rounded-full bg-muted-foreground" />
-                                    <span>
-                                        {startTimeStr} - {endTimeStr}
-                                    </span>
+                                    <span>{startTimeStr} - {endTimeStr}</span>
                                     <span className="size-1 rounded-full bg-muted-foreground" />
                                     <span>{timezone}</span>
                                 </div>
                             </div>
-
-                            {/* <Button variant="outline">
-                            <span>Propose new time</span>
-                            <ArrowUpRight className="size-4" />
-                        </Button> */}
                         </SheetHeader>
 
                         <div className="flex-1 overflow-y-auto px-4 py-4">
                             <div className="flex flex-col gap-4 max-w-[512px] mx-auto">
-                                <div className="flex flex-col gap-4">
-                                    {mockParticipants.map((participant) => (
-                                        <div
-                                            key={participant.id}
-                                            className="flex items-start gap-3 relative"
-                                        >
-                                            <Avatar className="size-7 border-[1.4px] border-background shrink-0">
-                                                <AvatarImage
-                                                    src={`https://api.dicebear.com/9.x/glass/svg?seed=${participant.id}`}
-                                                />
-                                            </Avatar>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start gap-2 relative">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-1.5 mb-1 relative">
-                                                            <p className="text-[13px] font-medium text-foreground leading-[18px]">
-                                                                {participant.name}
-                                                            </p>
-                                                            {participant.isOrganizer && (
-                                                                <span className="text-[10px] font-medium text-cyan-500 px-0.5 py-0.5 rounded-full">
-                                                                    Organizer
-                                                                </span>
-                                                            )}
-                                                            {participant.isYou && (
-                                                                <span className="text-[10px] font-medium text-foreground px-0.5 py-0.5 rounded-full">
-                                                                    You
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-xs text-muted-foreground leading-none">
-                                                            {participant.email}
-                                                        </p>
-                                                    </div>
-                                                    <CheckCircle2 className="size-3 text-green-500 shrink-0 absolute right-0 top-[17px]" />
-                                                </div>
-                                                {participant.isYou && (
-                                                    <div className="mt-3 flex gap-1.5 bg-muted/50 rounded-lg p-1.5">
-                                                        <Button
-                                                            variant={rsvpStatus === "yes" ? "default" : "ghost"}
-                                                            size="sm"
-                                                            className={`flex-1 h-[30px] text-xs font-medium ${rsvpStatus === "yes"
-                                                                ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
-                                                                : "text-muted-foreground"
-                                                                }`}
-                                                            onClick={() => setRsvpStatus("yes")}
-                                                        >
-                                                            Yes
-                                                        </Button>
-                                                        <Button
-                                                            variant={rsvpStatus === "no" ? "default" : "ghost"}
-                                                            size="sm"
-                                                            className={`flex-1 h-[30px] text-xs font-medium ${rsvpStatus === "no"
-                                                                ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
-                                                                : "text-muted-foreground"
-                                                                }`}
-                                                            onClick={() => setRsvpStatus("no")}
-                                                        >
-                                                            No
-                                                        </Button>
-                                                        <Button
-                                                            variant={
-                                                                rsvpStatus === "maybe" ? "default" : "ghost"
-                                                            }
-                                                            size="sm"
-                                                            className={`flex-1 h-[30px] text-xs font-medium ${rsvpStatus === "maybe"
-                                                                ? "bg-foreground text-background hover:bg-foreground/90 shadow-sm"
-                                                                : "text-muted-foreground"
-                                                                }`}
-                                                            onClick={() => setRsvpStatus("maybe")}
-                                                        >
-                                                            Maybe
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <EventParticipants participants={mockParticipants} />
 
                                 {event.meetingLink && (
-                                    <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="size-6 shrink-0">
-                                                <svg
-                                                    viewBox="0 0 24 24"
-                                                    className="size-full"
-                                                    fill="none"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-                                                    <path
-                                                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"
-                                                        fill="#22C55E"
-                                                    />
-                                                </svg>
-                                            </div>
-                                            <p className="text-xs font-medium text-muted-foreground flex-1">
-                                                Meeting
-                                            </p>
-                                            {/* <p className="text-xs text-muted-foreground">
-                                            Code: {meetingCode}
-                                        </p> */}
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                className="flex-1 h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-medium gap-2 shadow-sm"
-                                                onClick={() => {
-                                                    if (event.meetingLink) {
-                                                        window.open(event.meetingLink, "_blank");
-                                                    }
-                                                }}
-                                            >
-                                                <span>Join meeting</span>
-                                                <div className="flex gap-0.5">
-                                                    <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded">
-                                                        ⌘
-                                                    </Kbd>
-                                                    <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded w-[18px]">
-                                                        J
-                                                    </Kbd>
-                                                </div>
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8 gap-2 text-xs border-border"
-                                                onClick={() => {
-                                                    if (event.meetingLink) {
-                                                        copyToClipboard(event.meetingLink);
-                                                    }
-                                                }}
-                                            >
-                                                <LinkIcon className="size-4" />
-                                                <span>Copy link</span>
-                                            </Button>
-                                        </div>
-                                    </div>
+                                    <EventMeetingSection meetingLink={event.meetingLink} />
                                 )}
 
                                 <div className="flex flex-col gap-2 pt-4 border-t border-border">
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <div className="p-1">
-                                            <Bell className="size-4" />
-                                        </div>
+                                        <div className="p-1"><Bell className="size-4" /></div>
                                         <span>Reminder: 30min before</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <div className="p-1">
-                                            <CalendarIcon className="size-4" />
-                                        </div>
-                                        <span>Organizer: {organizerEmail}</span>
+                                        <div className="p-1"><CalendarIcon className="size-4" /></div>
+                                        <span>Organizer: {organizer}</span>
                                     </div>
-                                    {/* <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <div className="p-1">
-                                        <Phone className="size-4" />
-                                    </div>
-                                    <span>(US) +1 904-330-1131</span>
-                                </div> */}
                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <div className="p-1">
-                                            <Users className="size-4" />
-                                        </div>
+                                        <div className="p-1"><Users className="size-4" /></div>
                                         <span>
                                             {mockParticipants.length} persons
                                             <span className="mx-1">•</span>
                                             {yesCount} yes
                                         </span>
                                     </div>
-                                    {/* <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <div className="p-1">
-                                        <FilePlus className="size-4" />
-                                    </div>
-                                    <span>Notes from Organizer</span>
-                                </div> */}
                                 </div>
 
                                 <div className="pt-4 border-t border-border">
