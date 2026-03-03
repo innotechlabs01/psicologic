@@ -74,6 +74,7 @@
     "@tailwindcss/typography": "^0.5.15",
     "@types/alpinejs": "^3.13.10",
     "@types/node": "^20.11.30",
+    "@types/nodemailer": "^7.0.11",
     "@types/pdfkit": "^0.17.3",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
