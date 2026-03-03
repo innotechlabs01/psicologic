@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Video, Mic, MicOff, VideoOff, PhoneOff } from "lucide-react";
+import { Video, Mic, MicOff, VideoOff, PhoneOff, AlertTriangle, Loader2 } from "lucide-react";
+import { Button } from "./ui/button";
 import { useWebRTC } from "./hooks/useWebRTC";
 
 interface VideoRoomProps {
@@ -39,7 +40,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
             {/* Video Area */}
             <div className="flex-1 flex gap-4 relative">
                 {/* Remote Video (Main) */}
-                <div className="flex-1 bg-muted rounded-xl overflow-hidden relative flex items-center justify-center">
+                <div className="flex-1 bg-muted rounded-xl overflow-hidden relative flex items-center justify-center border border-border shadow-inner">
                     <video
                         ref={remoteVideoRef}
                         autoPlay
@@ -47,13 +48,45 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
                         className="w-full h-full object-cover"
                     />
                     {status !== "connected" && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
-                            <div className="text-center">
-                                <div className="animate-spin text-4xl mb-2">↻</div>
-                                <p className="font-medium">Esperando conexión...</p>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    Asegúrate que la otra persona ha entrado.
-                                </p>
+                        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/90 backdrop-blur-sm transition-all duration-500">
+                            <div className="text-center p-8 max-w-sm">
+                                {status === "error" ? (
+                                    <div className="animate-in fade-in zoom-in duration-300">
+                                        <div className="bg-red-500/10 text-red-500 p-4 rounded-full size-20 flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                                            <AlertTriangle className="size-10" />
+                                        </div>
+                                        <h3 className="text-xl font-black text-white mb-2">Error de Acceso</h3>
+                                        <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+                                            No pudimos acceder a tu cámara o micrófono. Por favor, verifica los permisos de tu navegador.
+                                        </p>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-zinc-700 text-zinc-300 bg-transparent hover:bg-zinc-800"
+                                            onClick={() => window.location.reload()}
+                                        >
+                                            Intentar de nuevo
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
+                                        <div className="relative mb-6">
+                                            <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-2xl animate-pulse"></div>
+                                            <div className="relative flex items-center justify-center size-20 bg-indigo-600 rounded-2xl mx-auto shadow-2xl shadow-indigo-500/20">
+                                                <Loader2 className="size-10 text-white animate-spin" />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-2xl font-black text-white mb-3">Preparando Sala</h3>
+                                        <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                                            Estableciendo conexión segura... {userType === 'host' ? 'Esperando al paciente.' : 'Esperando al doctor.'}
+                                        </p>
+                                        <div className="mt-8 flex gap-2 justify-center">
+                                            <span className="size-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.3s]"></span>
+                                            <span className="size-1.5 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.15s]"></span>
+                                            <span className="size-1.5 rounded-full bg-indigo-500 animate-bounce"></span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -80,8 +113,8 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
             <div className="h-20 flex items-center justify-center gap-6 mt-4">
                 <button
                     className={`p-4 rounded-full transition-colors ${isAudioMuted
-                            ? "bg-red-500/20 text-red-500 hover:bg-red-500/30"
-                            : "bg-muted hover:bg-accent"
+                        ? "bg-red-500/20 text-red-500 hover:bg-red-500/30"
+                        : "bg-muted hover:bg-accent"
                         }`}
                     onClick={toggleAudio}
                     title={isAudioMuted ? "Activar micrófono" : "Silenciar micrófono"}
@@ -91,8 +124,8 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
 
                 <button
                     className={`p-4 rounded-full transition-colors ${isVideoOff
-                            ? "bg-red-500/20 text-red-500 hover:bg-red-500/30"
-                            : "bg-muted hover:bg-accent"
+                        ? "bg-red-500/20 text-red-500 hover:bg-red-500/30"
+                        : "bg-muted hover:bg-accent"
                         }`}
                     onClick={toggleVideo}
                     title={isVideoOff ? "Activar cámara" : "Desactivar cámara"}

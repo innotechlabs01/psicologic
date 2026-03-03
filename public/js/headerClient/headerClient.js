@@ -126,17 +126,13 @@ const SidebarManager = {
         const scriptContent = script.textContent.trim();
         if (scriptContent && !scriptContent.match(/^[{\[]/)) {
           try {
-            const scriptFunction = new Function(`
-              document.addEventListener('DOMContentLoaded', function() {
-                ${scriptContent}
-              });
-            `);
+            // Evaluamos el script directamente. Como ya inyectamos el HTML en contentContainer,
+            // el DOM ya está listo para ser manipulado por el script.
+            const scriptFunction = new Function(scriptContent);
             scriptFunction();
           } catch (error) {
             this.logError('Error ejecutando script inline:', error);
           }
-        } else {
-
         }
       }
     }

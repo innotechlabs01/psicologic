@@ -1,132 +1,160 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
+import { Send, MessageSquare, Star, Heart } from 'lucide-react';
 
 export default function FeedbackForm() {
   const [mood, setMood] = useState('');
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const moodOptions = [
-    { emoji: '😠', score: 1 },
-    { emoji: '🙁', score: 2 },
-    { emoji: '😐', score: 5 },
-    { emoji: '🙂', score: 8 },
-    { emoji: '😊', score: 10 },
+    { emoji: '😠', label: 'Enojado', score: 1 },
+    { emoji: '🙁', label: 'Triste', score: 2 },
+    { emoji: '😐', label: 'Neutral', score: 5 },
+    { emoji: '🙂', label: 'Bien', score: 8 },
+    { emoji: '😊', label: 'Excelente', score: 10 },
   ];
 
-  // --- Estilos en línea para forzar la selección ---
-  const selectedStyle = {
-    transform: 'scale(1.25)',
-    // (Esto simula: ring-4 ring-green-500 shadow-xl shadow-green-500/50)
-    boxShadow: '0 0 0 4px #22c55e, 0 10px 15px -3px rgba(34, 197, 94, 0.4), 0 4px 6px -2px rgba(34, 197, 94, 0.2)',
-    opacity: 1
-  };
-
-  const defaultStyle = {
-    opacity: 0.75,
-    transform: 'scale(1)',
-    transition: 'all 0.3s ease'
-  };
-
-  // --- Estilos en línea para el botón de envío ---
-  const enabledButtonStyle = {
-    backgroundColor: '#16a34a', // bg-green-600
-    color: 'white',
-    transition: 'background-color 0.3s'
-  };
-
-  const disabledButtonStyle = {
-    backgroundColor: 'var(--color-gris-claro)', // bg gray -> token
-    color: 'var(--color-azul-oscuro)', // text -> token
-    cursor: 'not-allowed'
-  };
-
-
   const submitFeedback = async () => {
-    // ... (la lógica de envío es correcta)
     if (!mood) {
-      toast.warning('Por favor, selecciona un mood.');
+      toast.warning('Por favor, selecciona cómo te sientes.');
       return;
     }
-    const selectedMoodScore = moodOptions.find(o => o.emoji === mood)?.score || rating;
-    const res = await fetch('/api/feedback/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mood, rating: selectedMoodScore, comment }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      toast.success('¡Gracias por tu feedback!');
-      setMood(''); setRating(5); setComment('');
-    } else {
-      toast.error('Hubo un error al enviar el feedback.');
-      console.error(data.error);
+
+    setIsSubmitting(true);
+    try {
+      const selectedMoodScore = moodOptions.find(o => o.emoji === mood)?.score || rating;
+      const res = await fetch('/api/feedback/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood, rating: selectedMoodScore, comment }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success('¡Gracias por tu mensaje! Valoramos mucho tu opinión.');
+        setMood('');
+        setRating(5);
+        setComment('');
+      } else {
+        toast.error('No se pudo enviar el feedback.');
+      }
+    } catch (error) {
+      toast.error('Error de conexión.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-100 dark:border-gray-700">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">¿Cómo te sientes?</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">Tu opinión nos ayuda a mejorar.</p>
-
-      {/* Selector de Mood (Emojis) con Estilos en Línea */}
-      <div className="flex justify-between mb-8 gap-4">
-        {moodOptions.map(({ emoji }) => (
-          <button
-            key={emoji}
-            // Clases base de Tailwind (las que sí funcionan)
-            className="text-5xl p-3 rounded-full bg-gray-50 dark:bg-gray-700"
-            // Estilos en línea forzados
-            style={mood === emoji ? selectedStyle : defaultStyle}
-            onClick={() => setMood(emoji)}
-            aria-label={`Seleccionar mood ${emoji}`}
-          >
-            {emoji}
-          </button>
-        ))}
+    <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl p-8 md:p-12 max-w-xl w-full border border-gray-100 dark:border-gray-800 transition-all duration-300">
+      <div className="text-center mb-10">
+        <div className="inline-flex items-center justify-center p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-green-600 dark:text-green-400 mb-4">
+          <Heart className="size-8 fill-current" />
+        </div>
+        <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
+          ¿Cómo va tu experiencia?
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-lg">
+          Tu feedback es el motor que nos ayuda a mejorar Psicologic cada día.
+        </p>
       </div>
 
-      {/* Rango de Satisfacción (Rating) con Estilos en Línea */}
-      <div className="mb-8">
-        <label className="text-gray-900 dark:text-white block mb-2 font-medium">
-            Satisfacción (1-10): <span className="font-bold text-green-600 dark:text-green-400 ml-2">{rating}</span>
-        </label>
+      {/* Mood Selector */}
+      <div className="mb-12">
+        <p className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-center mb-6">
+          Selecciona tu estado de ánimo
+        </p>
+        <div className="flex justify-between items-center gap-2 sm:gap-4">
+          {moodOptions.map(({ emoji, label }) => (
+            <button
+              key={emoji}
+              onClick={() => setMood(emoji)}
+              className={`group relative flex flex-col items-center gap-2 transition-all duration-300 ${mood === emoji ? 'scale-110' : 'hover:scale-105 opacity-60 hover:opacity-100'
+                }`}
+            >
+              <div className={`text-5xl sm:text-6xl p-2 rounded-3xl transition-all duration-300 ${mood === emoji
+                  ? 'bg-green-100 dark:bg-green-900/30 shadow-lg shadow-green-500/20'
+                  : 'bg-transparent'
+                }`}>
+                {emoji}
+              </div>
+              <span className={`text-[10px] font-black uppercase tracking-tighter transition-all ${mood === emoji ? 'text-green-600 dark:text-green-400' : 'text-gray-400'
+                }`}>
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Rating Range */}
+      <div className="mb-10 bg-gray-50 dark:bg-gray-800/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/50">
+        <div className="flex justify-between items-center mb-4">
+          <label className="text-gray-900 dark:text-white font-bold flex items-center gap-2">
+            <Star className={`size-5 ${rating > 5 ? 'text-yellow-400 fill-current' : 'text-gray-400'}`} />
+            Nivel de Satisfacción
+          </label>
+          <span className="text-2xl font-black text-green-600 dark:text-green-400 bg-white dark:bg-gray-800 px-4 py-1 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            {rating}
+          </span>
+        </div>
         <input
           type="range"
           min="1"
           max="10"
           value={rating}
           onChange={e => setRating(Number(e.target.value))}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-200 dark:bg-gray-600"
-          // Estilo en línea para forzar el color 'accent'
-          style={{ accentColor: '#16a34a' }}
+          className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer accent-green-600"
         />
+        <div className="flex justify-between mt-2 text-[10px] font-bold text-gray-400 uppercase">
+          <span>Muy insatisfecho</span>
+          <span>Excelente</span>
+        </div>
       </div>
 
-      {/* Área de Comentarios (Funciona bien) */}
-      <textarea
-        placeholder="Cuéntanos más... (Opcional)"
-        value={comment}
-        onChange={e => setComment(e.target.value)}
-        className="w-full h-32 p-4 rounded-lg resize-none 
-                   bg-white dark:bg-gray-700 
-                   text-gray-900 dark:text-white 
-                   placeholder-gray-500 dark:placeholder-gray-400 
-                   border border-gray-300 dark:border-gray-600 
-                   focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-      ></textarea>
+      {/* Comment Area */}
+      <div className="mb-8 overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 focus-within:ring-4 focus-within:ring-green-500/10 focus-within:border-green-500 transition-all">
+        <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700">
+          <MessageSquare className="size-4 text-gray-400" />
+          <span className="text-xs font-bold text-gray-500 uppercase">Comentarios adicionales</span>
+        </div>
+        <textarea
+          placeholder="Dinos qué podemos mejorar o qué es lo que más te gusta..."
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          className="w-full h-32 p-4 bg-white dark:bg-gray-900 
+                     text-gray-900 dark:text-white 
+                     placeholder-gray-400 dark:placeholder-gray-500 
+                     resize-none border-none focus:ring-0 text-sm leading-relaxed"
+        ></textarea>
+      </div>
 
-      {/* Botón de Envío con Estilos en Línea */}
+      {/* Submit Button */}
       <button
-        // Clases base de Tailwind
-        className="mt-6 w-full py-3 rounded-lg font-semibold flex items-center justify-center"
-        // Estilos en línea forzados
-        style={!mood ? disabledButtonStyle : enabledButtonStyle}
         onClick={submitFeedback}
-        disabled={!mood} 
+        disabled={!mood || isSubmitting}
+        className={`group relative overflow-hidden w-full py-5 rounded-[1.5rem] font-black text-lg uppercase tracking-widest transition-all duration-500 shadow-xl
+          ${!mood || isSubmitting
+            ? 'bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed shadow-none'
+            : 'bg-green-600 text-white hover:bg-green-700 shadow-green-600/20 hover:shadow-green-600/40 active:scale-[0.98]'}`}
       >
-        Enviar Feedback <span className="ml-3 text-lg">🚀</span>
+        <span className="relative z-10 flex items-center justify-center gap-3">
+          {isSubmitting ? (
+            <div className="size-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <>
+              Enviar Experiencia
+              <Send className="size-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+            </>
+          )}
+        </span>
       </button>
+
+      <p className="text-center mt-6 text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-[0.2em]">
+        Valoramos tu privacidad &bull; Psicologic Analytics
+      </p>
     </div>
   );
 }
