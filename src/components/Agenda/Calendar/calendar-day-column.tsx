@@ -1,6 +1,6 @@
 "use client";
 
-import type { Event } from "../mock-data/events";
+import type { Event } from "../../../types/agenda";
 import {
     HOURS_24,
     HOUR_HEIGHT,
@@ -34,16 +34,6 @@ export function CalendarDayColumn({
     loading,
 }: CalendarDayColumnProps) {
     const holiday = getHoliday(day);
-
-    // Debug: show events received for this day column
-    if (typeof window !== 'undefined') {
-        try {
-            // Lightweight sample to avoid huge logs
-            console.debug('[CalendarDayColumn] day:', day.toISOString(), 'eventsCount:', events?.length, 'sample:', events?.slice(0, 2));
-        } catch (e) {
-            console.debug('[CalendarDayColumn] debug error', e);
-        }
-    }
 
     return (
         <div

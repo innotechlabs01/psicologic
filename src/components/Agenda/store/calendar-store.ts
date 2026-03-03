@@ -7,7 +7,7 @@ import {
     addDays,
     getDay,
 } from "date-fns";
-import { type Event, events, addEvent as addEventToStore } from "../mock-data/events";
+import type { Event } from "../../../types/agenda";
 
 interface CalendarState {
     events: Event[];

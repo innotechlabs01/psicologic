@@ -2,244 +2,206 @@
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
 import { SignedIn } from "@clerk/astro/components";
-import PaymentStatus from '../../components/Payment/js/PaymentStatus.jsx';
+import PaymentStatus from '../../components/Payment/js/PaymentStatus.tsx';
 import PaymentHistory from '@components/Payment/PaymentHistory.astro';
-const refPayco = Astro.url.searchParams.get('ref_payco');
-
 import PaymentStats from '@components/Payment/PaymentStats.astro';
+import { CreditCard, ShieldCheck, Zap, Info } from 'lucide-react';
 
-// Obtener usuario actual usando getAuth
+const refPayco = Astro.url.searchParams.get('ref_payco');
 const { userId } = Astro.locals.auth();
+
 if (!userId) {
   return Astro.redirect('/login');
 }
 
+// Obtener datos de pago desde la API interna
 const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
 const paymentData = await response.json();
 
-// Definir monto de pago según tipo de usuario
+// Definir monto según tipo de usuario
 const isGameUser = Boolean(paymentData?.paymentInfo?.isGameUser);
 const paymentAmount = isGameUser ? '5000' : '140000';
+const planName = isGameUser ? 'Plan Juegos' : 'Suscripción Premium';
 
+const isActive = paymentData.paymentInfo.isActive;
+const daysToNext = paymentData.paymentInfo.daysToNext || 0;
 ---
-<LayoutClient title="💳 Payment">
+
+<LayoutClient title="Facturación y Pagos">
     <SignedIn>
         <DashboardWrapper 
-            title="Centro de Pagos" 
-            subtitle="Gestiona tu suscripción y revisa el historial de pagos"
+            title="Centro de Facturación" 
+            subtitle="Gestiona tu membresía y consulta tus transacciones de forma segura"
         >
-        <!-- Información Adicional -->
-        <div class="mt-8 bg-blue-50 rounded-lg p-6">
-            <div class="flex items-start">
-                <div class="flex-shrink-0">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-blue-800">
-                        Información sobre tu suscripción
-                    </h3>
-                    <div class="mt-2 text-sm text-blue-700">
-                        <ul class="space-y-1">
-                            <li>• Los pagos se procesan de forma segura a través de EpayCO</li>
-                            <li>• Tu suscripción se renueva cada 30 días</li>
-                        </ul>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
+                <!-- Columna Principal: Suscripción Actual -->
+                <div class="lg:col-span-2 space-y-8">
+                    
+                    {refPayco && (
+                        <div class="mb-8">
+                            <PaymentStatus client:load refPayco={refPayco} userId={userId} />
+                        </div>
+                    )}
+
+                    <div class="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 md:p-10 shadow-xl border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+                        <!-- Glow decorativo -->
+                        <div class="absolute top-0 right-0 size-64 bg-indigo-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                        
+                        <div class="relative z-10">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                                <div>
+                                    <span class={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 ${isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                        <span class={`size-2 rounded-full animate-pulse ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                        {isActive ? 'Suscripción Activa' : 'Suscripción Inactiva'}
+                                    </span>
+                                    <h3 class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                                        {planName}
+                                    </h3>
+                                </div>
+                                <div class="text-left md:text-right">
+                                    <div class="text-4xl font-black text-gray-900 dark:text-white mb-1">
+                                        ${new Intl.NumberFormat('es-CO').format(parseInt(paymentAmount))}
+                                        <span class="text-lg font-normal text-gray-400">/mes</span>
+                                    </div>
+                                    <p class="text-gray-500 text-sm font-medium">Próximo cobro: {paymentData.paymentInfo.nextPaymentDate || 'No programado'}</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                <div class="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
+                                    <div class="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
+                                        <Zap className="size-6" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Días restantes</p>
+                                        <p class="text-xl font-black text-gray-900 dark:text-white">{daysToNext} días</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50">
+                                    <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400">
+                                        <ShieldCheck className="size-6" />
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Estado de cuenta</p>
+                                        <p class="text-xl font-black text-gray-900 dark:text-white">{isActive ? 'Al día' : 'Pendiente'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {!isActive || daysToNext <= 7 ? (
+                                <button 
+                                    id="payment-button"
+                                    class="group relative w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all duration-300 shadow-xl shadow-indigo-500/20 active:scale-[0.98]"
+                                >
+                                    <span class="flex items-center justify-center gap-3">
+                                        <CreditCard className="size-6 group-hover:rotate-12 transition-transform" />
+                                        Renovar Membresía con ePayco
+                                    </span>
+                                </button>
+                            ) : (
+                                <div class="p-6 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/30 flex items-center gap-4">
+                                    <Info className="size-6 text-green-600 dark:text-green-400 shrink-0" />
+                                    <p class="text-green-800 dark:text-green-300 text-sm font-medium leading-relaxed">
+                                        Tu membresía está activa. Podrás renovarla cuando queden 7 días o menos para el vencimiento.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </div>
+
+                    <!-- Estadísticas Detalladas -->
+                    <PaymentStats {...paymentData.paymentInfo} />
                 </div>
-            </div>
-        </div>
-        {
-            paymentData.paymentInfo.daysToNext > 7
-            ? (<div>
-                <p class="mover-p">Suscripción esta activa. Te quedan {paymentData.paymentInfo.daysToNext} días para renovar.</p> 
-               </div>)
-            : (
-                <button id="payment-button" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                    Pagar con EpayCo
-                </button>
-                <PaymentStatus client:load refPayco={refPayco} userId={userId} />
-            )
-        }
-        
 
-        <!-- Estadísticas de Pago -->
-        <PaymentStats 
-            {...paymentData.paymentInfo}
-        />
-
-        <!-- Historial de Transacciones -->
-        <PaymentHistory 
-            transactions={paymentData.paymentHistory} 
-        />
-        </DashboardWrapper>
-    </SignedIn>
-</LayoutClient>
-
-<script type="text/javascript" src="https://checkout.epayco.co/checkout.js" />
-
-<script type="module">
-  // Server-provided amount based on user type
-  const PAYMENT_AMOUNT = "{paymentAmount}";
-  const button = document.getElementById('payment-button');
-
-  button?.addEventListener('click', async () => {
-    try {
-      const response = await fetch('/api/epayCO/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Producto ejemplo',
-          description: 'Descripción del producto',
-          invoice: `test-${Date.now()}`,
-          currency: 'cop',
-          amount: PAYMENT_AMOUNT,
-          tax_base: '0',
-          tax: '0',
-          country: 'co',
-          lang: 'es',
-          external: 'false',
-          email_billing: 'cliente@correo.com',
-          confirm: '/api/epayCO/confirmacion',
-          response: '/client/payment', // ← tu página controlada
-        }),
-      });
-
-      const { checkoutData, publicKey, isTest } = await response.json();
-
-      const handler = ePayco.checkout.configure({
-        key: publicKey,
-        test: isTest,
-      });
-
-      handler.open(checkoutData);
-    } catch (error) {
-      console.error('Error al iniciar pago:', error);
-      alert('No se pudo iniciar el pago.');
-    }
-  });
-</script>
-
-
-
-
-
-<!-- ---
-// src/pages/client/payment.astro
-import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
-import LayoutClient from '../../layouts/LayoutClient.astro';
-import PaymentStats from '../../components/Payment/PaymentStats.astro';
-import PaymentHistory from '../../components/Payment/PaymentHistory.astro';
-import PaymentButton from '../../components/Payment/PaymentButton.astro';
-import { SignedIn } from "@clerk/astro/components";
-import { getAuth } from "@clerk/astro/server";
-import { clerkClient } from "@clerk/clerk-sdk-node";
-
-// Obtener usuario actual usando getAuth
-const { userId } = await getAuth();
-if (!userId) {
-  return Astro.redirect('/login');
-}
-
-// Obtener datos de usuario de Clerk
-const user = await clerkClient.users.getUser(userId);
-const userData = {
-  emailAddress: user.emailAddresses[0].emailAddress,
-  firstName: user.firstName || '',
-  lastName: user.lastName || ''
-};
-
-// Obtener datos de pago
-const response = await fetch(`${Astro.url.origin}/api/payment/status/${userId}`);
-const paymentData = await response.json();
--->
-
-<LayoutClient title="💳 Payment">
-    <SignedIn>
-        <DashboardWrapper 
-            title="Centro de Pagos" 
-            subtitle="Gestiona tu suscripción y revisa el historial de pagos"
-        >
-            <!-- Botón de Pago/Renovación 
-            <PaymentButton 
-                userId={userId}
-                userEmail={userData.emailAddress}
-                userName={`${userData.firstName} ${userData.lastName}`}
-                isSubscriptionActive={paymentData.paymentInfo.is_subscription_active}
-                daysToNext={paymentData.paymentInfo.days_to_next_payment}
-            />
-
-            <!-- Estadísticas de Pago
-            <PaymentStats 
-                {...paymentData.paymentInfo}
-            />
-
-            <!-- Historial de Transacciones
-            <PaymentHistory 
-                transactions={paymentData.paymentHistory} 
-            />
-
-            <!-- Información Adicional -->
-            <!-- <div class="mt-8 bg-blue-50 rounded-lg p-6">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                <!-- Columna Lateral: Información de Seguridad -->
+                <div class="space-y-6">
+                    <div class="bg-indigo-600 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden">
+                        <div class="absolute bottom-0 right-0 opacity-10 -mr-8 -mb-8">
+                            <ShieldCheck size={200} />
+                        </div>
+                        <h4 class="text-xl font-black mb-4 relative z-10">Pagos Seguros</h4>
+                        <p class="text-indigo-100 text-sm leading-relaxed mb-6 opacity-90 relative z-10">
+                            Utilizamos ePayco para garantizar que tus transacciones estén protegidas con los más altos estándares de seguridad (PCI DSS).
+                        </p>
+                        <div class="flex items-center gap-4 relative z-10">
+                            <div class="bg-white/20 p-2 rounded-lg">
+                                <img src="https://multimedia.epayco.co/epayco-landing/btns/epayco-logo-fondo-claro-lite.png" alt="ePayco" class="h-6 filter brightness-0 invert" />
+                            </div>
+                        </div>
                     </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-blue-800">
-                            Información sobre tu suscripción
-                        </h3>
-                        <div class="mt-2 text-sm text-blue-700">
-                            <ul class="space-y-1">
-                                <li>• Los pagos se procesan de forma segura a través de MercadoPago</li>
-                                <li>• Tu suscripción se renueva automáticamente cada 30 días</li>
-                                <li>• Puedes cancelar tu suscripción en cualquier momento</li>
-                                <li>• El acceso premium se mantiene hasta la fecha de vencimiento</li>
-                            </ul>
+
+                    <div class="bg-white dark:bg-gray-900 rounded-[2rem] p-8 border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <h4 class="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-6 flex items-center gap-2">
+                             ¿Necesitas ayuda?
+                        </h4>
+                        <div class="space-y-4">
+                            <a href="mailto:soporte@innotechlabs.com" class="block p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border border-transparent hover:border-indigo-200 transition-all">
+                                <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1">Soporte Técnico</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 font-medium">soporte@psicologic.com</p>
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Soporte 
-            <div class="mt-6 text-center">
-                <p class="text-sm text-gray-500">
-                    ¿Necesitas ayuda con tu suscripción? 
-                    <a href="mailto:soporte@tuapp.com" class="text-blue-600 hover:text-blue-500 font-medium">
-                        Contacta a nuestro equipo de soporte
-                    </a>
-                </p>
+            <!-- Historial Completo -->
+            <div class="mt-12">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Historial de Transacciones</h3>
+                </div>
+                <PaymentHistory transactions={paymentData.paymentHistory} />
             </div>
         </DashboardWrapper>
     </SignedIn>
 </LayoutClient>
 
-<script>
-    // Script para cargar datos del usuario en tiempo real
-    // document.addEventListener('DOMContentLoaded', async function() {
-    //     try {
-    //         // En producción, obtienes el userId de Clerk
-    //         // const userId = await window.Clerk?.user?.id;
-            
-    //         // Por ahora usamos un ID de ejemplo
-    //         const userId = 'user_example_id';
-            
-    //         if (userId) {
-    //             const response = await fetch(`/api/payment/status/${userId}`);
-    //             const data = await response.json();
-                
-    //             if (data.success) {
-    //                 // Aquí actualizarías la UI con los datos reales
-    //                 console.log('Datos de pago cargados:', data);
-                    
-    //                 // En una implementación completa, actualizarías los componentes
-    //                 // con los datos reales del usuario
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.error('Error al cargar datos de pago:', error);
-    //     }
-    // });
-</script> -->
+<script type="text/javascript" src="https://checkout.epayco.co/checkout.js"></script>
+
+<script is:inline define:vars={{ paymentAmount, userId }}>
+  const button = document.getElementById('payment-button');
+
+  if (button) {
+    button.addEventListener('click', async () => {
+        const originalContent = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="flex items-center justify-center gap-3"><svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Conectando con ePayco...</span>';
+        
+        try {
+            const response = await fetch('/api/epayCO/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: 'Membresía Psicologic',
+                    description: 'Acceso Premium a la plataforma Psicologic',
+                    invoice: `PS-REG-${Date.now()}`,
+                    currency: 'cop',
+                    amount: paymentAmount,
+                    tax_base: '0',
+                    tax: '0',
+                    country: 'co',
+                    lang: 'es',
+                    external: 'false',
+                    extra1: userId, // Pasamos el userId para identificarlo en la confirmación
+                    confirm: '/api/epayCO/confirmacion',
+                    response: '/client/payment',
+                }),
+            });
+
+            const { checkoutData, publicKey, isTest } = await response.json();
+
+            const handler = ePayco.checkout.configure({
+                key: publicKey,
+                test: isTest,
+            });
+
+            handler.open(checkoutData);
+        } catch (error) {
+            console.error('Error al iniciar pago:', error);
+            alert('No se pudo iniciar el proceso de pago. Intenta de nuevo más tarde.');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalContent;
+        }
+    });
+  }
+</script>

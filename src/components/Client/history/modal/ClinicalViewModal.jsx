@@ -1,149 +1,125 @@
-'use client';
+"use client";
 
-async function fetchClinicTemplate(entryId) {
-  const response = await fetch(`/api/patients/search-template-patients`, {
-    method: "POST",
-    body: JSON.stringify({ id: entryId }),
-    headers: { "Content-Type": "application/json" },
-  });
+import { useEffect, useState } from "react";
 
-  return await response.json();
+function formatLabel(str) {
+  return str.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export default async function ClinicalViewModal({ entry, onClose }) {
-  if (!entry) return null;
-
-  const data = await fetchClinicTemplate(entry.id);
-  const sections = data.sections || {};
-
-  let normalizedSections = {};
-
-  if (Object.keys(sections).length === 1) {
-    const onlyKey = Object.keys(sections)[0];
-
-    normalizedSections = {
-      "Información Registrada": sections[onlyKey]
-    };
-  } else {
-    normalizedSections = sections;
+export default function ClinicalViewModal({ entry, onClose }) {
+  // Manejo de carga
+  if (!entry) {
+    return (
+      <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="text-white text-xl flex items-center space-x-3">
+          <svg className="animate-spin h-6 w-6 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Cargando historia clínica...</span>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+  const clinicHistory = entry.clinicHistory ?? {};
+  const generalSections = entry.sections?.General ?? {};
 
-      <div className="bg-white w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 animate-fadeIn">
+  let answers = {};
+  try {
+    const raw = typeof generalSections === "string"
+      ? generalSections
+      : JSON.stringify(generalSections);
+    answers = JSON.parse(raw);
+  } catch (error) {
+    console.error("Error parsing sections:", error);
+    answers = {};
+  }
+
+  const answerEntries = Object.entries(answers);
+
+  return (
+    <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div className="bg-white dark:bg-gray-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700 scale-in">
 
         {/* HEADER */}
-        <header className="px-10 py-7 bg-gradient-to-r from-gray-50 to-gray-100 border-b flex items-center justify-between">
+        <div className="px-8 py-6 border-b bg-white dark:bg-gray-800 flex items-center justify-between sticky top-0 z-10">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Ficha Clínica — {entry.name}
-            </h1>
-
-            <p className="text-sm text-gray-500 mt-1">
-              Registro creado el:{" "}
-              {entry.created_at
-                ? new Date(entry.created_at).toLocaleDateString()
-                : "Fecha no disponible"}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ficha Clínica — {entry.name}</h1>
+            <p className="text-sm text-gray-500 mt-1 italic">
+              Registro creado el: {clinicHistory.created_at ? new Date(clinicHistory.created_at).toLocaleDateString() : 'Fecha no disponible'}
             </p>
           </div>
-
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-900 transition p-3 rounded-full hover:bg-gray-200"
+            className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 transition duration-150 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Cerrar"
           >
-            ✕
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
-        </header>
+        </div>
 
         {/* BODY */}
-        <div className="p-10 max-h-[75vh] overflow-y-auto space-y-12 bg-gray-50">
+        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto bg-gray-50 dark:bg-gray-900">
+          {answerEntries.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p className="text-lg font-medium">No hay registros detallados</p>
+              <p className="text-sm">Esta historia clínica no tiene respuestas grabadas aún.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {answerEntries.map(([key, obj]) => {
+                const label = obj?.label ?? formatLabel(key);
+                const value = obj?.value ?? "---";
 
-          {Object.keys(normalizedSections).length === 0 && (
-            <p className="text-center text-gray-500 italic">
-              No hay información disponible para esta ficha clínica.
-            </p>
+                return (
+                  <section
+                    key={key}
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm hover:shadow-md transition duration-200"
+                  >
+                    <h3 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-3 border-b border-gray-100 dark:border-gray-700 pb-2">
+                      {label}
+                    </h3>
+
+                    <div className="text-gray-800 dark:text-gray-200 text-sm whitespace-pre-wrap leading-relaxed font-medium">
+                      {typeof value === "boolean"
+                        ? (value ? (
+                          <span className="flex items-center gap-1 text-green-600">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                            Sí
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-red-600">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
+                            No
+                          </span>
+                        ))
+                        : typeof value === "object"
+                          ? JSON.stringify(value, null, 2)
+                          : value}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
           )}
-
-          {Object.keys(normalizedSections).map((secName) => (
-            <SectionBlock
-              key={secName}
-              title={secName}
-              fields={normalizedSections[secName]}
-            />
-          ))}
-
         </div>
 
         {/* FOOTER */}
-        <footer className="p-6 border-t flex justify-end bg-white">
+        <div className="px-8 py-5 border-t bg-white dark:bg-gray-800 flex justify-end sticky bottom-0 z-10">
           <button
             onClick={onClose}
-            className="px-8 py-2.5 bg-gray-900 text-white rounded-lg shadow hover:bg-gray-800 transition"
+            className="px-8 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold hover:opacity-90 transition duration-150 shadow-lg"
           >
             Cerrar Vista
           </button>
-        </footer>
+        </div>
       </div>
     </div>
   );
-}
-
-/* ----------------------------- SUBCOMPONENTES ----------------------------- */
-
-function SectionBlock({ title, fields }) {
-  return (
-    <section className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 border-l-4 border-indigo-600 pl-4">
-        {title}
-      </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7">
-        {fields.map((f) => (
-          <FieldCard key={f.id} field={f} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function FieldCard({ field }) {
-  const { label, type, value, options } = field;
-
-  return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition">
-
-      <h3 className="text-sm font-semibold text-indigo-700 tracking-wide uppercase mb-2 border-b pb-1">
-        {label}
-      </h3>
-
-      <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-        {renderValue(type, value, options)}
-      </div>
-    </div>
-  );
-}
-
-/* ---- Render inteligente según tipo ---- */
-function renderValue(type, value, options) {
-  if (value == null || value === "") {
-    return <span className="text-gray-400 italic">Sin respuesta</span>;
-  }
-
-  switch (type) {
-    case "boolean":
-    case "checkbox":
-      return value ? "Sí" : "No";
-
-    case "select":
-    case "radio":
-      const opt = options?.find((o) => o.value === value);
-      return opt ? opt.label : value;
-
-    case "textarea":
-      return <pre className="whitespace-pre-wrap">{value}</pre>;
-
-    default:
-      return value;
-  }
 }
