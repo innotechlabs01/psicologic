@@ -22,6 +22,12 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
         endCall,
     } = useWebRTC({ meetingToken, userType });
 
+    // Debug identifying role
+    React.useEffect(() => {
+        console.log(`[WebRTC] Estás entrando como: ${userType.toUpperCase()}`);
+        console.log(`[WebRTC] Token de reunión: ${meetingToken}`);
+    }, [userType, meetingToken]);
+
     return (
         <div className="flex flex-col h-screen bg-background text-foreground p-4">
             {/* Header */}
