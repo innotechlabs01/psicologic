@@ -123,22 +123,22 @@ export async function updateEvent(event: Partial<AgendaEvent> & { id: string, us
     try {
         const { id, userId, title, startTime, endTime, date, participants } = event;
 
-        const result = await client.execute({
-            sql: `
-                UPDATE agenda 
-                SET title = ?, startTime = ?, endTime = ?, date = ?, participants = ?
-                WHERE id = ? AND userId = ?
-            `,
-            args: [
-                title ?? null,
-                startTime ?? null,
-                endTime ?? null,
-                date ?? null,
-                participants !== undefined ? JSON.stringify(participants) : null,
-                id,
-                userId
-            ]
-        });
+        const sql = `
+            UPDATE agenda 
+            SET title = ?, startTime = ?, endTime = ?, date = ?, participants = ?
+            WHERE id = ? AND userId = ?
+        `;
+        const args = [
+            title ?? null,
+            startTime ?? null,
+            endTime ?? null,
+            date ?? null,
+            participants !== undefined ? JSON.stringify(participants) : null,
+            id,
+            userId
+        ];
+
+        const result = await client.execute({ sql, args });
 
         return result.rowsAffected > 0;
     } catch (error) {
@@ -157,14 +157,16 @@ export async function addSignalingMessage(meetingToken: string, type: string, pa
         }
 
         const payloadStr = JSON.stringify(payload);
-        await client.execute({
-            sql: `INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)`,
-            args: [meetingToken, type, payloadStr, sender]
-        });
+
+        const sql = `INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)`;
+        const args = [meetingToken, type, payloadStr, sender];
+
+        await client.execute({ sql, args });
         return true;
     } catch (error) {
         console.error("DB Error adding signaling:", error);
-        return false;
+        // Throw the error so the API route can catch it and show details
+        throw error;
     }
 }
 
