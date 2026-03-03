@@ -2,7 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { Avatar, AvatarImage } from "../ui/avatar";
-import type { Event } from "../mock-data/events";
+import type { Event } from "../../../types/agenda";
 import { getEventDuration } from "./calendar-utils";
 
 interface EventCardProps {

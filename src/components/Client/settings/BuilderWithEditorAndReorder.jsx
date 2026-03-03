@@ -183,10 +183,18 @@ export default function BuilderWithEditorAndReorder() {
 
       showToast('Template guardado', 'success');
       console.log('Template guardado exitosamente');
+      // Redirect to Clinical History after save
+      setTimeout(() => {
+        window.location.href = '/client/history/historias';
+      }, 1500);
     } catch (err) {
       console.error('Error al guardar template:', err);
       showToast('Error guardando template: ' + (err?.message || String(err)), 'error');
     }
+  }
+
+  function goBack() {
+    window.location.href = '/client/history/historias';
   }
 
   function clearAll() {
@@ -214,6 +222,7 @@ export default function BuilderWithEditorAndReorder() {
           <button className="px-3 py-2 bg-white border rounded" onClick={() => addComponent('input')}>+ Input</button>
           <button className="px-3 py-2 bg-white border rounded" onClick={() => addComponent('checkbox')}>+ Checkbox</button>
           <button className="px-3 py-2 bg-white border rounded" onClick={() => addComponent('select')}>+ Select</button>
+          <button className="px-3 py-2 bg-gray-100 border rounded hover:bg-gray-200 transition" onClick={goBack}>Volver</button>
           <button className="px-3 py-2 bg-indigo-600 text-white rounded" onClick={saveForm}>Guardar</button>
         </div>
       </div>

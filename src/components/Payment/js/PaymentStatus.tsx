@@ -1,160 +1,115 @@
-// src/components/PaymentStatus.tsx
-import { createClient } from '@libsql/client';
+// src/components/Payment/js/PaymentStatus.tsx
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { CheckCircle2, XCircle, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import type { PropsPaymentStatus } from 'src/constants';
-import type { PaymentModel } from 'src/constants/interfaces';
-
-const client = createClient({
-  url: import.meta.env.PUBLIC_TURSO_DATABASE_URL,
-  authToken: import.meta.env.PUBLIC_TURSO_AUTH_TOKEN,
-});
-
-const getPaymentStatus = (status: number): string => {
-  const normalizedStatus = Math.trunc(status); // Convierte 1.0 → 1, 2.0 → 2, etc.
-
-  switch (normalizedStatus) {
-    case 1:
-      return 'approved';
-    case 2:
-      return 'rejected';
-    case 3:
-      return 'pending';
-    case 4:
-      return 'canceled';
-    default:
-      return 'unknown';
-  }
-};
-
-const saveStatusPayment = async (userId: string, paymentId: string, amount: number, status: number) => {
-  try {
-
-    let nextPaymentDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); 
-    let blockedPaymentDate = new Date(Date.now() + (30 + 5) * 24 * 60 * 60 * 1000); 
-
-    if (userId === "user_33QQtauDI314VtzXnGnZQPan2Cw" || userId === "user_33RoQhnBva6vjdOAXGuHVgxRQNl") {
-      nextPaymentDate = new Date(Date.now() + 1360 * 24 * 60 * 60 * 1000); 
-      blockedPaymentDate = new Date(Date.now() + (1360 + 5) * 24 * 60 * 60 * 1000); 
-    }
-
-    const statusPayment = getPaymentStatus(status);
-
-    await client.execute(
-      `
-        INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        paymentId, // Usar un ID de transacción único
-        userId,
-        amount, // Monto 0 para la prueba
-        statusPayment, // Estado inicial de prueba
-        new Date(), // Fecha de inicio de la prueba
-        nextPaymentDate,
-        blockedPaymentDate,
-        new Date()
-      ]
-    );
-
-    if(statusPayment === 'approved') {
-      await client.execute(
-        `
-          update usuarios set status = ? where userId = ?
-        `,
-        ['active', userId]
-      );
-
-      // If this payment is approved, mark patient's membership_paid if linked
-      try {
-        await client.execute(
-          `
-            update patientsClient set membership_paid = ?, updated_at = ? where userId = ?
-          `,
-          [1, new Date().toISOString(), userId]
-        );
-      } catch (err) {
-        console.warn('⚠️ Error updating patientsClient membership_paid:', err);
-      }
-    }
-
-
-  } catch (error) {
-    console.error('Error al actualizar el estado de la transacción:', error);
-  }
-}
 
 export default function PaymentStatus({ refPayco, userId }: PropsPaymentStatus) {
-  const [estado, setEstado] = useState<string | null>(null);
-  const [transactionId, setTransactionId] = useState<string | null>(null);
-  const [mensaje, setMensaje] = useState('Consultando estado de la transacción...');
-  const [color, setColor] = useState('text-gray-600');
-  const [icono, setIcono] = useState('⏳');
+  const [status, setStatus] = useState<'loading' | 'approved' | 'rejected' | 'pending' | 'failed' | 'error'>('loading');
+  const [processed, setProcessed] = useState(false);
 
   useEffect(() => {
-    if (!refPayco) return;
-    
-    if (!refPayco || refPayco === 'undefined') {
-      toast.warning('La transacción está en proceso de validación.');
-      return;
-    }
+    if (!refPayco || refPayco === 'undefined' || processed) return;
 
-    toast.info(`Consultando estado de la transacción #${refPayco}`);
+    const validatePayment = async () => {
+      try {
+        const res = await fetch('/api/epayCO/process-validation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refPayco, userId })
+        });
 
-    fetch(`https://secure.epayco.co/validation/v1/reference/${refPayco}`)
-      .then(res => res.json())
-      .then(async data => {
-        const respuesta = data.data?.x_cod_response;
-        const transaction = data.data?.x_transaction_id;
-        const amount = parseFloat(String(data.data?.x_amount)) || 0;
-        setTransactionId(transaction);
-        setEstado(respuesta);
+        const data = await res.json();
 
-        switch (respuesta) {
-          case 1:
-            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 1);
-            setMensaje('¡Pago aprobado!');
-            setColor('text-green-600');
-            setIcono('✅');
-            toast.success('Pago aprobado');
-            break;
-          case 2:
-            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 2);
-            setMensaje('Pago rechazado.');
-            setColor('text-red-600');
-            setIcono('❌');
-            toast.error('Pago rechazado');
-            break;
-          case 3: 
-            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 3);
-            setMensaje('Pago pendiente de validación.');
-            setColor('text-yellow-600');
-            setIcono('⏳');
-            toast.warning('Pago pendiente');
-            break;
-          case 4:
-            await saveStatusPayment(userId ?? '', transaction ?? '', amount, 4);
-            setMensaje('Transacción fallida.');
-            setColor('text-orange-600');
-            setIcono('⚠️');
-            toast.error('Transacción fallida');
-            break;
-          default:
-            setMensaje('Estado desconocido.');
-            setColor('text-gray-600');
-            setIcono('🔍');
-            toast.info('Estado desconocido');
+        if (res.ok && data.success) {
+          setStatus(data.status);
+          if (data.status === 'approved') {
+            toast.success('¡Tu pago ha sido aprobado exitosamente!');
+          } else if (data.status === 'pending') {
+            toast.warning('Tu pago está siendo procesado.');
+          } else {
+            toast.error('Hubo un problema con tu pago.');
+          }
+        } else {
+          setStatus('error');
+          toast.error('No se pudo validar la transacción.');
         }
-      })
-      .catch(() => {
-        toast.error('Error al consultar el estado del pago');
-      });
-  }, [refPayco]);
+      } catch (error) {
+        console.error('Validation Error:', error);
+        setStatus('error');
+      } finally {
+        setProcessed(true);
+      }
+    };
+
+    validatePayment();
+  }, [refPayco, userId, processed]);
 
   if (!refPayco || refPayco === 'undefined') return null;
 
+  const statusConfigs = {
+    loading: {
+      icon: <Loader2 className="size-8 text-indigo-500 animate-spin" />,
+      title: 'Validando Transacción',
+      description: 'Estamos verificando el estado de tu pago con ePayco...',
+      bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
+      textColor: 'text-indigo-700 dark:text-indigo-300'
+    },
+    approved: {
+      icon: <CheckCircle2 className="size-8 text-green-500" />,
+      title: '¡Pago Aprobado!',
+      description: 'Tu suscripción ha sido activada correctamente. Gracias por confiar en nosotros.',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+      textColor: 'text-green-700 dark:text-green-300'
+    },
+    rejected: {
+      icon: <XCircle className="size-8 text-red-500" />,
+      title: 'Pago Rechazado',
+      description: 'La transacción fue declinada por la entidad bancaria. Por favor intenta de nuevo.',
+      bgColor: 'bg-red-50 dark:bg-red-900/20',
+      textColor: 'text-red-700 dark:text-red-300'
+    },
+    pending: {
+      icon: <Clock className="size-8 text-yellow-500" />,
+      title: 'Pago Pendiente',
+      description: 'Tu transacción está en proceso de validación. Te avisaremos pronto.',
+      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+      textColor: 'text-yellow-700 dark:text-yellow-300'
+    },
+    failed: {
+      icon: <AlertTriangle className="size-8 text-orange-500" />,
+      title: 'Transacción Fallida',
+      description: 'El proceso de pago no pudo completarse. Por favor verifica tus datos.',
+      bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+      textColor: 'text-orange-700 dark:text-orange-300'
+    },
+    error: {
+      icon: <AlertTriangle className="size-8 text-gray-500" />,
+      title: 'Error de Validación',
+      description: 'No pudimos conectar con el servicio de validación. Contacta a soporte.',
+      bgColor: 'bg-gray-50 dark:bg-gray-900/20',
+      textColor: 'text-gray-700 dark:text-gray-300'
+    }
+  };
+
+  const config = statusConfigs[status] || statusConfigs.error;
+
   return (
-    <div></div>
+    <div className={`mt-8 p-6 rounded-3xl border border-transparent transition-all duration-500 ${config.bgColor}`}>
+      <div className="flex items-center gap-5">
+        <div className="flex-shrink-0">
+          {config.icon}
+        </div>
+        <div>
+          <h3 className={`text-lg font-bold ${config.textColor}`}>
+            {config.title}
+          </h3>
+          <p className={`text-sm opacity-80 ${config.textColor}`}>
+            {config.description}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 function uuidv4(): import("@libsql/client").InValue {

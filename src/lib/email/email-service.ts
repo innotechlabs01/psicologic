@@ -1,54 +1,49 @@
-import { Resend } from 'resend';
-
-// Initialize Resend with the key from environment variables
-const resend = new Resend(import.meta.env.VITE_RESEND_KEY);
-
+import nodemailer from 'nodemailer';
 import { generateICSContent, generateGoogleCalendarLink } from './calendar-utils';
 
+// Configurar transporter de Gmail
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: import.meta.env.EMAIL_USER,
+        pass: import.meta.env.EMAIL_PASS,
+    },
+});
+
 export async function sendBookingEmail(to: string | string[], bookingDetails: any) {
-    if (!import.meta.env.VITE_RESEND_KEY) {
-        console.warn("Resend API key not found (VITE_RESEND_KEY). Email sending skipped.");
+    if (!import.meta.env.EMAIL_USER || !import.meta.env.EMAIL_PASS) {
+        console.warn("Credenciales de Gmail no encontradas. Email no enviado.");
         return false;
     }
 
     try {
-        // Extract details (fallback title if missing)
         const { date, startTime, endTime, meetingLink, secureToken, title } = bookingDetails;
         const eventTitle = title || 'Cita de Asesoría - Psicologic';
         const description = `Unirse a la videollamada: ${meetingLink}`;
         const location = 'Videollamada (Psicologic)';
 
-        // Generate Calendar Artifacts
         const icsContent = generateICSContent({
-            date,
-            startTime,
-            endTime,
+            date, startTime, endTime,
             title: eventTitle,
-            description,
-            location,
+            description, location,
             url: meetingLink
         });
 
         const googleCalendarLink = generateGoogleCalendarLink({
-            date,
-            startTime,
-            endTime,
+            date, startTime, endTime,
             title: eventTitle,
-            description,
-            location
+            description, location
         });
 
-        // Convert string content to Buffer for attachment (Resend expects content as string or buffer, usually Buffer for files)
-        const icsBuffer = Buffer.from(icsContent);
-
-        const { data, error } = await resend.emails.send({
-            from: 'Psicologic <noreply@mail.innotechlabs.com>',
-            to: to,
+        await transporter.sendMail({
+            from: `"Psicologic" <${import.meta.env.EMAIL_USER}>`,
+            to: Array.isArray(to) ? to.join(', ') : to,
             subject: `Confirmación de Cita: ${eventTitle}`,
             attachments: [
                 {
                     filename: 'invite.ics',
-                    content: icsBuffer,
+                    content: Buffer.from(icsContent),
+                    contentType: 'text/calendar',
                 },
             ],
             html: `
@@ -64,11 +59,11 @@ export async function sendBookingEmail(to: string | string[], bookingDetails: an
                     </div>
 
                     <div style="text-align: center; margin: 30px 0;">
-                        <a href="${meetingLink}" style="display: inline-block; background-color: #8A2BE2; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(138, 43, 226, 0.25);">Unirse a la Videollamada</a>
+                        <a href="${meetingLink}" style="display: inline-block; background-color: #8A2BE2; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Unirse a la Videollamada</a>
                     </div>
                     
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <a href="${googleCalendarLink}" style="display: inline-block; color: #444; text-decoration: none; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-size: 14px; background-color: white;">
+                        <a href="${googleCalendarLink}" style="display: inline-block; color: #444; text-decoration: none; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-size: 14px;">
                             📅 Agregar a Google Calendar
                         </a>
                     </div>
@@ -83,15 +78,10 @@ export async function sendBookingEmail(to: string | string[], bookingDetails: an
             `,
         });
 
-        if (error) {
-            console.error("Error sending email via Resend:", error);
-            return false;
-        }
-
-        console.log("Message sent via Resend:", data?.id);
+        console.log("Email enviado correctamente a:", to);
         return true;
     } catch (error) {
-        console.error("Error sending email:", error);
+        console.error("Error enviando email:", error);
         return false;
     }
 }
