@@ -155,7 +155,7 @@ export async function addSignalingMessage(meetingToken: string, type: string, pa
         const payloadStr = JSON.stringify(payload);
 
         // Manual cleanup to ensure it's a valid string for the DB
-        const sql = "INSERT INTO agenda_signaling (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)";
+        const sql = "INSERT INTO webrtc_signals (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)";
         const args = [meetingToken as string, type as string, payloadStr as string, sender as string];
 
         await client.execute({ sql, args });
@@ -170,7 +170,7 @@ export async function addSignalingMessage(meetingToken: string, type: string, pa
 export async function getSignalingMessages(meetingToken: string, afterId: number = 0) {
     try {
         const result = await client.execute({
-            sql: `SELECT * FROM agenda_signaling WHERE meetingToken = ? AND id > ? ORDER BY id ASC`,
+            sql: `SELECT * FROM webrtc_signals WHERE meetingToken = ? AND id > ? ORDER BY id ASC`,
             args: [meetingToken, afterId]
         });
 
