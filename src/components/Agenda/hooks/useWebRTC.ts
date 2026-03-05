@@ -62,19 +62,19 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
             if (signal.type === "offer" && userType === "client") {
                 console.log("[Signaling] Processing offer from host");
                 await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
-                
+
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
-                
+
                 waitingForOffer.current = false;
-                
+
                 console.log("[Signaling] Sending answer to host");
                 await sendSignal("answer", answer);
-            } 
+            }
             else if (signal.type === "answer" && userType === "host") {
                 console.log("[Signaling] Processing answer from client");
                 await pc.setRemoteDescription(new RTCSessionDescription(signal.payload));
-            } 
+            }
             else if (signal.type === "ice-candidate") {
                 console.log("[Signaling] Processing ICE candidate from", signal.sender);
                 if (pc.remoteDescription && pc.remoteDescription.type) {
@@ -99,7 +99,7 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
 
     const initiateConnection = async (pc: RTCPeerConnection) => {
         if (userType !== "host") return;
-        
+
         try {
             console.log("[WebRTC] Creating and sending offer");
             const offer = await pc.createOffer();
@@ -161,10 +161,10 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
         const init = async () => {
             try {
                 console.log("[WebRTC] Initializing as", userType);
-                
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 1280, height: 720 }, 
-                    audio: true 
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 1280, height: 720 },
+                    audio: true
                 });
                 console.log("[WebRTC] Got local media stream");
                 streamRef.current = stream;
@@ -237,7 +237,7 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
                 };
 
                 peerConnection.current = pc;
-                
+
                 startPolling();
 
                 if (userType === "client") {
@@ -254,9 +254,25 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
         init();
 
         return () => {
-            streamRef.current?.getTracks().forEach((t) => t.stop());
-            peerConnection.current?.close();
-            if (pollingInterval.current) clearInterval(pollingInterval.current);
+            console.log("[WebRTC] Cleaning up connection");
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach((t) => t.stop());
+                streamRef.current = null;
+            }
+            if (peerConnection.current) {
+                peerConnection.current.onicecandidate = null;
+                peerConnection.current.ontrack = null;
+                peerConnection.current.onconnectionstatechange = null;
+                peerConnection.current.oniceconnectionstatechange = null;
+                peerConnection.current.close();
+                peerConnection.current = null;
+            }
+            if (pollingInterval.current) {
+                clearInterval(pollingInterval.current);
+                pollingInterval.current = null;
+            }
+            iceCandidateQueue.current = [];
+            hasInitiatedConnection.current = false;
         };
     }, [meetingToken, userType, sendSignal, startPolling]);
 
@@ -278,13 +294,34 @@ export function useWebRTC({ meetingToken, userType }: UseWebRTCOptions): UseWebR
         setIsVideoOff((prev) => !prev);
     }, []);
 
-    const endCall = useCallback(() => {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        peerConnection.current?.close();
-        if (pollingInterval.current) clearInterval(pollingInterval.current);
+    const endCall = useCallback(async () => {
+        console.log("[WebRTC] Ending call...");
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach((t) => t.stop());
+        }
+        if (peerConnection.current) {
+            peerConnection.current.close();
+        }
+        if (pollingInterval.current) {
+            clearInterval(pollingInterval.current);
+        }
+
         setStatus("disconnected");
+
+        // Inform server to clean this token's signaling data, so if they rejoin
+        // it starts a fresh P2P connection sequence.
+        try {
+            await fetch("/api/agenda/signaling", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ meetingToken }),
+            });
+        } catch (err) {
+            console.error("[WebRTC] Failed to clear DB signaling room", err);
+        }
+
         window.location.href = "/agenda";
-    }, []);
+    }, [meetingToken]);
 
     return {
         status,
