@@ -191,6 +191,18 @@ export async function getSignalingMessages(meetingToken: string, afterId: number
     }
 }
 
+export async function clearSignalingRoom(meetingToken: string) {
+    try {
+        if (!meetingToken) return false;
+        const sql = "DELETE FROM webrtc_signals WHERE meetingToken = ?";
+        await client.execute({ sql, args: [meetingToken] });
+        return true;
+    } catch (error) {
+        console.error("DB Error clearing signaling room:", error);
+        return false;
+    }
+}
+
 // --- SETTINGS & VALIDATION ---
 
 export interface AgendaSettings {
