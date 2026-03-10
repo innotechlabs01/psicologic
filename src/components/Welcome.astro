@@ -6,6 +6,9 @@ import { SignInButton } from "@clerk/astro/components";
 <div
   class="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4"
 >
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
   <img
     src={innoTechLogoWhite.src}
     alt="InnoTech Logo"
@@ -72,7 +75,21 @@ import { SignInButton } from "@clerk/astro/components";
 </div>
 
 <script>
+  import { showToast } from "../utils/toast.js";
+
   document.addEventListener("DOMContentLoaded", () => {
+    // Verificar si hay un mensaje en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get('message');
+
+    if (message) {
+      const decodedMessage = decodeURIComponent(message);
+      showToast(decodedMessage, 'error', 8000);
+
+      // Limpiar la URL para que no muestre el mensaje al recargar
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const gameBtn = document.getElementById("btn-game-login");
     if (gameBtn) {
       const setGameAuth = () => {
