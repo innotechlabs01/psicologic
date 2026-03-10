@@ -10,8 +10,21 @@ const client = createClient({
 
 const saveStatusPayment = async (userId: string, paymentId: string, amount: number, status: string) => {
   try {
-    const nextPaymentDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const blockedPaymentDate = new Date(Date.now() + (30 + 5) * 24 * 60 * 60 * 1000);
+    // Función auxiliar para verificar año bisiesto
+    function isLeapYear(year: number): boolean {
+      return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    }
+
+    // Calcular 30 o 31 días dependiendo del mes actual
+    const today = new Date();
+    const daysInMonth = [31, isLeapYear(today.getFullYear()) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    const actualDays = daysInMonth[today.getMonth()];
+
+    const nextPaymentDate = new Date(today);
+    nextPaymentDate.setDate(today.getDate() + actualDays);
+
+    const blockedPaymentDate = new Date(nextPaymentDate);
+    blockedPaymentDate.setDate(nextPaymentDate.getDate() + 5); // 5 días de prórroga
 
     await client.execute({
       sql: `INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
