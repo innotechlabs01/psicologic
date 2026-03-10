@@ -11,9 +11,9 @@ const client = createClient({
 /**
  * Valida el estado de pago del usuario y determina si debe tener acceso a la aplicación.
  * @param userId El ID del usuario de Clerk.
- * @returns Un objeto con el estado de acceso (canAccess) y los días restantes.
+ * @returns Un objeto con el estado de acceso (canAccess), los días restantes y si la cuenta está vencida.
  */
-export async function checkUserPaymentAccess(userId: string): Promise<{ canAccess: boolean, daysRemaining: number }> {
+export async function checkUserPaymentAccess(userId: string): Promise<{ canAccess: boolean, daysRemaining: number, isExpired: boolean }> {
   console.log(`Checking payment access for user: ${userId}`);
 
   try {
@@ -27,7 +27,7 @@ export async function checkUserPaymentAccess(userId: string): Promise<{ canAcces
     // o no ha pasado por el proceso de asignación de rol. Permitir acceso para que el middleware lo cree.
     if (!payment) {
       console.log('ℹ️ No payment record found. Allowing access for initial setup.');
-      return { canAccess: true, daysRemaining: 15 };
+      return { canAccess: true, daysRemaining: 15, isExpired: false };
     }
 
     const now = new Date();
@@ -42,7 +42,10 @@ export async function checkUserPaymentAccess(userId: string): Promise<{ canAcces
     const timeToPayment = nextPaymentDate.getTime() - now.getTime();
     const daysToPayment = Math.ceil(timeToPayment / (1000 * 60 * 60 * 24));
 
-    console.log(`Payment status: ${payment.status}. Days to Block: ${daysRemaining}. Days to Next Payment: ${daysToPayment}`);
+    // Verificar si la cuenta está vencida (ya pasó la fecha de nextPaymentDate)
+    const isExpired = now > nextPaymentDate;
+
+    console.log(`Payment status: ${payment.status}. Days to Block: ${daysRemaining}. Days to Next Payment: ${daysToPayment}. Is Expired: ${isExpired}`);
 
 
     // 3. Lógica de Acceso:
@@ -58,20 +61,20 @@ export async function checkUserPaymentAccess(userId: string): Promise<{ canAcces
       // El usuario debe ser marcado como 'denied' en la tabla 'usuarios'
       console.log(`🚫 Access expired. Denying user ${userId} and setting status to 'denied'.`);
       await client.execute(`update usuarios set status='denied' where clerk_user_id=?`, [userId])
-      return { canAccess: false, daysRemaining: daysToPayment };
+      return { canAccess: false, daysRemaining: daysToPayment, isExpired };
     } else if (canAccess && payment.status === 'denied') {
       // Si por alguna razón el usuario está marcado como 'denied' pero aún tiene acceso
       // (ej. acaba de pagar), se podría resetear el estado, pero la lógica de pago
       // se encargaría de actualizar el registro principal, lo cual es mejor.
       // Solo nos enfocamos en el bloqueo.
-      return { canAccess: false, daysRemaining: 0 };
+      return { canAccess: false, daysRemaining: 0, isExpired: true };
     }
 
-    return { canAccess, daysRemaining: daysToPayment };
+    return { canAccess, daysRemaining: daysToPayment, isExpired };
 
   } catch (error) {
     console.error('❌ Unexpected error in checkUserPaymentAccess:', error);
     // Fallback de seguridad: si algo falla, no bloqueamos el acceso.
-    return { canAccess: false, daysRemaining: 999 };
+    return { canAccess: false, daysRemaining: 999, isExpired: false };
   }
 }

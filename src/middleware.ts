@@ -93,10 +93,13 @@ function parseCookies(cookieHeader?: string) {
 
 function redirectToRoute(route: string, message: string, status: number = 302) {
   console.log(`🔄 REDIRECT: ${message} -> ${route} (Status: ${status})`);
+  // Codificar el mensaje para pasarlo como query param
+  const encodedMessage = encodeURIComponent(message);
+  const redirectUrl = message ? `${route}?message=${encodedMessage}` : route;
   return new Response(null, {
     status,
     headers: {
-      Location: route,
+      Location: redirectUrl,
     },
   });
 }
@@ -176,7 +179,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     adminInsertPromise = handleInsertUsersAdmin(context, userId ?? "");
   }
 
-  const [{ canAccess, daysRemaining }] = await Promise.all([
+  const [{ canAccess, daysRemaining, isExpired }] = await Promise.all([
     paymentCheckPromise,
     adminInsertPromise
   ]);
@@ -188,8 +191,14 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       orgRole ?? 'SIN_ROL',
       'denied',
       currentPath,
-      { reason: 'payment_required', daysRemaining }
+      { reason: 'payment_required', daysRemaining, isExpired }
     ));
+
+    // Si la cuenta está vencida (isExpired = true), mostrar mensaje de contactar a administración
+    if (isExpired) {
+      return redirectToRoute('/', 'Su cuenta ha vencido. Por favor comuníquese con administración para habilitar su cuenta.');
+    }
+    // Si aún está en período de gracia pero sin acceso, mostrar mensaje de pago pendiente
     return redirectToRoute('/', `Acceso restringido - por favor complete su pago (${daysRemaining} días restantes)`);
   }
 
