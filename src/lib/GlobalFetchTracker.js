@@ -7,6 +7,18 @@ function emit(event) {
 const originalFetch = window.fetch;
 
 window.fetch = async (...args) => {
+  const url = args[0] ? (typeof args[0] === 'string' ? args[0] : args[0].url) : '';
+  
+  // ⚡ Skip skeleton for background polling or non-critical requests
+  const isBackground = url.includes('/messages') || 
+                      url.includes('/mark-read') || 
+                      url.includes('/headers/api') ||
+                      (args[1] && args[1].background);
+
+  if (isBackground) {
+    return originalFetch(...args);
+  }
+
   activeRequests++;
   emit("global:fetch-start");
 

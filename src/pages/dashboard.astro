@@ -13,26 +13,7 @@ let dashboardData = {
 };
 
 try {
-  // Fetch data directly on server
-  // Since we are on the same server, we can call the DB logic directly or fetch from localhost
-  // But calling fetch to its own API during SSR can be tricky with auth headers.
-  // Ideally we should import the logic.
-  // For now, let's keep using fetch but we need the absolute URL or use the logic directly.
-  // Recommendation: Import the DB logic directly if possible or make the API call with full URL.
-  // However, simpler for now: just call the API endpoint if it's public/protected by cookies passed along?
-  // Astro middleware handles auth.
-
-  // Better approach: Import the controller/logic if available.
-  // If not, we'll assume the API is reachable.
-  // NOTE: Calling own API in Astro SSR typically requires full URL.
-  // process.env.VERCEL_URL might help, or just request.url origin.
-
   const origin = Astro.url.origin;
-  // We need to pass the cookie for auth to work if the API caches it?
-  // Actually the API probably uses the same database so we could just query DB here.
-  // But to avoid code duplication let's try to fetch.
-  // If this fails, we fall back to client side or 0.
-
   const response = await fetch(`${origin}/api/dashboard`, {
     headers: Astro.request.headers,
   });
@@ -43,154 +24,192 @@ try {
 } catch (e) {
   console.error("Failed to fetch dashboard data server-side", e);
 }
+
+const stats = [
+  { 
+    label: "Usuarios Nuevos", 
+    value: dashboardData.countUser, 
+    icon: "users", 
+    color: "from-blue-500 to-indigo-600",
+    bgColor: "bg-blue-50 dark:bg-blue-900/20"
+  },
+  { 
+    label: "Mensajes Pendientes", 
+    value: dashboardData.countTicket, 
+    icon: "ticket", 
+    color: "from-amber-400 to-orange-500",
+    bgColor: "bg-amber-50 dark:bg-amber-900/20"
+  },
+  { 
+    label: "Chats Activos", 
+    value: dashboardData.countChatActive, 
+    icon: "pulse", 
+    color: "from-purple-500 to-pink-500",
+    bgColor: "bg-purple-50 dark:bg-purple-900/20"
+  },
+  { 
+    label: "Completados", 
+    value: dashboardData.countChatClose, 
+    icon: "check", 
+    color: "from-emerald-400 to-teal-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
+  }
+];
 ---
 
-<LayoutDashboard title="🔒 Dashboard">
+<LayoutDashboard title="Panel de Control | Psicologic">
   <SignedIn>
-    <DashboardWrapper
-      title="Dashboard Principal"
-      subtitle="Bienvenido a tu panel de control"
-    >
-      <!-- Contenido principal del dashboard -->
-      <div class="space-y-6">
-        <!-- Grid de tarjetas estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Usuarios Nuevos
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="newUsersCount"
-                >
-                  {dashboardData.countUser}
-                </p>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <!-- Welcome Header -->
+      <section class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            Panel de Control
+          </h1>
+          <p class="mt-1 text-lg text-gray-500 dark:text-gray-400">
+            Resumen de actividad y métricas en tiempo real.
+          </p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+            <span class="h-2 w-2 mr-2 rounded-full bg-green-500 animate-pulse"></span>
+            Sistema Online
+          </span>
+        </div>
+      </section>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat) => (
+          <div class="relative group overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:border-indigo-500/30 transition-all duration-300 p-6">
+            <div class={`absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full opacity-10 bg-gradient-to-br ${stat.color} group-hover:scale-150 transition-transform duration-500`}></div>
+            
+            <div class="flex items-center justify-between mb-4">
+              <div class={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform`}>
+                {stat.icon === 'users' && (
+                  <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
+                )}
+                {stat.icon === 'ticket' && (
+                  <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z" /></svg>
+                )}
+                {stat.icon === 'pulse' && (
+                  <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                )}
+                {stat.icon === 'check' && (
+                  <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                )}
               </div>
-              <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-blue-600 dark:text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  ></path>
-                </svg>
-              </div>
+            </div>
+            
+            <div>
+              <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {stat.label}
+              </p>
+              <h3 class="mt-1 text-3xl font-bold text-gray-900 dark:text-white leading-none">
+                {stat.value}
+              </h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Analytics Chart -->
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 flex flex-col">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900 dark:text-white">Flujo de Actividad</h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Interacciones en los últimos 7 días</p>
+            </div>
+            <div class="flex space-x-2">
+              <span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold uppercase transition-colors hover:bg-indigo-100">Vista Semanal</span>
+            </div>
+          </div>
+          <div class="flex-1 min-h-[400px]">
+            <MyLine client:only="react" />
+          </div>
+        </div>
+
+        <!-- Sidebar / Secondary Content -->
+        <div class="space-y-8">
+          <!-- Quick Actions/Notice Card -->
+          <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+            <h3 class="text-lg font-bold mb-4">Acciones Rápidas</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <a href="/tickets" class="flex flex-col items-center justify-center p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all duration-200 backdrop-blur-md border border-white/20 group">
+                <svg class="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                <span class="text-xs font-medium">Tickets</span>
+              </a>
+              <a href="/admin/users" class="flex flex-col items-center justify-center p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all duration-200 backdrop-blur-md border border-white/20 group">
+                <svg class="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
+                <span class="text-xs font-medium">Usuarios</span>
+              </a>
             </div>
           </div>
 
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Mensajes Pendientes
+          <!-- Pending Alerts List -->
+          <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+              <svg class="w-5 h-5 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              Alertas Pendientes
+            </h3>
+            <div class="space-y-4">
+              {dashboardData.countTicket > 0 ? (
+                <div class="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-start space-x-3">
+                  <div class="flex-shrink-0 mt-0.5">
+                    <div class="h-2 w-2 rounded-full bg-amber-500"></div>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
+                      Tienes {dashboardData.countTicket} tickets sin atender.
+                    </p>
+                    <a href="/tickets" class="mt-2 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline uppercase tracking-wider">Ver Tickets →</a>
+                  </div>
+                </div>
+              ) : (
+                <p class="text-sm text-gray-500 dark:text-gray-400 italic text-center py-4">
+                  No hay alertas críticas en este momento.
                 </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="ticketsCount"
-                >
-                  {dashboardData.countTicket}
-                </p>
-              </div>
-              <div class="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-yellow-600 dark:text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Chats Activos
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="chatActiveCount"
-                >
-                  {dashboardData.countChatActive}
-                </p>
-              </div>
-              <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-purple-600 dark:text-purple-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  ></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Chats Cerrados
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="chatCloseCount"
-                >
-                  {dashboardData.countChatClose}
-                </p>
-              </div>
-              <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-green-600 dark:text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </div>
-      <div
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-      >
-        <MyLine client:only />
-      </div>
-    </DashboardWrapper>
+    </main>
   </SignedIn>
 </LayoutDashboard>
+
+<style>
+  /* Premium animations */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  main {
+    animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Custom scrollbar for dark mode */
+  :root.dark ::-webkit-scrollbar {
+    width: 8px;
+  }
+  :root.dark ::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+  :root.dark ::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 4px;
+  }
+  :root.dark ::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+  }
+</style>

@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config'
 import clerk from '@clerk/astro'
 import react from '@astrojs/react'
-import vercel from '@astrojs/vercel/serverless'
+import vercel from '@astrojs/vercel'
 import tailwindcss from '@tailwindcss/vite'
 import { esES } from '@clerk/localizations'
 import dotenv from 'dotenv'
