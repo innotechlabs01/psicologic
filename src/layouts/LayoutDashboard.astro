@@ -2,15 +2,13 @@
 // src/layouts/LayoutDashboard.astro
 import Footer from "../components/Footer/footer.astro";
 import Header from "../components/Header/header.astro";
-
-import SkeletonManager from "../components/Skeleton/SkeletonManager.astro";
 import { ClientRouter } from "astro:transitions";
 
-const { title, skeletonType } = Astro.props;
+const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,41 +17,65 @@ const { title, skeletonType } = Astro.props;
     <link rel="stylesheet" href="/css/main.css" />
     <title>{title}</title>
     <ClientRouter />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
 
-  <body class="min-h-screen bg-gray-100 dark:bg-gray-900">
+  <body class="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans antialiased text-gray-900 dark:text-gray-100">
+    <!-- Barrita de carga premium -->
+    <div id="global-page-loader" class="fixed top-0 left-0 w-full h-[3px] z-[100] pointer-events-none opacity-0 transition-opacity duration-300">
+      <div class="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 w-0 transition-all duration-300 ease-out shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+    </div>
+
     <!-- Header con sidebar incluido -->
     <Header />
 
-    <!-- Contenedor principal que respeta el espacio del sidebar -->
     <div class="flex min-h-screen">
-      <!-- Espacio reservado para el sidebar (invisible pero mantiene el layout) -->
+      <!-- Espacio reservado para el sidebar en Desktop -->
       <div class="hidden sm:block sm:w-64 flex-shrink-0"></div>
 
-      <!-- Contenido principal alineado -->
-      <main class="flex-2 w-full sm:w-auto">
-        <div class="p-6 max-w-full relative min-h-[calc(100vh-4rem)]">
-          <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2">
-          </div>
-        </div>
-        <script type="module" src="/js/toast.js"></script>
-        <SkeletonManager type={skeletonType} />
-        <slot />
-      </main>
+      <!-- Área de Contenido Principal -->
+      <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <main class="main-content flex-grow p-4 md:p-6 lg:p-8" transition:animate="fade">
+          <!-- Contenedor de Toasts -->
+          <div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2"></div>
+          
+          <!-- Contenido de la página -->
+          <slot />
+        </main>
+        
+        <Footer />
+      </div>
     </div>
-  </body><Footer />
+
+    <script type="module" src="/js/toast.js"></script>
+    <script type="module" src="/js/dashboard/dashboardNavigation.js"></script>
+  </body>
 </html>
 
-<style>
-  /* Asegurar que el contenido no se superponga con el sidebar */
-  @media (min-width: 640px) {
-    body {
-      padding-left: 0; /* El layout flex se encarga del espaciado */
-    }
+<style is:global>
+  :root {
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  body {
+    font-family: var(--font-sans);
   }
 
-  /* Prevenir overflow horizontal */
-  main {
-    overflow-x: hidden;
+  /* Animaciones suaves para transiciones de Astro */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Ocultar scrollbar innecesario pero permitir scroll */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 </style>

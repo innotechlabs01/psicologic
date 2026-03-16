@@ -42,6 +42,8 @@ const unreadCount = data.unreadCount;
   id="separator-sidebar"
   class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 -translate-x-full sm:translate-x-0"
   aria-label="Sidebar"
+  transition:persist="sidebar"
+  transition:name="sidebar"
 >
   <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
     <!-- Botón cerrar en móvil (opcional) -->
@@ -69,6 +71,8 @@ const unreadCount = data.unreadCount;
       <li>
         <a
           href="/dashboard"
+          data-astro-prefetch
+          data-navigate
           class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
         >
           <svg
@@ -91,6 +95,8 @@ const unreadCount = data.unreadCount;
       <li style="display: none;">
         <a
           href="/admin/users"
+          data-astro-prefetch
+          data-navigate
           class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
         >
           <svg
@@ -111,6 +117,8 @@ const unreadCount = data.unreadCount;
         <a
           href="/dashboard/message"
           id="messages-link"
+          data-astro-prefetch
+          data-navigate
           class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
         >
           <svg
@@ -150,6 +158,8 @@ const unreadCount = data.unreadCount;
       <li>
         <a
           href="/dashboard/payments"
+          data-astro-prefetch
+          data-navigate
           class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
         >
           <svg
@@ -169,6 +179,8 @@ const unreadCount = data.unreadCount;
       <li>
         <a
           href="/dashboard/settings"
+          data-astro-prefetch
+          data-navigate
           class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group sidebar-link"
         >
           <svg
@@ -204,14 +216,13 @@ const unreadCount = data.unreadCount;
 </aside>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  function setupSidebar() {
     const toggleButton = document.getElementById("sidebar-toggle");
     const sidebar = document.getElementById("separator-sidebar");
     const overlay = document.getElementById("sidebar-overlay");
     const closeButton = document.getElementById("sidebar-close");
     const sidebarLinks = document.querySelectorAll(".sidebar-link");
 
-    // Función para mostrar sidebar
     function showSidebar() {
       if (sidebar) {
         sidebar.classList.remove("-translate-x-full");
@@ -223,11 +234,9 @@ const unreadCount = data.unreadCount;
       if (toggleButton) {
         toggleButton.setAttribute("aria-expanded", "true");
       }
-      // Prevenir scroll del body
       document.body.style.overflow = "hidden";
     }
 
-    // Función para ocultar sidebar
     function hideSidebar() {
       if (sidebar) {
         sidebar.classList.add("-translate-x-full");
@@ -239,17 +248,13 @@ const unreadCount = data.unreadCount;
       if (toggleButton) {
         toggleButton.setAttribute("aria-expanded", "false");
       }
-      // Restaurar scroll del body
       document.body.style.overflow = "";
     }
 
-    // Event listeners
     if (toggleButton) {
       toggleButton.addEventListener("click", (e) => {
         e.preventDefault();
-
         const isHidden = sidebar?.classList.contains("-translate-x-full");
-
         if (isHidden) {
           showSidebar();
         } else {
@@ -258,38 +263,32 @@ const unreadCount = data.unreadCount;
       });
     }
 
-    // Cerrar sidebar al hacer click en overlay
     if (overlay) {
       overlay.addEventListener("click", () => {
         hideSidebar();
       });
     }
 
-    // Cerrar sidebar con botón X
     if (closeButton) {
       closeButton.addEventListener("click", () => {
         hideSidebar();
       });
     }
 
-    // Cerrar sidebar al hacer click en un enlace (en móvil)
     sidebarLinks.forEach((link) => {
       link.addEventListener("click", () => {
-        // Solo cerrar en móvil
         if (window.innerWidth < 640) {
           hideSidebar();
         }
       });
     });
 
-    // Cerrar sidebar al redimensionar a desktop
     window.addEventListener("resize", () => {
       if (window.innerWidth >= 640) {
         hideSidebar();
       }
     });
 
-    // Cerrar sidebar con tecla ESC
     document.addEventListener("keydown", (e) => {
       if (
         e.key === "Escape" &&
@@ -298,70 +297,55 @@ const unreadCount = data.unreadCount;
         hideSidebar();
       }
     });
-  });
-</script>
 
-<style>
-  /* Asegurar que las transiciones funcionen suavemente */
-  #separator-sidebar {
-    transition: transform 0.3s ease-in-out;
-  }
-
-  /* Overlay con animación */
-  #sidebar-overlay {
-    transition: opacity 0.3s ease-in-out;
-  }
-
-  /* Asegurar que el sidebar esté por encima de otros elementos */
-  #separator-sidebar {
-    z-index: 50;
-  }
-
-  #sidebar-overlay {
-    z-index: 40;
-  }
-
-  /* Mejorar la experiencia táctil en móvil */
-  @media (max-width: 640px) {
-    #sidebar-toggle {
-      -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
-    }
-  }
-</style>
-
-<script>
-  // Script para manejar la reactividad del Badge de Mensajes
-
-  // 1. Encontrar el elemento Badge (le daremos un ID único)
-  const unreadBadge = document.getElementById("unread-badge");
-  const messagesLink = document.getElementById("messages-link"); // Asegúrate de darle este ID al <a>
-
-  // 2. Función para obtener y actualizar el conteo
-  async function updateUnreadCount() {
-    try {
-      const response = await fetch("/api/headers/api"); // Llama a la API de Astro
-      const data = await response.json();
-      const newCount = data.unreadCount;
-
-      if (unreadBadge) {
-        if (newCount > 0) {
-          // Actualiza el texto si el badge ya existe
-          unreadBadge.textContent = newCount;
-          unreadBadge.classList.remove("hidden"); // Asegura que esté visible
-        } else {
-          // Oculta/elimina si el conteo es 0
-          unreadBadge.classList.add("hidden");
-          // Opcional: podrías eliminar el elemento completamente si quieres
-        }
+    // Marcar link activo
+    const currentPath = window.location.pathname;
+    sidebarLinks.forEach((link) => {
+      if (link instanceof HTMLAnchorElement && link.getAttribute('href') === currentPath) {
+        link.classList.add('bg-gray-200', 'dark:bg-gray-700');
+      } else {
+        link.classList.remove('bg-gray-200', 'dark:bg-gray-700');
       }
-      // Si el badge no existe pero el conteo es > 0, deberías crearlo.
-      // Pero para simplificar, si está oculto/ausente, lo manejamos con clases/Astro.
-    } catch (error) {
-      console.error("Error al actualizar el conteo de no leídos:", error);
-      // En caso de error, es mejor no tocar el badge
-    }
+    });
   }
 
-  // 3. Escuchar el evento disparado por el componente React
-  document.addEventListener("unreadCountUpdated", updateUnreadCount);
+  // Prevenir duplicación de inicialización en navegaciones SPA
+  if (!(window as any).__HEADER_JS_INITIALIZED) {
+    (window as any).updateUnreadCount = async function() {
+      const unreadBadge = document.getElementById("unread-badge");
+      if (!unreadBadge) return;
+      
+      try {
+        const response = await fetch("/api/headers/api");
+        if (!response.ok) return;
+        const data = await response.json();
+        const newCount = data.unreadCount;
+
+        if (newCount > 0) {
+          unreadBadge.textContent = newCount;
+          unreadBadge.classList.remove("hidden");
+        } else {
+          unreadBadge.classList.add("hidden");
+        }
+      } catch (error) {
+        console.error("Error updating unread count:", error);
+      }
+    };
+
+    document.addEventListener("unreadCountUpdated", () => {
+      if (typeof (window as any).updateUnreadCount === 'function') {
+        (window as any).updateUnreadCount();
+      }
+    });
+
+    (window as any).__HEADER_JS_INITIALIZED = true;
+  }
+
+  // Ejecutar en carga inicial y en cada transición de página
+  document.addEventListener("astro:page-load", () => {
+    setupSidebar();
+    if (typeof (window as any).updateUnreadCount === 'function') {
+      (window as any).updateUnreadCount();
+    }
+  });
 </script>
