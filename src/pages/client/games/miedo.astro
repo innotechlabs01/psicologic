@@ -1,12 +1,12 @@
 ---
 import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../../layouts/LayoutClient.astro';
-import { SignedIn } from '@clerk/astro/components';
+import { Show } from '@clerk/astro/components';
 export const prerender = false; // Renderizado del lado del cliente
 ---
 
 <LayoutClient title="🃏 Miedos">
-  <SignedIn>
+  <Show when="signed-in">
     <DashboardWrapper 
       title="🃏 Jugamos" 
       subtitle="Supera tus miedos"
@@ -60,5 +60,5 @@ export const prerender = false; // Renderizado del lado del cliente
       </div>
       <script type="module" src="/js/games/overcome_fears.js"></script>
     </DashboardWrapper>
-  </SignedIn>
+  </Show>
 </LayoutClient>

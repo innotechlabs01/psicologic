@@ -1,5 +1,5 @@
 ---
-import { SignedIn, SignOutButton, UserButton } from "@clerk/astro/components";
+import { Show, SignOutButton, UserButton } from "@clerk/astro/components";
 ---
 
 <div
@@ -23,7 +23,7 @@ import { SignedIn, SignOutButton, UserButton } from "@clerk/astro/components";
       >Mensajes</a
     >
 
-    <SignedIn>
+    <Show when="signed-in">
       <SignOutButton redirectUrl="/" asChild>
         <a
           class="mt-4 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
@@ -31,7 +31,7 @@ import { SignedIn, SignOutButton, UserButton } from "@clerk/astro/components";
           Cerrar sesión
         </a>
       </SignOutButton>
-    </SignedIn>
+    </Show>
   </div>
 </div>
 

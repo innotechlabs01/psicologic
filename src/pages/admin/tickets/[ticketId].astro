@@ -1,7 +1,7 @@
 ---
 import LayoutClient from '../../../layouts/LayoutClient.astro'; // Usamos el mismo layout por simplicidad
 import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import ChatInterface from '@components/Chat/ChatInterface.jsx'; 
 import { createClient } from '@libsql/client';
 import getAuth from "@clerk/astro"; 
@@ -70,7 +70,7 @@ const titleText = `AGENTE: Conversación ${urlTicketId.substring(0, 8)}...`;
 ---
 
 <LayoutDashboard title="💼 Admin Chat">
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper 
         title={titleText} 
         subtitle="Modo Agente: Visualiza, responde y cierra el ticket"
@@ -88,5 +88,5 @@ const titleText = `AGENTE: Conversación ${urlTicketId.substring(0, 8)}...`;
                 )}
             </div>
         </DashboardWrapper>
-    </SignedIn>
+    </Show>
 </LayoutDashboard>

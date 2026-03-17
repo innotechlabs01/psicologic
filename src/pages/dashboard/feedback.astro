@@ -1,11 +1,11 @@
 <!-- ---
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import LayoutClient from "../../layouts/LayoutClient.astro";
 import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
 ---
 
 <LayoutClient>
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper title="💬 Feedback" subtitle="Gestiona todos los feedbacks desde aquí">
             <!-- Grid para mostrar feedbacks
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -17,7 +17,7 @@ import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro"
                 <canvas id="moodChart"></canvas>
             </div>
         </DashboardWrapper>
-    </SignedIn>
+    </Show>
 </LayoutClient>
 
 <script>

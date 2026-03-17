@@ -1,11 +1,11 @@
 ---
 import LayoutClient from '../layouts/LayoutClient.astro'
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import DashboardWrapper from '../components/Dashboard/DashboardWrapper.astro';
 ---
 
 <LayoutClient title=" 🔒 Client">
-	<SignedIn>
+	<Show when="signed-in">
 		<DashboardWrapper title="Área de Cliente"
 	subtitle="Bienvenido a tu área de cliente">
 
@@ -16,5 +16,5 @@ import DashboardWrapper from '../components/Dashboard/DashboardWrapper.astro';
 		</main>
 
 		</DashboardWrapper>
-	</SignedIn>
+	</Show>
 </LayoutClient>

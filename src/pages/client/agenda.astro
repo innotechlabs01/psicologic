@@ -1,14 +1,14 @@
 ---
 import LayoutClient from "../../layouts/LayoutClient.astro";
 
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import { CalendarHeader } from "../../components/Agenda/Calendar/calendar-header";
 import { CalendarControls } from "../../components/Agenda/Calendar/calendar-controls";
 import { CalendarView } from "../../components/Agenda/Calendar/calendar-view";
 ---
 
 <LayoutClient>
-  <SignedIn>
+  <Show when="signed-in">
     <div class="h-svh overflow-hidden lg:p-2 w-full">
       <div
         class="lg:border lg:rounded-md overflow-hidden flex flex-col items-center justify-start bg-container h-full w-full bg-background"
@@ -22,5 +22,5 @@ import { CalendarView } from "../../components/Agenda/Calendar/calendar-view";
         </div>
       </div>
     </div>
-  </SignedIn>
+  </Show>
 </LayoutClient>
