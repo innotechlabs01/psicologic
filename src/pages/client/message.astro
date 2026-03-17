@@ -1,7 +1,7 @@
 ---
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import { createClient } from '@libsql/client';
 
 // Configuración de la conexión a Turso
@@ -68,7 +68,7 @@ const titleText = ticketToShowId ? `Conversación: ${ticketToShowId.substring(0,
 ---
 
 <LayoutClient title="Asistencia">
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper 
             title="Centro de Asistencia" 
             subtitle="¿Cómo podemos ayudarte hoy?"
@@ -164,5 +164,5 @@ const titleText = ticketToShowId ? `Conversación: ${ticketToShowId.substring(0,
                 })();
             </script>
         </DashboardWrapper>
-    </SignedIn>
+    </Show>
 </LayoutClient>

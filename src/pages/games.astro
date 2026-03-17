@@ -1,11 +1,11 @@
 ---
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
 import LayoutGames from "../layouts/LayoutGames.astro";
 ---
 
 <LayoutGames title=" 🔒 Games">
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper
             title="Área de Games"
             subtitle="Bienvenido a tu área de games"
@@ -20,5 +20,5 @@ import LayoutGames from "../layouts/LayoutGames.astro";
                 </p>
             </main>
         </DashboardWrapper>
-    </SignedIn>
+    </Show>
 </LayoutGames>

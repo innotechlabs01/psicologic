@@ -69,7 +69,7 @@ export function getHoliday(date: Date): string | null {
     const holidays = holidaysColombia(year);
     const dateStr = format(date, "yyyy-MM-dd");
 
-    const holiday = holidays.find((h: any) => h.celebrationDay === dateStr);
+    const holiday = holidays.find((h: any) => h.holiday === dateStr);
 
     return holiday ? holiday.celebration : null;
 }

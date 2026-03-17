@@ -1,7 +1,7 @@
 ---
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../layouts/LayoutClient.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import PaymentStatus from '../../components/Payment/js/PaymentStatus.tsx';
 import PaymentHistory from '@components/Payment/PaymentHistory.astro';
 import PaymentStats from '@components/Payment/PaymentStats.astro';
@@ -28,7 +28,7 @@ const daysToNext = paymentData.paymentInfo.daysToNext || 0;
 ---
 
 <LayoutClient title="Facturación y Pagos">
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper 
             title="Centro de Facturación" 
             subtitle="Gestiona tu membresía y consulta tus transacciones de forma segura"
@@ -152,7 +152,7 @@ const daysToNext = paymentData.paymentInfo.daysToNext || 0;
                 <PaymentHistory transactions={paymentData.paymentHistory} />
             </div>
         </DashboardWrapper>
-    </SignedIn>
+    </Show>
 </LayoutClient>
 
 <script type="text/javascript" src="https://checkout.epayco.co/checkout.js"></script>

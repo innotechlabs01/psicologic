@@ -1,40 +1,52 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
+import { 
+    Send, 
+    MessageSquare, 
+    XCircle, 
+    Clock, 
+    User, 
+    CheckCheck, 
+    MoreVertical, 
+    Smile, 
+    Paperclip,
+    ArrowLeft
+} from 'lucide-react';
 
 const AGENT_ROLE = 'agente_soporte';
 
-// Estado inicial cuando no hay ticket seleccionado
 const INITIAL_STATE = {
     ticketId: null,
     userName: null,
     messages: [],
     isClosed: false,
-    // Eliminamos isLoading del INITIAL_STATE para controlarlo por separado
     error: null,
     pollingInterval: 5000, 
 };
 
+/**
+ * Respuestas rápidas predefinidas para optimizar el trabajo del agente.
+ */
+const QUICK_REPLIES = [
+    "Hola, ¿en qué puedo ayudarte hoy?",
+    "Entiendo perfectamente su consulta. Déjeme verificarlo.",
+    "¿Podría proporcionarme más detalles sobre esto?",
+    "Gracias por esperar. Ya tengo la solución.",
+    "Su ticket ha sido resuelto. ¿Desea algo más?",
+];
+
 export default function ChatInterfaceAdmin({ currentUserId, currentUserRole }) {
     const [chatState, setChatState] = useState(INITIAL_STATE);
     const [newMessage, setNewMessage] = useState('');
-    // 🆕 Estado para controlar solo la primera carga (evita que 'Cargando...' salga en el polling)
     const [isInitialLoad, setIsInitialLoad] = useState(false); 
     const chatEndRef = useRef(null);
     const intervalRef = useRef(null);
     
     const isAgentUser = currentUserRole === AGENT_ROLE || currentUserRole === 'org:admin';
 
-
-    // ------------------------------------------------
-    // 1. Lógica de Polling para obtener mensajes
-    // ------------------------------------------------
     const fetchMessages = useCallback(async (id, isFirstLoad = false) => {
         if (!id) return;
-        
-        // 🚨 Solo mostramos el loader si es la carga inicial del ticket
-        if (isFirstLoad) {
-            setIsInitialLoad(true); 
-        }
+        if (isFirstLoad) setIsInitialLoad(true); 
 
         try {
             const res = await fetch(`/api/tickets/${id}/messages`);
@@ -46,123 +58,74 @@ export default function ChatInterfaceAdmin({ currentUserId, currentUserRole }) {
                     messages: data.messages || [],
                     isClosed: data.isClosed,
                 }));
-
-
-                const isSenderAgent = String(data.messages?.[0]?.sender_id) === String(currentUserId);
-
-                console.log(`
-                    isSenderAgent: ${isSenderAgent}
-                    isAgentUser: ${isAgentUser}
-                `)
             } else {
                 throw new Error(data.error || 'Fallo al cargar mensajes');
             }
         } catch (e) {
             console.error(e);
             setChatState(prev => ({ ...prev, error: 'No se pudieron cargar los mensajes.' }));
-            // Detener polling en caso de error grave
-            clearInterval(intervalRef.current); 
+            if (intervalRef.current) clearInterval(intervalRef.current);
             intervalRef.current = null;
         } finally {
-            // 🛑 Siempre ocultamos el loader al terminar la petición
-            if (isFirstLoad) {
-                setIsInitialLoad(false); 
-            }
-            // NOTA: El polling ahora es silencioso, sin afectar el estado isLoading
+            if (isFirstLoad) setIsInitialLoad(false); 
         }
-    }, []);
+    }, [currentUserId]);
 
-    // ------------------------------------------------
-    // 1.5. Nueva Lógica: Marcar Ticket como Leído por el Agente
-    // ------------------------------------------------
     const markTicketAsRead = useCallback(async (id) => {
         if (!id) return;
         try {
-            // Este endpoint debe actualizar el campo en la tabla de Tickets o el mensaje
-            // Asumimos que estás actualizando el ticket para indicar que el agente lo vio.
-            const res = await fetch(`/api/tickets/${id}/mark-read`, {
+            await fetch(`/api/tickets/${id}/mark-read`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // Opcional: Si necesitas indicar quién lo leyó
                 body: JSON.stringify({ userId: currentUserId, role: currentUserRole }), 
             });
-
-            if (!res.ok) {
-                console.error("Fallo al marcar el ticket como leído.");
-                // No mostramos toast al usuario, es una acción de fondo
-            }
         } catch (e) {
             console.error("Error de red al marcar como leído:", e);
         }
     }, [currentUserId, currentUserRole]);
 
-    // ------------------------------------------------
-    // 2. Manejo de Selección de Ticket (Desde Astro)
-    // ------------------------------------------------
     useEffect(() => {
         const handleTicketSelection = (event) => {
             const { ticketId, userName } = event.detail;
 
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
+            if (intervalRef.current) clearInterval(intervalRef.current);
 
-            // Reiniciar estado
-            setChatState({
-                ...INITIAL_STATE,
-                ticketId,
-                userName,
-            });
+            setChatState({ ...INITIAL_STATE, ticketId, userName });
             
-            // 🌟 Carga inicial (true)
             fetchMessages(ticketId, true);
-            
-            // 🌟 NUEVO: Marcar inmediatamente como leído al abrir el chat
             markTicketAsRead(ticketId);
 
-            // Iniciar Polling (sin mostrar el loader)
             intervalRef.current = setInterval(() => {
-                fetchMessages(ticketId, false); // false = no es carga inicial
+                fetchMessages(ticketId, false);
             }, INITIAL_STATE.pollingInterval);
         };
 
         document.addEventListener('ticketSelected', handleTicketSelection);
-
         return () => {
             document.removeEventListener('ticketSelected', handleTicketSelection);
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
+            if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [fetchMessages]);
+    }, [fetchMessages, markTicketAsRead]);
 
-    // ... (3. Scroll al final, 4. Envío de Mensaje, 5. Cerrar Ticket se mantienen iguales) ...
-    // [CÓDIGO OMITIDO POR BREVEDAD - SON LOS MISMO QUE EL ORIGINAL]
-    // ...
-
-    // ------------------------------------------------
-    // 3. Scroll al final
-    // ------------------------------------------------
     useEffect(() => {
         if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [chatState.messages]);
 
-    // ------------------------------------------------
-    // 4. Lógica de Envío de Mensaje
-    // ------------------------------------------------
     const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if (!newMessage.trim() || !chatState.ticketId || chatState.isClosed || !isAgentUser) return;
+        if (e) e.preventDefault();
+        const content = newMessage.trim();
+        if (!content || !chatState.ticketId || chatState.isClosed || !isAgentUser) return;
 
         const messageData = {
             ticketId: chatState.ticketId,
-            senderId: currentUserId, // ID interno del Agente
-            content: newMessage.trim(),
+            senderId: currentUserId,
+            content,
             type: 'texto', 
         };
+
+        setNewMessage(''); // Limpiar inmediatamente para mejor UX
 
         try {
             const res = await fetch(`/api/tickets/${chatState.ticketId}/send`, {
@@ -172,28 +135,27 @@ export default function ChatInterfaceAdmin({ currentUserId, currentUserRole }) {
             });
 
             if (res.ok) {
-                setNewMessage('');
-                // Forzar la actualización inmediata tras el envío, no es carga inicial
                 fetchMessages(chatState.ticketId, false); 
             } else {
                 const errorData = await res.json();
                 toast.error(errorData.error || 'Fallo al enviar el mensaje.');
+                setNewMessage(content); // Restaurar contenido si falla
             }
         } catch (error) {
             console.error('Error de red al enviar mensaje:', error);
-            toast.error('Error de conexión. Inténtalo de nuevo.');
+            toast.error('Error de conexión.');
+            setNewMessage(content);
         }
     };
-    
-    // ------------------------------------------------
-    // 5. Lógica de Cerrar Ticket
-    // ------------------------------------------------
+
+    const applyQuickReply = (reply) => {
+        setNewMessage(reply);
+        // Opcional: enviar automáticamente si se desea
+    };
+
     const handleCloseTicket = async () => {
         if (!chatState.ticketId || !isAgentUser) return;
-
-        if (!window.confirm(`¿Estás seguro de que quieres cerrar el ticket ${chatState.ticketId.substring(0, 8)}...?`)) {
-            return;
-        }
+        if (!window.confirm(`¿Estás seguro de que quieres cerrar este ticket?`)) return;
 
         try {
             const res = await fetch(`/api/tickets/${chatState.ticketId}/close`, { 
@@ -203,34 +165,41 @@ export default function ChatInterfaceAdmin({ currentUserId, currentUserRole }) {
             });
 
             if (res.ok) {
-                toast.success('Ticket cerrado exitosamente. Refresca la lista para verlo actualizado.');
-                // Forzar re-fetch para actualizar el estado del chat a isClosed
+                toast.success('Ticket cerrado exitosamente.');
                 fetchMessages(chatState.ticketId, false);
             } else {
                 const errorData = await res.json();
                 toast.error(errorData.error || 'Fallo al cerrar el ticket.');
             }
-
         } catch (error) {
-            console.error('Error de red al cerrar ticket:', error);
-            toast.error('Error de conexión al cerrar ticket.');
+            toast.error('Error al cerrar ticket.');
         }
     };
 
-    // ------------------------------------------------
-    // 6. Renderizado
-    // ------------------------------------------------
-
     if (!chatState.ticketId) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <svg className="w-20 h-20 text-indigo-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                    Selecciona una Conversación
+            <div className="flex flex-col items-center justify-center h-full p-12 text-center bg-gray-50 dark:bg-gray-900/20">
+                <div className="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mb-6 animate-bounce-slow">
+                    <MessageSquare className="w-12 h-12 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                    Bandeja de Entrada
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                    Haz clic en un ticket de la izquierda para comenzar a responder.
+                <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                    Selecciona una conversación del panel lateral para gestionar el ticket y responder a las consultas.
                 </p>
+                <div className="mt-8 grid grid-cols-2 gap-4 w-full max-w-md">
+                   <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center">
+                      <Clock className="w-6 h-6 text-blue-500 mb-2" />
+                      <span className="text-xs font-semibold text-gray-500 lowercase">Tiempo Respuesta</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">~15 min</span>
+                   </div>
+                   <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center">
+                      <CheckCheck className="w-6 h-6 text-green-500 mb-2" />
+                      <span className="text-xs font-semibold text-gray-500 lowercase">Tickets Resueltos</span>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white">94%</span>
+                   </div>
+                </div>
             </div>
         );
     }
@@ -238,99 +207,157 @@ export default function ChatInterfaceAdmin({ currentUserId, currentUserRole }) {
     const { messages, userName, isClosed } = chatState;
 
     return (
-        <div className="flex flex-col h-full bg-white dark:bg-gray-800">
-            {/* Cabecera del Chat con Botón de Cerrar */}
-            <div className="p-4 border-b dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    Chat con: {userName}
-                </h3>
-                {!isClosed && isAgentUser && (
-                    <button
-                        onClick={handleCloseTicket}
-                        className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md"
-                    >
-                        ❌ Cerrar Ticket
-                    </button>
-                )}
-                {isClosed && (
-                     <span className="px-4 py-2 bg-gray-500 text-white font-semibold rounded-lg">
-                        TICKET CERRADO
-                     </span>
-                )}
-            </div>
-
-            {/* Cuerpo de Mensajes */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                {/* 🚨 Solo mostrar el loader si es la carga inicial */}
-                {isInitialLoad && <p className="text-center text-indigo-500 dark:text-indigo-300">Cargando mensajes...</p>}
+        <div className="flex flex-col h-full bg-white dark:bg-gray-900">
+            {/* Header del Chat */}
+            <header className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
+                <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        {userName?.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                            {userName}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                            <span className={`w-2 h-2 rounded-full ${isClosed ? 'bg-gray-400' : 'bg-green-500 animate-pulse'}`}></span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                {isClosed ? 'Ticket Cerrado' : 'Online / Ticket Activo'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
                 
-                {(!isInitialLoad || messages.length > 0) && messages.map((msg) => {
+                <div className="flex items-center space-x-3">
+                    {!isClosed && isAgentUser && (
+                        <button
+                            onClick={handleCloseTicket}
+                            className="flex items-center space-x-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-bold rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 transition-all border border-red-100 dark:border-red-900/30"
+                        >
+                            <XCircle className="w-4 h-4" />
+                            <span>Finalizar Chat</span>
+                        </button>
+                    )}
+                    <button className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full">
+                        <MoreVertical className="w-5 h-5" />
+                    </button>
+                </div>
+            </header>
+
+            {/* Area de Mensajes */}
+            <main className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
+                {isInitialLoad && (
+                    <div className="flex justify-center p-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                    </div>
+                )}
+                
+                {!isInitialLoad && messages.length === 0 && (
+                   <div className="text-center py-10">
+                       <p className="text-gray-400 dark:text-gray-500 italic text-sm">Aún no hay mensajes en esta conversación.</p>
+                   </div>
+                )}
+
+                {messages.map((msg, idx) => {
                     const isSenderAgent = String(msg.sender_id) === String(currentUserId);
                     const timestamp = new Date(msg.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     
+                    // Lógica para agrupar mensajes por remitente
+                    const prevMsg = messages[idx - 1];
+                    const isGrouped = prevMsg && String(prevMsg.sender_id) === String(msg.sender_id);
+
                     return (
-                        <div key={msg.message_id} className={`flex ${isSenderAgent ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-xl shadow-md 
+                        <div key={msg.message_id} className={`flex flex-col ${isSenderAgent ? 'items-end' : 'items-start'} ${isGrouped ? '-mt-4' : ''}`}>
+                            {!isGrouped && (
+                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 ml-1 mr-1">
+                                    {isSenderAgent ? 'Agente' : userName} • {timestamp}
+                                </span>
+                            )}
+                            
+                            <div className={`relative group max-w-[85%] md:max-w-[70%] lg:max-w-xl transition-all duration-200
                                 ${isSenderAgent 
-                                    ? 'bg-indigo-600 text-white rounded-br-none dark:bg-indigo-700' 
-                                    : 'bg-gray-200 text-gray-800 rounded-tl-none dark:bg-gray-700 dark:text-white'
-                                }`
+                                    ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm shadow-md' 
+                                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm border border-gray-100 dark:border-gray-700 shadow-sm'
+                                } p-4`
                             }>
-                                <p className="font-medium text-sm mb-1">
-                                    {isSenderAgent ? 'Tú (Agente)' : userName || '(Cliente)'}
-                                </p>
-                                
                                 {msg.tipo === 'imagen' && msg.url_adjunto ? (
-                                    <a href={msg.url_adjunto} target="_blank" rel="noopener noreferrer" className="block">
+                                    <div className="space-y-2">
                                         <img 
                                             src={msg.url_adjunto} 
                                             alt={msg.contenido} 
-                                            className="max-h-48 w-auto rounded object-cover cursor-pointer"
+                                            className="max-h-72 w-full rounded-lg object-cover cursor-zoom-in hover:opacity-95 transition-opacity"
+                                            onClick={() => window.open(msg.url_adjunto, '_blank')}
                                         />
-                                        <p className="mt-1 text-sm italic">{msg.contenido || 'Imagen Adjunta'}</p>
-                                    </a>
+                                        {msg.contenido && <p className="text-sm font-medium leading-relaxed">{msg.contenido}</p>}
+                                    </div>
                                 ) : (
-                                    <p className="text-base break-words">{msg.contenido}</p>
+                                    <p className="text-sm md:text-base leading-relaxed break-words">{msg.contenido}</p>
                                 )}
-                                
-                                <span className={`text-xs mt-1 block text-right opacity-70 
-                                    ${isSenderAgent ? 'text-indigo-200' : 'text-gray-500 dark:text-gray-400'}`
-                                }>
-                                    {timestamp}
-                                </span>
                             </div>
                         </div>
                     );
                 })}
                 <div ref={chatEndRef} />
-            </div>
+            </main>
 
-            {/* Formulario de Respuesta */}
-            <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
+            {/* Pie de Chat y Respuestas Rápidas */}
+            <footer className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 sticky bottom-0">
+                {!isClosed && isAgentUser && (
+                    <div className="mb-4 flex space-x-2 overflow-x-auto pb-2 scrollbar-hide no-scrollbar">
+                        {QUICK_REPLIES.map((reply, i) => (
+                            <button
+                                key={i}
+                                onClick={() => applyQuickReply(reply)}
+                                className="whitespace-nowrap px-4 py-1.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors shrink-0"
+                            >
+                                {reply}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {isClosed ? (
-                    <p className="text-center text-red-500 dark:text-red-400 font-bold">
-                        El ticket ha sido cerrado. No se pueden enviar más mensajes.
-                    </p>
+                    <div className="flex items-center justify-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                        <XCircle className="w-5 h-5 text-gray-400 mr-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400 font-bold">
+                            Esta conversación ha finalizado
+                        </p>
+                    </div>
                 ) : (
-                    <form onSubmit={handleSendMessage} className="flex space-x-3">
-                        <input
-                            type="text"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            placeholder="Escribe tu respuesta..."
-                            className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white transition-shadow"
-                            disabled={!chatState.ticketId}
-                        />
+                    <form onSubmit={handleSendMessage} className="relative flex items-end space-x-2">
+                        <div className="flex-1 relative">
+                            <textarea
+                                value={newMessage}
+                                onChange={(e) => setNewMessage(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendMessage();
+                                    }
+                                }}
+                                rows={1}
+                                placeholder="Escribe tu mensaje aquí..."
+                                className="w-full p-4 pr-12 bg-gray-50 dark:bg-gray-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 dark:text-white transition-all resize-none shadow-inner min-h-[56px] max-h-32 scrollbar-hide overflow-y-auto"
+                                disabled={!chatState.ticketId}
+                            />
+                            <div className="absolute right-3 bottom-3 flex space-x-1">
+                                <button type="button" className="p-1.5 text-gray-400 hover:text-indigo-500 transition-colors">
+                                    <Paperclip className="w-5 h-5" />
+                                </button>
+                                <button type="button" className="p-1.5 text-gray-400 hover:text-indigo-500 transition-colors">
+                                    <Smile className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
                         <button
                             type="submit"
-                            className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md disabled:bg-indigo-400"
+                            className="p-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transform hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-200 dark:shadow-none disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:transform-none"
                             disabled={!newMessage.trim() || !chatState.ticketId}
                         >
-                            Enviar
+                            <Send className="w-6 h-6" />
                         </button>
                     </form>
                 )}
-            </div>
+            </footer>
         </div>
     );
 }

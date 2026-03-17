@@ -1,7 +1,7 @@
 ---
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
 import LayoutDashboard from "../layouts/LayoutDashboard.astro";
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import { MyLine } from "../components/Chartjs/chart.tsx";
 
 // ⚡️ SSR Data Fetching
@@ -27,189 +27,189 @@ try {
 
 const stats = [
   { 
-    label: "Usuarios Nuevos", 
+    label: "Usuarios", 
     value: dashboardData.countUser, 
+    trend: "+12%",
     icon: "users", 
-    color: "from-blue-500 to-indigo-600",
-    bgColor: "bg-blue-50 dark:bg-blue-900/20"
+    color: "indigo-600",
+    gradient: "from-indigo-600 to-blue-500"
   },
   { 
-    label: "Mensajes Pendientes", 
+    label: "Pendientes", 
     value: dashboardData.countTicket, 
+    trend: "-5%",
     icon: "ticket", 
-    color: "from-amber-400 to-orange-500",
-    bgColor: "bg-amber-50 dark:bg-amber-900/20"
+    color: "amber-500",
+    gradient: "from-amber-400 to-orange-500"
   },
   { 
-    label: "Chats Activos", 
+    label: "En Curso", 
     value: dashboardData.countChatActive, 
+    trend: "+3",
     icon: "pulse", 
-    color: "from-purple-500 to-pink-500",
-    bgColor: "bg-purple-50 dark:bg-purple-900/20"
+    color: "purple-500",
+    gradient: "from-purple-500 to-pink-500"
   },
   { 
-    label: "Completados", 
+    label: "Éxito", 
     value: dashboardData.countChatClose, 
+    trend: "98%",
     icon: "check", 
-    color: "from-emerald-400 to-teal-500",
-    bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
+    color: "emerald-500",
+    gradient: "from-emerald-400 to-teal-500"
   }
 ];
 ---
 
-<LayoutDashboard title="Panel de Control | Psicologic">
-  <SignedIn>
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      <!-- Welcome Header -->
-      <section class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-            Panel de Control
-          </h1>
-          <p class="mt-1 text-lg text-gray-500 dark:text-gray-400">
-            Resumen de actividad y métricas en tiempo real.
-          </p>
-        </div>
-        <div class="flex items-center space-x-3">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-            <span class="h-2 w-2 mr-2 rounded-full bg-green-500 animate-pulse"></span>
-            Sistema Online
-          </span>
-        </div>
-      </section>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <div class="relative group overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-xl hover:border-indigo-500/30 transition-all duration-300 p-6">
-            <div class={`absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 rounded-full opacity-10 bg-gradient-to-br ${stat.color} group-hover:scale-150 transition-transform duration-500`}></div>
+<LayoutDashboard title="Workspace | Psicologic">
+  <Show when="signed-in">
+    <div class="min-h-screen bg-gray-50/50 dark:bg-gray-950 pb-12">
+      <!-- Header Seccion con Gradiente Atmosférico -->
+      <div class="relative bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full -mr-48 -mt-48"></div>
+        <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/5 blur-[100px] rounded-full -ml-24 -mb-24"></div>
+        
+        <main class="max-w-7xl mx-auto px-6 py-12 relative">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-md">Live Platform</span>
+                <div class="flex items-center gap-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                  Sincronizado
+                </div>
+              </div>
+              <h1 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+                Bienvenido de nuevo
+              </h1>
+              <p class="text-gray-500 dark:text-gray-400 text-lg font-medium max-w-md">
+                Aquí tienes lo que está pasando en Psicologic hoy.
+              </p>
+            </div>
             
-            <div class="flex items-center justify-between mb-4">
-              <div class={`p-3 rounded-xl ${stat.bgColor} group-hover:scale-110 transition-transform`}>
-                {stat.icon === 'users' && (
-                  <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
-                )}
-                {stat.icon === 'ticket' && (
-                  <svg class="w-6 h-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z" /></svg>
-                )}
-                {stat.icon === 'pulse' && (
-                  <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                )}
-                {stat.icon === 'check' && (
-                  <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                )}
+            <div class="flex flex-wrap gap-3">
+              <button class="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 shadow-sm hover:shadow-md transition-all active:scale-95">
+                Exportar Reporte
+              </button>
+              <button class="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-2xl text-sm font-bold shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95">
+                Nueva Sesión
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <main class="max-w-7xl mx-auto px-6 -mt-8 space-y-8 relative">
+        <!-- Stats Grid con Efecto Glass -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat) => (
+            <div class="group relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none hover:-translate-y-1 transition-all duration-300">
+              <div class="flex items-start justify-between mb-4">
+                <div class={`p-3 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white shadow-lg group-hover:rotate-6 transition-transform`}>
+                  {stat.icon === 'users' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>}
+                  {stat.icon === 'ticket' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z" /></svg>}
+                  {stat.icon === 'pulse' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+                  {stat.icon === 'check' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                </div>
+                <span class="text-[10px] font-black px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-lg">
+                  {stat.trend}
+                </span>
+              </div>
+              <div>
+                <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none mb-1">
+                  {stat.label}
+                </p>
+                <h3 class="text-4xl font-black text-gray-900 dark:text-white tracking-tighter">
+                  {stat.value}
+                </h3>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <!-- Main Analytics Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Central Chart Card -->
+          <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/40 dark:shadow-none flex flex-col">
+            <div class="flex items-center justify-between mb-10">
+              <div>
+                <h2 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Análisis Predictivo</h2>
+                <p class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Actividad Semanal</p>
+              </div>
+              <div class="flex bg-gray-50 dark:bg-gray-800 p-1.5 rounded-2xl">
+                <button class="px-4 py-2 bg-white dark:bg-gray-700 text-indigo-600 dark:text-white text-xs font-black rounded-xl shadow-sm">7D</button>
+                <button class="px-4 py-2 text-gray-400 text-xs font-black">30D</button>
               </div>
             </div>
             
-            <div>
-              <p class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                {stat.label}
-              </p>
-              <h3 class="mt-1 text-3xl font-bold text-gray-900 dark:text-white leading-none">
-                {stat.value}
-              </h3>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <!-- Main Content Area -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Analytics Chart -->
-        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 flex flex-col">
-          <div class="flex items-center justify-between mb-8">
-            <div>
-              <h2 class="text-xl font-bold text-gray-900 dark:text-white">Flujo de Actividad</h2>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Interacciones en los últimos 7 días</p>
-            </div>
-            <div class="flex space-x-2">
-              <span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-bold uppercase transition-colors hover:bg-indigo-100">Vista Semanal</span>
-            </div>
-          </div>
-          <div class="flex-1 min-h-[400px]">
-            <MyLine client:only="react" />
-          </div>
-        </div>
-
-        <!-- Sidebar / Secondary Content -->
-        <div class="space-y-8">
-          <!-- Quick Actions/Notice Card -->
-          <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-6 text-white shadow-lg shadow-indigo-200 dark:shadow-none">
-            <h3 class="text-lg font-bold mb-4">Acciones Rápidas</h3>
-            <div class="grid grid-cols-2 gap-3">
-              <a href="/tickets" class="flex flex-col items-center justify-center p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all duration-200 backdrop-blur-md border border-white/20 group">
-                <svg class="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                <span class="text-xs font-medium">Tickets</span>
-              </a>
-              <a href="/admin/users" class="flex flex-col items-center justify-center p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all duration-200 backdrop-blur-md border border-white/20 group">
-                <svg class="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
-                <span class="text-xs font-medium">Usuarios</span>
-              </a>
+            <div class="flex-1 min-h-[450px]">
+              <MyLine client:only="react" />
             </div>
           </div>
 
-          <!-- Pending Alerts List -->
-          <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              Alertas Pendientes
-            </h3>
-            <div class="space-y-4">
-              {dashboardData.countTicket > 0 ? (
-                <div class="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 rounded-2xl flex items-start space-x-3">
-                  <div class="flex-shrink-0 mt-0.5">
-                    <div class="h-2 w-2 rounded-full bg-amber-500"></div>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
-                      Tienes {dashboardData.countTicket} tickets sin atender.
-                    </p>
-                    <a href="/tickets" class="mt-2 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline uppercase tracking-wider">Ver Tickets →</a>
-                  </div>
+          <!-- Vertical Info Stack -->
+          <div class="space-y-8">
+            <!-- System Health Card -->
+            <div class="bg-indigo-600 dark:bg-indigo-700 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
+              <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-700">
+                <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              </div>
+              <p class="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-4">Estado Global</p>
+              <h3 class="text-2xl font-black tracking-tight leading-tight mb-6 italic">Todo fluyendo como <br/>debería estarlo.</h3>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-white/10 rounded-3xl border border-white/10">
+                  <p class="text-[10px] font-bold text-white/50 uppercase mb-1">Latencia</p>
+                  <p class="text-xl font-black">24ms</p>
                 </div>
-              ) : (
-                <p class="text-sm text-gray-500 dark:text-gray-400 italic text-center py-4">
-                  No hay alertas críticas en este momento.
-                </p>
-              )}
+                <div class="p-4 bg-white/10 rounded-3xl border border-white/10">
+                  <p class="text-[10px] font-bold text-white/50 uppercase mb-1">Uptime</p>
+                  <p class="text-xl font-black">100%</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Activity List -->
+            <div class="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/40 dark:shadow-none">
+              <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-tight mb-8 flex items-center gap-3">
+                <div class="w-8 h-8 bg-amber-500/10 rounded-xl flex items-center justify-center">
+                  <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                Alertas
+              </h3>
+              
+              <div class="space-y-6">
+                {dashboardData.countTicket > 0 ? (
+                  <div class="group flex gap-4">
+                    <div class="w-1 h-12 bg-amber-500 rounded-full group-hover:h-14 transition-all"></div>
+                    <div>
+                      <p class="text-sm font-black text-gray-900 dark:text-white leading-none mb-1">Tickets Pendientes</p>
+                      <p class="text-xs font-bold text-gray-400 mb-3 uppercase tracking-tighter">Acción requerida inmediata</p>
+                      <a href="/dashboard/message" class="text-[10px] font-black px-4 py-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-xl hover:bg-gray-900 dark:hover:bg-white hover:text-white dark:hover:text-black transition-all">
+                        GESTIONAR {dashboardData.countTicket} →
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div class="text-center py-6">
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Sin alertas críticas</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </main>
-  </SignedIn>
+      </main>
+    </div>
+  </Show>
 </LayoutDashboard>
 
 <style>
-  /* Premium animations */
-  @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @keyframes entry {
+    from { opacity: 0; transform: scale(0.98) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
   }
-
   main {
-    animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  /* Custom scrollbar for dark mode */
-  :root.dark ::-webkit-scrollbar {
-    width: 8px;
-  }
-  :root.dark ::-webkit-scrollbar-track {
-    background: #1f2937;
-  }
-  :root.dark ::-webkit-scrollbar-thumb {
-    background: #374151;
-    border-radius: 4px;
-  }
-  :root.dark ::-webkit-scrollbar-thumb:hover {
-    background: #4b5563;
+    animation: entry 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 </style>

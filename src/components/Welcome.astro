@@ -3,75 +3,82 @@ import innoTechLogoWhite from "../../public/img/logo/logo_white.png";
 import { SignInButton } from "@clerk/astro/components";
 ---
 
-<div
-  class="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4"
->
+<div class="relative min-h-screen overflow-hidden bg-[#0a0a0b] flex flex-col items-center justify-center px-6 antialiased">
+  <!-- Efectos de Fondo Atmosférico -->
+  <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-600/10 blur-[150px] rounded-full"></div>
+  <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full"></div>
+  <div class="absolute top-1/2 right-0 w-[400px] h-[400px] bg-purple-600/5 blur-[100px] rounded-full"></div>
+
   <!-- Toast container -->
-  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+  <div id="toast-container" class="fixed top-8 right-8 z-50 flex flex-col gap-3"></div>
 
-  <img
-    src={innoTechLogoWhite.src}
-    alt="InnoTech Logo"
-    class="mb-10 h-32 w-auto"
-  />
+  <main class="relative z-10 w-full max-w-5xl flex flex-col items-center">
+    <!-- Logo con Animación Suave -->
+    <img
+      src={innoTechLogoWhite.src}
+      alt="InnoTech Logo"
+      class="mb-16 h-28 w-auto filter drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-700"
+    />
 
-  <div class="flex w-full max-w-3xl flex-col gap-10">
-    <!-- Card principal -->
-    <div
-      class="relative rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
-    >
-      <h1 class="mb-4 text-center text-3xl font-bold text-zinc-900">
-        Bienvenido a <span class="text-blue-600">Psicologic Platform</span>
-      </h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+      <!-- Card Profesional -->
+      <div class="group relative bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 overflow-hidden hover:border-indigo-500/30 transition-all duration-500 shadow-2xl">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        
+        <div class="relative space-y-6">
+          <div class="inline-flex px-3 py-1 bg-indigo-500/10 rounded-full border border-indigo-500/20">
+            <span class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Portal Profesional</span>
+          </div>
+          <h2 class="text-4xl font-black text-white tracking-tighter leading-tight">
+            Gestión <br/><span class="text-indigo-400 font-medium">Integral</span>
+          </h2>
+          <p class="text-gray-400 text-lg leading-relaxed font-medium">
+            Accede a herramientas de vanguardia diseñadas para potenciar el bienestar emocional a través de la analítica y el acompañamiento profesional.
+          </p>
+          
+          <div class="pt-4">
+            <div class="relative inline-block group/btn overflow-hidden rounded-2xl">
+              <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 transition-transform group-hover/btn:scale-105"></div>
+              <div class="relative px-8 py-4 text-sm font-black text-white tracking-widest uppercase cursor-pointer">
+                <SignInButton mode="modal" class="w-full h-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <p class="mb-8 text-center text-lg text-zinc-600">
-        Una plataforma moderna diseñada para facilitar tu trabajo profesional,
-        mejorar la salud mental y potenciar el bienestar emocional de las
-        personas.
-      </p>
-
-      <div class="flex justify-center">
-        <div
-          class="flex h-12 w-44 items-center justify-center rounded-xl
-          bg-gradient-to-tr from-blue-500 via-blue-600 to-blue-700
-          text-lg font-semibold text-white transition-all
-          hover:scale-105 hover:shadow-lg"
-        >
-          <SignInButton mode="modal" />
+      <!-- Card Lúdica -->
+      <div class="group relative bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 overflow-hidden hover:border-emerald-500/30 transition-all duration-500 shadow-2xl">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        
+        <div class="relative space-y-6">
+          <div class="inline-flex px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Experiencia Lúdica</span>
+          </div>
+          <h2 class="text-4xl font-black text-white tracking-tighter leading-tight">
+            Explora <br/><span class="text-emerald-400 font-medium">Emociones</span>
+          </h2>
+          <p class="text-gray-400 text-lg leading-relaxed font-medium">
+            Fortalece habilidades sociales y emocionales a través de dinámicas seguras y experiencias transformadoras basadas en el juego.
+          </p>
+          
+          <div class="pt-4">
+            <div id="btn-game-login" class="relative inline-block group/btn overflow-hidden rounded-2xl">
+              <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 transition-transform group-hover/btn:scale-105"></div>
+              <div class="relative px-8 py-4 text-sm font-black text-white tracking-widest uppercase cursor-pointer">
+                <SignInButton mode="modal" class="w-full h-full" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Card secundaria -->
-    <div
-      class="relative rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
-    >
-      <h2 class="mb-4 text-2xl font-bold text-zinc-900">
-        Para jugadores de Psicologic Platform
-      </h2>
-
-      <p class="mb-8 text-lg text-zinc-600 leading-relaxed">
-        Nuestro objetivo es brindar apoyo, acompañamiento y herramientas que
-        ayuden a fortalecer habilidades emocionales, sociales y de pareja a
-        través de juegos y actividades lúdicas.
-        <br /><br />
-        Con Psicologic Platform podrás vivir nuevas experiencias, mejorar la comunicación
-        y fortalecer tus relaciones de una forma divertida, segura y significativa.
-      </p>
-
-      <div class="flex justify-center">
-        <div
-          class="flex h-12 w-44 items-center justify-center rounded-xl
-          bg-gradient-to-tr from-blue-500 via-blue-600 to-blue-700
-          text-lg font-semibold text-white transition-all
-          hover:scale-105 hover:shadow-lg"
-          id="btn-game-login"
-        >
-          <SignInButton mode="modal" />
-        </div>
-      </div>
+    <!-- Footer / Credenciales -->
+    <div class="mt-20 text-center">
+      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.4em]">Powered by InnoTech Labs © 2025</p>
     </div>
-  </div>
+  </main>
 </div>
 
 <script>
@@ -104,9 +111,20 @@ import { SignInButton } from "@clerk/astro/components";
         }
       };
 
-      // Listen for both click and mousedown to ensure we catch it before navigation/modal interaction
+      // Listen for both click and mousedown
       gameBtn.addEventListener("click", setGameAuth);
       gameBtn.addEventListener("mousedown", setGameAuth);
     }
   });
 </script>
+
+<style>
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(30px); filter: blur(10px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  
+  main {
+    animation: fade-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+</style>

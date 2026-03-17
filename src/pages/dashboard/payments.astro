@@ -1,7 +1,7 @@
 ---
 import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 
 // 1. Llamada a la API para obtener los datos
 const response = await fetch(`${Astro.url.origin}/api/dashboard/payment`);
@@ -102,12 +102,10 @@ const getStatusText = (status: Payment['status']) => {
       return 'Desconocido';
   }
 };
-
-
 ---
 
 <LayoutDashboard title="💳 Pagos">
-  <SignedIn>
+  <Show when="signed-in">
     <DashboardWrapper 
       title="Gestión de Pagos" 
       subtitle="Administra todas las transacciones y facturación"
@@ -175,7 +173,7 @@ const getStatusText = (status: Payment['status']) => {
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
               {recentTransactions.map((payment) => (
-                <tr key={payment.id}>
+                <tr>
                   <td class="py-3 px-4 text-gray-900 dark:text-white font-medium">
                     {payment.paymentId}
                   </td>
@@ -206,5 +204,5 @@ const getStatusText = (status: Payment['status']) => {
         </div>
       </div>
     </DashboardWrapper>
-  </SignedIn>
+  </Show>
 </LayoutDashboard>

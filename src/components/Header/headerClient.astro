@@ -1,5 +1,5 @@
 ---
-import { SignOutButton, SignedIn } from "@clerk/astro/components";
+import { SignOutButton, Show } from "@clerk/astro/components";
 ---
 
 <!-- Botón toggle para móvil -->
@@ -54,7 +54,7 @@ import { SignOutButton, SignedIn } from "@clerk/astro/components";
     </ul>
 
     <ul class="pt-4 mt-4 space-y-2 font-medium border-t border-gray-200 dark:border-gray-700">
-      <SignedIn>
+      <Show when="signed-in">
         <li>
           <SignOutButton redirectUrl="/" asChild>
             <a class="mt-2 block w-full text-center bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 sidebar-link">
@@ -62,7 +62,7 @@ import { SignOutButton, SignedIn } from "@clerk/astro/components";
             </a>
           </SignOutButton>
         </li>
-      </SignedIn>
+      </Show>
     </ul>
   </div>
 </aside>
