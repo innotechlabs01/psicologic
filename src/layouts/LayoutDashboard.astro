@@ -23,9 +23,30 @@ const { title } = Astro.props;
   </head>
 
   <body class="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans antialiased text-gray-900 dark:text-gray-100">
-    <!-- Barrita de carga premium -->
-    <div id="global-page-loader" class="fixed top-0 left-0 w-full h-[3px] z-[100] pointer-events-none opacity-0 transition-opacity duration-300">
-      <div class="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-500 w-0 transition-all duration-300 ease-out shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+    <!-- Sistema de carga premium -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-[9999] flex items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
+      <div class="text-center">
+        <div class="relative w-20 h-20 mx-auto mb-4">
+          <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
+          <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 rounded-full animate-spin"></div>
+          <div class="absolute inset-2 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" style="animation-duration: 1.5s; animation-direction: reverse;"></div>
+        </div>
+        <p id="loading-text" class="text-gray-600 dark:text-gray-400 font-medium text-sm">Cargando...</p>
+        <p id="loading-module" class="text-indigo-600 dark:text-indigo-400 font-semibold text-lg mt-2"></p>
+      </div>
+    </div>
+
+    <!-- Barra de progreso superior -->
+    <div id="progress-bar-container" class="fixed top-0 left-0 w-full h-1.5 z-[100] pointer-events-none opacity-0 transition-opacity duration-300">
+      <div id="progress-bar" class="h-full w-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-[0_0_10px_rgba(139,92,246,0.5)] transition-all duration-300 ease-out"></div>
+    </div>
+
+    <!-- Indicador de carga en header -->
+    <div id="header-loading-indicator" class="fixed top-16 left-1/2 -translate-x-1/2 z-[90] opacity-0 transition-opacity duration-300 pointer-events-none">
+      <div class="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+        <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
+        <span id="header-loading-text" class="text-sm font-medium text-gray-700 dark:text-gray-300">Cargando módulo...</span>
+      </div>
     </div>
 
     <!-- Header con sidebar incluido -->
@@ -51,6 +72,141 @@ const { title } = Astro.props;
 
     <script type="module" src="/js/toast.js"></script>
     <script type="module" src="/js/dashboard/dashboardNavigation.js"></script>
+    
+    <!-- Sistema de carga controlado -->
+    <script type="module" src="/js/fetch-interceptor.js"></script>
+    
+    <!-- Sistema de carga premium -->
+    <script>
+      /* eslint-disable */
+      (function() {
+        var overlay = document.getElementById('loading-overlay');
+        var progressBar = document.getElementById('progress-bar');
+        var progressContainer = document.getElementById('progress-bar-container');
+        var headerIndicator = document.getElementById('header-loading-indicator');
+        var loadingModule = document.getElementById('loading-module');
+        var headerLoadingText = document.getElementById('header-loading-text');
+
+        var activeRequests = 0;
+        var progressTimeout = null;
+        var isNavigating = false;
+
+        function getCurrentModule() {
+          var path = window.location.pathname;
+          if (path.includes('payments')) return 'Pagos';
+          if (path.includes('message')) return 'Mensajes';
+          if (path.includes('feedback')) return 'Feedback';
+          if (path.includes('settings')) return 'Configuraciones';
+          if (path.includes('agenda')) return 'Agenda';
+          if (path.includes('patients')) return 'Pacientes';
+          if (path.includes('history')) return 'Historial';
+          return 'Dashboard';
+        }
+
+        function showLoading(moduleName) {
+          if (!overlay || !progressContainer) return;
+          
+          var module = moduleName || getCurrentModule();
+          
+          overlay.classList.remove('opacity-0', 'pointer-events-none');
+          progressContainer.classList.remove('opacity-0');
+          
+          if (loadingModule) loadingModule.textContent = module;
+          if (headerLoadingText) headerLoadingText.textContent = 'Cargando ' + module + '...';
+          
+          headerIndicator.classList.remove('opacity-0');
+          
+          var progress = 0;
+          progressBar.style.width = '0%';
+          
+          progressTimeout = setInterval(function() {
+            if (progress < 85) {
+              progress += Math.random() * 15;
+              progressBar.style.width = Math.min(progress, 85) + '%';
+            }
+          }, 200);
+        }
+
+        function hideLoading() {
+          if (!overlay || !progressContainer) return;
+          
+          if (progressTimeout) {
+            clearInterval(progressTimeout);
+            progressTimeout = null;
+          }
+          
+          progressBar.style.width = '100%';
+          
+          setTimeout(function() {
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            progressContainer.classList.add('opacity-0');
+            headerIndicator.classList.add('opacity-0');
+            progressBar.style.width = '0%';
+          }, 200);
+        }
+
+        window.addEventListener('global:fetch-start', function() {
+          activeRequests++;
+          if (activeRequests === 1) {
+            showLoading();
+          }
+        });
+
+        window.addEventListener('global:fetch-end', function() {
+          activeRequests = Math.max(0, activeRequests - 1);
+          if (activeRequests === 0) {
+            hideLoading();
+          }
+        });
+
+        window.addEventListener('dashboard:loading-start', function(e) {
+          activeRequests++;
+          showLoading(e.detail && e.detail.module);
+        });
+
+        window.addEventListener('dashboard:loading-end', function() {
+          activeRequests = Math.max(0, activeRequests - 1);
+          if (activeRequests === 0) {
+            hideLoading();
+          }
+        });
+
+        document.addEventListener('astro:before-preparation', function() {
+          isNavigating = true;
+          var moduleName = 'Cargando...';
+          var url = window.location.pathname;
+          
+          if (url.includes('payments')) moduleName = 'Pagos';
+          else if (url.includes('message')) moduleName = 'Mensajes';
+          else if (url.includes('feedback')) moduleName = 'Feedback';
+          else if (url.includes('settings')) moduleName = 'Configuraciones';
+          else if (url.includes('agenda')) moduleName = 'Agenda';
+          else if (url.includes('patients')) moduleName = 'Pacientes';
+          else if (url.includes('history')) moduleName = 'Historial';
+          
+          showLoading(moduleName);
+        });
+
+        document.addEventListener('astro:after-swap', function() {
+          hideLoading();
+          isNavigating = false;
+        });
+
+        document.addEventListener('astro:page-load', function() {
+          if (!isNavigating) {
+            setTimeout(function() {
+              hideLoading();
+            }, 500);
+          }
+        });
+
+        window.addEventListener('load', function() {
+          setTimeout(function() {
+            hideLoading();
+          }, 300);
+        });
+      })();
+    </script>
   </body>
 </html>
 

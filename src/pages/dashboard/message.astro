@@ -2,7 +2,7 @@
 // src/pages/dashboard/message.astro
 import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import { createClient } from '@libsql/client';
 import ChatInterface from '../../components/Chat/ChatInterfaceAdmin.jsx';
 
@@ -76,7 +76,7 @@ if (clerkUserId) {
 ---
 
 <LayoutDashboard title="Mensajes | Psicologic">
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper 
             title="Tickets Activos" 
             subtitle={`Total: ${activeTickets.length} conversaciones abiertas`}
@@ -84,37 +84,75 @@ if (clerkUserId) {
             <div class="flex h-[calc(100vh-14rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 
                 <!-- 1. Panel Lateral de Conversaciones -->
-                <div class="w-1/3 lg:w-1/4 border-r dark:border-gray-700 overflow-y-auto bg-gray-50/50 dark:bg-gray-900/50 flex flex-col">
-                    <div class="p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                            Conversaciones
-                        </h3>
+                <div class="w-full md:w-1/3 lg:w-1/4 border-r dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900 flex flex-col z-10 shadow-xl">
+                    <div class="p-5 border-b dark:border-gray-800 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                                Mensajes
+                            </h3>
+                            <span class="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-md uppercase">
+                                {activeTickets.length} Activos
+                            </span>
+                        </div>
+                        
+                        <!-- Barra de Búsqueda -->
+                        <div class="relative group">
+                            <input 
+                                type="text" 
+                                id="ticket-search"
+                                placeholder="Buscar usuario o ticket..." 
+                                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-gray-800 transition-all outline-none"
+                            />
+                            <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto">
+                    <div class="flex-1 overflow-y-auto scrollbar-hide" id="tickets-list">
                         {activeTickets.length === 0 ? (
-                            <div class="p-8 text-center text-gray-500 dark:text-gray-400">
-                                <svg class="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                                No hay tickets activos.
+                            <div class="flex flex-col items-center justify-center h-48 p-8 text-center text-gray-400">
+                                <div class="w-16 h-16 mb-4 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                                    <svg class="w-8 h-8 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                </div>
+                                <p class="text-sm font-medium">Bandeja vacía</p>
                             </div>
                         ) : (
-                            activeTickets.map(ticket => (
+                            activeTickets.map((ticket, index) => (
                                 <button 
                                     data-ticket-id={ticket.id}
                                     data-user-name={ticket.userName}
-                                    class="ticket-link w-full text-left flex items-center p-4 border-b dark:border-gray-700 hover:bg-white dark:hover:bg-gray-800 transition-colors group relative"
+                                    class="ticket-link w-full text-left flex items-center p-4 border-b border-gray-50 dark:border-gray-800/50 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-all group relative overflow-hidden"
                                     aria-label={`Chat con ${ticket.userName}`}
                                 >
-                                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold shrink-0">
-                                        {ticket.userName.charAt(0)}
+                                    <!-- Indicador de selección lateral -->
+                                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 scale-y-0 group-hover:scale-y-50 transition-transform origin-center ticket-active-indicator"></div>
+                                    
+                                    <div class={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-sm shrink-0 transition-transform group-hover:scale-105 ${['bg-blue-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500', 'bg-emerald-500'][index % 5]}`}>
+                                        {ticket.userName.charAt(0).toUpperCase()}
                                     </div>
-                                    <div class="ml-3 flex-1 min-w-0">
-                                        <div class="flex justify-between items-baseline">
-                                            <p class="font-semibold text-gray-900 dark:text-gray-100 truncate">{ticket.userName}</p>
-                                            <span class="text-[10px] text-gray-400 uppercase font-medium">{ticket.fecha}</span>
+                                    
+                                    <div class="ml-4 flex-1 min-w-0">
+                                        <div class="flex justify-between items-start mb-0.5">
+                                            <p class="font-bold text-gray-900 dark:text-gray-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                {ticket.userName}
+                                            </p>
+                                            <span class="text-[10px] text-gray-400 font-bold whitespace-nowrap ml-2">
+                                                {ticket.fecha}
+                                            </span>
                                         </div>
-                                        <p class="text-xs text-gray-500 truncate mt-0.5">ID: {ticket.id.substring(0,8)}</p>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate pr-4">
+                                                ID: {ticket.id.substring(0,8)}...
+                                            </p>
+                                            <!-- Badge simulado de "Nuevo" solo para los primeros tickets para demo -->
+                                            {index < 1 && (
+                                                <div class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
+                                            )}
+                                        </div>
                                     </div>
+                                    
+                                    <div class="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-gray-900 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                                 </button>
                             ))
                         )}
@@ -122,7 +160,7 @@ if (clerkUserId) {
                 </div>
 
                 <!-- 2. ÁREA DE CHAT (REACT) -->
-                <div class="flex-1 flex flex-col bg-white dark:bg-gray-800" id="chat-content-area">
+                <div class="flex-1 flex flex-col bg-white dark:bg-gray-900/50 shadow-inner overflow-hidden" id="chat-content-area">
                     {currentUserRole && (
                         <ChatInterface
                             currentUserId={currentUserId}
@@ -133,26 +171,63 @@ if (clerkUserId) {
                 </div>
             </div>
         </DashboardWrapper>
-    </SignedIn>
+    </Show>
 </LayoutDashboard>
+
+<style>
+    /* Ocultar barra de desplazamiento manteniendo funcionalidad */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
 
 <script>
     function setupMessages() {
         const ticketLinks = document.querySelectorAll('.ticket-link');
+        const searchInput = document.getElementById('ticket-search') as HTMLInputElement;
         const dashboardWrapper = document.getElementById('dashboard-wrapper');
         const titleEl = dashboardWrapper?.querySelector('h1'); 
         const subtitleEl = dashboardWrapper?.querySelector('h1 + p');
         
+        // 🔍 Lógica de Búsqueda
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const term = (e.target as HTMLInputElement).value.toLowerCase();
+                ticketLinks.forEach(link => {
+                    const userName = (link as HTMLElement).dataset.userName?.toLowerCase() || '';
+                    const ticketId = (link as HTMLElement).dataset.ticketId?.toLowerCase() || '';
+                    if (userName.includes(term) || ticketId.includes(term)) {
+                        (link as HTMLElement).style.display = 'flex';
+                    } else {
+                        (link as HTMLElement).style.display = 'none';
+                    }
+                });
+            });
+        }
+
         const activateChat = (ticketId: string, userName: string) => {
-            if (titleEl) titleEl.textContent = `Chat: ${userName}`;
-            if (subtitleEl) subtitleEl.textContent = `Ticket ID: ${ticketId.substring(0, 8)}...`;
+            if (titleEl) titleEl.textContent = `Gestión de Ticket: ${userName}`;
+            if (subtitleEl) subtitleEl.textContent = `Atendiendo ticket #${ticketId.substring(0, 8)}`;
             
-            document.querySelectorAll('.ticket-link').forEach(link => 
-                link.classList.remove('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'z-10')
-            );
+            // Limpiar estados activos
+            document.querySelectorAll('.ticket-link').forEach(link => {
+                link.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/20', 'border-l-indigo-600');
+                const indicator = link.querySelector('.ticket-active-indicator');
+                if (indicator) indicator.classList.replace('scale-y-100', 'scale-y-0');
+            });
+
             const activeLink = document.querySelector(`[data-ticket-id="${ticketId}"]`);
             if (activeLink) {
-                activeLink.classList.add('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'z-10');
+                activeLink.classList.add('bg-indigo-50', 'dark:bg-indigo-900/20');
+                const indicator = activeLink.querySelector('.ticket-active-indicator');
+                if (indicator) {
+                    indicator.classList.replace('scale-y-0', 'scale-y-100');
+                    indicator.classList.remove('group-hover:scale-y-50');
+                }
             }
 
             document.dispatchEvent(new CustomEvent('ticketSelected', {
@@ -171,8 +246,12 @@ if (clerkUserId) {
                 const userName = target.dataset.userName;
                 
                 if (ticketId && userName) {
-                    history.pushState(null, '', `?ticketId=${ticketId}`);
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.set('ticketId', ticketId);
+                    window.history.pushState({}, '', newUrl);
                     activateChat(ticketId, userName);
+
+                    // Si estamos en móvil, podríamos querer ocultar la lista aquí
                 }
             });
         });

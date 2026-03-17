@@ -2,12 +2,12 @@
 // src/pages/dashboard/settings.astro
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 import LayoutDashboard from '../../layouts/LayoutDashboard.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 
 ---
 
 <LayoutDashboard title="🔒 Dashboard - ⚙️ Configuraciones">
-  <SignedIn>
+  <Show when="signed-in">
     <DashboardWrapper 
       title="Configuraciones" 
       subtitle="Personaliza tu experiencia en la plataforma"
@@ -160,7 +160,7 @@ import { SignedIn } from "@clerk/astro/components";
         </div>
       </div>
     </DashboardWrapper>
-  </SignedIn>
+  </Show>
 
   <script>
     function setupSettings() {
