@@ -27,7 +27,7 @@ astro.lock
 # environment variables
 .env
 .env.local
-.env.development
+.env.*
 
 # macOS-specific files
 .DS_Store

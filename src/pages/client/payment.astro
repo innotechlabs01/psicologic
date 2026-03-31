@@ -7,7 +7,7 @@ import PaymentHistory from '@components/Payment/PaymentHistory.astro';
 import PaymentStats from '@components/Payment/PaymentStats.astro';
 import { CreditCard, ShieldCheck, Zap, Info } from 'lucide-react';
 
-const refPayco = Astro.url.searchParams.get('ref_payco');
+const boldOrderId = Astro.url.searchParams.get('bold-order-id');
 const { userId } = Astro.locals.auth();
 
 if (!userId) {
@@ -25,6 +25,7 @@ const planName = isGameUser ? 'Plan Juegos' : 'Suscripción Premium';
 
 const isActive = paymentData.paymentInfo.isActive;
 const daysToNext = paymentData.paymentInfo.daysToNext || 0;
+const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
 ---
 
 <LayoutClient title="Facturación y Pagos">
@@ -37,9 +38,9 @@ const daysToNext = paymentData.paymentInfo.daysToNext || 0;
                 <!-- Columna Principal: Suscripción Actual -->
                 <div class="lg:col-span-2 space-y-8">
                     
-                    {refPayco && (
+                    {boldOrderId && (
                         <div class="mb-8">
-                            <PaymentStatus client:load refPayco={refPayco} userId={userId} />
+                            <PaymentStatus client:load orderId={boldOrderId} userId={userId} />
                         </div>
                     )}
 
@@ -89,15 +90,14 @@ const daysToNext = paymentData.paymentInfo.daysToNext || 0;
                             </div>
 
                             {!isActive || daysToNext <= 7 ? (
-                                <button 
-                                    id="payment-button"
-                                    class="group relative w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-lg uppercase tracking-widest transition-all duration-300 shadow-xl shadow-indigo-500/20 active:scale-[0.98]"
-                                >
-                                    <span class="flex items-center justify-center gap-3">
-                                        <CreditCard className="size-6 group-hover:rotate-12 transition-transform" />
-                                        Renovar Membresía con ePayco
-                                    </span>
-                                </button>
+                                <div id="bold-button-container">
+                                    <div id="bold-button-loading" class="group relative w-full py-5 bg-gray-400 text-white rounded-2xl font-black text-lg uppercase tracking-widest text-center">
+                                        <span class="flex items-center justify-center gap-3">
+                                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Preparando pago...
+                                        </span>
+                                    </div>
+                                </div>
                             ) : (
                                 <div class="p-6 rounded-2xl bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/30 flex items-center gap-4">
                                     <Info className="size-6 text-green-600 dark:text-green-400 shrink-0" />
@@ -121,11 +121,11 @@ const daysToNext = paymentData.paymentInfo.daysToNext || 0;
                         </div>
                         <h4 class="text-xl font-black mb-4 relative z-10">Pagos Seguros</h4>
                         <p class="text-indigo-100 text-sm leading-relaxed mb-6 opacity-90 relative z-10">
-                            Utilizamos ePayco para garantizar que tus transacciones estén protegidas con los más altos estándares de seguridad (PCI DSS).
+                            Utilizamos Bold para garantizar que tus transacciones estén protegidas con los más altos estándares de seguridad.
                         </p>
                         <div class="flex items-center gap-4 relative z-10">
-                            <div class="bg-white/20 p-2 rounded-lg">
-                                <img src="https://multimedia.epayco.co/epayco-landing/btns/epayco-logo-fondo-claro-lite.png" alt="ePayco" class="h-6 filter brightness-0 invert" />
+                            <div class="bg-white/20 px-4 py-2 rounded-lg">
+                                <span class="text-sm font-bold">Bold</span>
                             </div>
                         </div>
                     </div>
@@ -155,53 +155,49 @@ const daysToNext = paymentData.paymentInfo.daysToNext || 0;
     </Show>
 </LayoutClient>
 
-<script type="text/javascript" src="https://checkout.epayco.co/checkout.js"></script>
+<!-- Script de Bold Payment Button -->
+<script src="https://checkout.bold.co/library/boldPaymentButton.js" is:inline></script>
 
-<script is:inline define:vars={{ paymentAmount, userId }}>
-  const button = document.getElementById('payment-button');
+<script is:inline define:vars={{ paymentAmount, userId, BOLD_API_KEY }}>
+  const container = document.getElementById('bold-button-container');
+  const loadingEl = document.getElementById('bold-button-loading');
 
-  if (button) {
-    button.addEventListener('click', async () => {
-        const originalContent = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<span class="flex items-center justify-center gap-3"><svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Conectando con ePayco...</span>';
-        
-        try {
-            const response = await fetch('/api/epayCO/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: 'Membresía Psicologic',
-                    description: 'Acceso Premium a la plataforma Psicologic',
-                    invoice: `PS-REG-${Date.now()}`,
-                    currency: 'cop',
-                    amount: paymentAmount,
-                    tax_base: '0',
-                    tax: '0',
-                    country: 'co',
-                    lang: 'es',
-                    external: 'false',
-                    extra1: userId, // Pasamos el userId para identificarlo en la confirmación
-                    confirm: '/api/epayCO/confirmacion',
-                    response: '/client/payment',
-                }),
-            });
+  if (container && loadingEl) {
+    (async () => {
+      try {
+        const orderId = `PS-REG-${Date.now()}`;
 
-            const { checkoutData, publicKey, isTest } = await response.json();
+        // Obtener la firma de integridad desde el backend
+        const sigRes = await fetch('/api/bold/create-signature', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, amount: paymentAmount }),
+        });
 
-            const handler = ePayco.checkout.configure({
-                key: publicKey,
-                test: isTest,
-            });
+        const { signature } = await sigRes.json();
 
-            handler.open(checkoutData);
-        } catch (error) {
-            console.error('Error al iniciar pago:', error);
-            alert('No se pudo iniciar el proceso de pago. Intenta de nuevo más tarde.');
-        } finally {
-            button.disabled = false;
-            button.innerHTML = originalContent;
+        // Ocultar loading y crear el script del botón Bold
+        loadingEl.remove();
+
+        const script = document.createElement('script');
+        script.setAttribute('data-bold-button', 'dark-L');
+        script.setAttribute('data-api-key', BOLD_API_KEY);
+        script.setAttribute('data-order-id', orderId);
+        script.setAttribute('data-currency', 'COP');
+        script.setAttribute('data-amount', paymentAmount);
+        script.setAttribute('data-integrity-signature', signature);
+        script.setAttribute('data-redirection-url', `${window.location.origin}/client/payment`);
+        script.setAttribute('data-description', 'Membresía Psicologic');
+        script.setAttribute('data-tax', 'vat-19');
+        script.setAttribute('data-extra-data-1', userId);
+
+        container.appendChild(script);
+      } catch (error) {
+        console.error('Error al preparar el pago con Bold:', error);
+        if (loadingEl) {
+          loadingEl.innerHTML = '<span class="flex items-center justify-center gap-3">Error al preparar el pago. Intenta de nuevo.</span>';
         }
-    });
+      }
+    })();
   }
 </script>

@@ -155,7 +155,7 @@ export class PaymentService {
           transaction_date: paymentDate,
           amount: item.amount as string,
           status: status,
-          payment_method: 'epayCO',
+          payment_method: 'bold',
           subscription_period_start: paymentDate,
           subscription_period_end: nextPaymentDate,
         })

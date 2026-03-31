@@ -1,6 +1,7 @@
 ---
 import Footer from "../components/Footer/footer.astro";
 import HeaderClient from "../components/Header/headerClient.astro";
+import { Analytics } from "@vercel/analytics/react";
 
 import ToastRoot from "../components/Toast/ToastRoot";
 import SkeletonManager from "../components/Skeleton/SkeletonManager.astro";
@@ -19,6 +20,7 @@ const { title, skeletonType } = Astro.props;
     <link rel="stylesheet" href="/css/main.css" />
     <title>{title}</title>
     <ClientRouter />
+    <Analytics />
   </head>
   <body class="min-h-screen bg-gray-100 dark:bg-gray-900">
     <!-- Barrita de carga premium -->
