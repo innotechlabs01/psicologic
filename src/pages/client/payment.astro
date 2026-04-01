@@ -6,6 +6,7 @@ import PaymentStatus from "../../components/Payment/js/PaymentStatus.tsx";
 import PaymentHistory from "@components/Payment/PaymentHistory.astro";
 import PaymentStats from "@components/Payment/PaymentStats.astro";
 import { CreditCard, ShieldCheck, Zap, Info } from "lucide-react";
+import { PaymentService } from "../../lib/services/paymentService";
 
 const boldOrderId = Astro.url.searchParams.get("bold-order-id");
 const { userId } = Astro.locals.auth();
@@ -14,7 +15,6 @@ if (!userId) {
     return Astro.redirect("/login");
 }
 
-// Obtener datos de pago desde la API interna
 let paymentData = {
     paymentInfo: {
         paymentId: "",
@@ -32,12 +32,9 @@ let paymentData = {
 };
 
 try {
-    const response = await fetch(
-        `${Astro.url.origin}/api/payment/status/${userId}`,
-    );
-    if (response.ok) {
-        paymentData = await response.json();
-    }
+    const paymentInfo = await PaymentService.getUserPaymentInfo(userId);
+    const paymentHistory = await PaymentService.getPaymentHistory(userId);
+    paymentData = { paymentInfo, paymentHistory };
 } catch (error) {
     console.error("Error fetching payment data:", error);
 }
