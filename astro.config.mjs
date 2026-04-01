@@ -12,7 +12,7 @@ export default defineConfig({
   output: 'server',
 
   adapter: vercel({
-    edgeMiddleware: false // ⛔ evita edge si no lo necesitas (más estable)
+    edgeMiddleware: false
   }),
 
   integrations: [
@@ -23,11 +23,19 @@ export default defineConfig({
     }),
 
     react({
-      // ⚡ react 18 optimizado
       experimentalReactChildren: true,
       fastRefresh: true
     })
   ],
+
+  image: {
+    service: {
+      entrypoint: 'astro/assets/services/sharp',
+      config: {
+        limitInputPixels: false
+      }
+    }
+  },
 
   vite: {
     plugins: [tailwindcss()],
@@ -46,7 +54,6 @@ export default defineConfig({
     }
   },
 
-  // ⚡ Prefetch inteligente
   prefetch: {
     defaultStrategy: 'viewport'
   }

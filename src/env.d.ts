@@ -13,13 +13,10 @@ declare namespace astroHTML.JSX {
 interface ImportMetaEnv {
   readonly MP_ACCESS_TOKEN: string;
   readonly BASE_PATH: string;
-  
-  // ePayco
-  readonly EPAYCO_PUBLIC_KEY: string;
-  readonly EPAYCO_PRIVATE_KEY: string;
-  readonly EPAYCO_P_KEY: string;
-  readonly EPAYCO_P_CUST_ID_CLIENTE: string;
-  readonly IsTest: boolean;
+
+  // Bold
+  readonly BOLD_API_KEY: string;
+  readonly BOLD_SECRET_KEY: string;
 }
 
 interface ImportMeta {
