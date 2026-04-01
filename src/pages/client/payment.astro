@@ -27,9 +27,8 @@ let paymentData = {
         subscriptionStatus: "trial",
         isActive: true,
         isGameUser: false,
-        isActive: true
     },
-    paymentHistory: []
+    paymentHistory: [],
 };
 
 try {
@@ -301,7 +300,8 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
 </LayoutClient>
 
 <!-- Script de Bold Payment Button -->
-<script src="https://checkout.bold.co/library/boldPaymentButton.js" is:inline></script>
+<script src="https://checkout.bold.co/library/boldPaymentButton.js" is:inline
+></script>
 
 <script is:inline define:vars={{ paymentAmount, userId, BOLD_API_KEY }}>
     const container = document.getElementById("bold-button-container");
@@ -321,7 +321,9 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                 const { signature } = await sigRes.json();
 
                 if (!signature) {
-                    throw new Error("No se pudo obtener la firma de integridad");
+                    throw new Error(
+                        "No se pudo obtener la firma de integridad",
+                    );
                 }
 
                 loadingEl.remove();
