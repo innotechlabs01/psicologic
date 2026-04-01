@@ -6,7 +6,7 @@ export const Contanst = {
 }
 
 export interface PropsPaymentStatus {
-  refPayco: string | null;
+  orderId: string | null;
   userId: string | null;
 }
 
@@ -18,9 +18,11 @@ export interface MenuClient {
     status: boolean;
 }
 
-export const ESTADOS = {
-  1: 'Aprobado',
-  2: 'Rechazado',
-  3: 'Pendiente',
-  4: 'Fallido',
+export const ESTADOS: Record<string, string> = {
+  'APPROVED': 'Aprobado',
+  'REJECTED': 'Rechazado',
+  'PENDING': 'Pendiente',
+  'PROCESSING': 'Pendiente',
+  'FAILED': 'Fallido',
+  'VOIDED': 'Anulado',
 }
