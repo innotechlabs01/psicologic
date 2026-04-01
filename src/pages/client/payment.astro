@@ -55,7 +55,7 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
             title="Centro de Facturación"
             subtitle="Gestiona tu membresía y consulta tus transacciones de forma segura"
         >
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mt-4 sm:mt-6">
                 <!-- Columna Principal: Suscripción Actual -->
                 <div class="lg:col-span-2 space-y-8">
                     {
@@ -71,7 +71,7 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                     }
 
                     <div
-                        class="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 md:p-10 shadow-xl border border-gray-100 dark:border-gray-800 relative overflow-hidden"
+                        class="bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 lg:p-8 shadow-xl border border-gray-100 dark:border-gray-800 relative overflow-hidden"
                     >
                         <!-- Glow decorativo -->
                         <div
@@ -97,14 +97,14 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                                         }
                                     </span>
                                     <h3
-                                        class="text-3xl font-black text-gray-900 dark:text-white tracking-tight"
+                                        class="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 dark:text-white tracking-tight"
                                     >
                                         {planName}
                                     </h3>
                                 </div>
                                 <div class="text-left md:text-right">
                                     <div
-                                        class="text-4xl font-black text-gray-900 dark:text-white mb-1"
+                                        class="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 dark:text-white mb-1"
                                     >
                                         ${
                                             new Intl.NumberFormat(
