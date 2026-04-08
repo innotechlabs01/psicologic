@@ -1,4 +1,5 @@
 ---
+import LayoutClient from '../../../../layouts/LayoutClient.astro';
 import FormRenderer from '../../../../components/Client/history/FormRenderer.jsx';
 import { createClient } from '@libsql/client';
 
@@ -19,8 +20,8 @@ const structure = JSON.parse(template.rows[0].template?.toString() || '{}');
 const templateId = template.rows[0].id;
 ---
 
-<html>
-  <body>
+<LayoutClient title="Formulario de Historia">
+  <div class="min-h-[calc(100vh-8rem)] p-4 sm:p-6">
     <FormRenderer structure={structure} templateId={templateId} client:only="react" />
-  </body>
-</html>
+  </div>
+</LayoutClient>
