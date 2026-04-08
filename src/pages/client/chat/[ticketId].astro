@@ -69,7 +69,7 @@ const titleText = `Conversación: ${urlTicketId.substring(0, 8)}...`;
         title={titleText} 
         subtitle="Conversación activa de soporte"
         >
-            <div class="h-[75vh]">
+            <div class="h-[60vh] sm:h-[75vh]">
                 {/* 🎯 Solo muestra la interfaz si la autorización fue exitosa */}
                 {isAuthorized && currentUserId && (
                     <ChatInterface 
