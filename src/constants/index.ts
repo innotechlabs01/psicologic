@@ -8,6 +8,7 @@ export const Contanst = {
 export interface PropsPaymentStatus {
   orderId: string | null;
   userId: string | null;
+  initialStatus?: string | null;
 }
 
 

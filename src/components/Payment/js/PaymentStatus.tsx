@@ -4,12 +4,50 @@ import { toast } from 'react-toastify';
 import { CheckCircle2, XCircle, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import type { PropsPaymentStatus } from 'src/constants';
 
-export default function PaymentStatus({ orderId, userId }: PropsPaymentStatus) {
+export default function PaymentStatus({ orderId, userId, initialStatus }: PropsPaymentStatus) {
   const [status, setStatus] = useState<'loading' | 'approved' | 'rejected' | 'pending' | 'failed' | 'error'>('loading');
   const [processed, setProcessed] = useState(false);
 
   useEffect(() => {
     if (!orderId || orderId === 'undefined' || processed) return;
+
+    // If we already have status from URL (bold-tx-status), use it directly
+    if (initialStatus) {
+      const statusMap: Record<string, 'approved' | 'rejected' | 'pending' | 'failed'> = {
+        'approved': 'approved',
+        'rejected': 'rejected',
+        'pending': 'pending',
+        'failed': 'failed',
+      };
+      const mappedStatus = statusMap[initialStatus.toLowerCase()] || 'error';
+      
+      // Save payment to database when we have URL status
+      if (mappedStatus !== 'error' && userId) {
+        fetch('/api/bold/save-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            orderId, 
+            userId, 
+            status: mappedStatus 
+          })
+        }).catch(saveError => {
+          console.error('Error saving payment:', saveError);
+        });
+      }
+      
+      setStatus(mappedStatus);
+      
+      if (mappedStatus === 'approved') {
+        toast.success('¡Tu pago ha sido aprobado exitosamente!');
+      } else if (mappedStatus === 'pending') {
+        toast.warning('Tu pago está siendo procesado.');
+      } else {
+        toast.error('Hubo un problema con tu pago.');
+      }
+      setProcessed(true);
+      return;
+    }
 
     const validatePayment = async () => {
       try {
@@ -43,7 +81,7 @@ export default function PaymentStatus({ orderId, userId }: PropsPaymentStatus) {
     };
 
     validatePayment();
-  }, [orderId, userId, processed]);
+  }, [orderId, userId, processed, initialStatus]);
 
   if (!orderId || orderId === 'undefined') return null;
 

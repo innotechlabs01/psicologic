@@ -23,20 +23,38 @@ const saveStatusPayment = async (userId: string, paymentId: string, amount: numb
     const blockedPaymentDate = new Date(nextPaymentDate);
     blockedPaymentDate.setDate(nextPaymentDate.getDate() + 5);
 
-    await client.execute({
-      sql: `INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        paymentId,
-        userId,
-        amount,
-        status,
-        new Date().toISOString(),
-        nextPaymentDate.toISOString(),
-        blockedPaymentDate.toISOString(),
-        new Date().toISOString()
-      ]
+    // Check if payment already exists
+    const existingPayment = await client.execute({
+      sql: 'SELECT id FROM payments WHERE paymentId = ?',
+      args: [paymentId],
     });
+
+    if (existingPayment.rows.length > 0) {
+      // Update existing payment
+      await client.execute({
+        sql: `UPDATE payments SET status = ?, amount = ?, updated_at = ? WHERE paymentId = ?`,
+        args: [status, amount, new Date().toISOString(), paymentId],
+      });
+      console.log(`Payment ${paymentId} updated successfully`);
+    } else {
+      // Insert new payment
+      await client.execute({
+        sql: `INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          paymentId,
+          userId,
+          amount,
+          status,
+          new Date().toISOString(),
+          nextPaymentDate.toISOString(),
+          blockedPaymentDate.toISOString(),
+          new Date().toISOString(),
+          new Date().toISOString(),
+        ],
+      });
+      console.log(`Payment ${paymentId} created successfully`);
+    }
   } catch (error) {
     console.error('Error al guardar el estado de la transacción:', error);
   }

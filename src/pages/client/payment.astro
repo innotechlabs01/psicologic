@@ -9,6 +9,7 @@ import { CreditCard, ShieldCheck, Zap, Info } from "lucide-react";
 import { PaymentService } from "../../lib/services/paymentService";
 
 const boldOrderId = Astro.url.searchParams.get("bold-order-id");
+const boldTxStatus = Astro.url.searchParams.get("bold-tx-status");
 const { userId } = Astro.locals.auth();
 
 if (!userId) {
@@ -41,7 +42,7 @@ try {
 
 // Definir monto según tipo de usuario
 const isGameUser = Boolean(paymentData?.paymentInfo?.isGameUser);
-const paymentAmount = isGameUser ? "5000" : "140000";
+const paymentAmount = isGameUser ? "5000" : "150000";
 const planName = isGameUser ? "Plan Juegos" : "Suscripción Premium";
 
 const isActive = paymentData.paymentInfo.isActive;
@@ -65,6 +66,7 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                                     client:load
                                     orderId={boldOrderId}
                                     userId={userId}
+                                    initialStatus={boldTxStatus}
                                 />
                             </div>
                         )
@@ -339,6 +341,7 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                 script.setAttribute("data-description", "Membresía Psicologic");
                 script.setAttribute("data-tax", "vat-19");
                 script.setAttribute("data-extra-data-1", userId);
+                script.setAttribute("data-payment-methods", "PSE");
 
                 container.appendChild(script);
             } catch (error) {
