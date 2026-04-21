@@ -30,6 +30,7 @@ interface CreateEventDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     eventToEdit?: any;
+    onSuccess?: () => void;
 }
 
 /* --- UTILITIES --- */
@@ -48,7 +49,8 @@ const minutesToTime = (totalMinutes: number): string => {
 export function CreateEventDialog({
     open,
     onOpenChange,
-    eventToEdit
+    eventToEdit,
+    onSuccess
 }: CreateEventDialogProps) {
     const { addEvent, goToDate } = useCalendarStore();
     const { addEventToCache, invalidateCache } = useAgendaCache();
@@ -134,6 +136,10 @@ export function CreateEventDialog({
 
             // Actualización de caches y stores
             invalidateCache();
+
+            if (onSuccess) {
+                onSuccess();
+            }
 
             const eventData = {
                 ...payload,

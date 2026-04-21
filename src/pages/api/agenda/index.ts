@@ -102,7 +102,9 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
         };
 
         // Generate meeting link (pointing to the same app's video room)
-        const origin = import.meta.env.PUBLIC_SITE_URL || new URL(request.url).origin;
+        // Always use the host from the request
+        const origin = new URL(request.url).origin;
+
         newEvent.meetingLink = `${origin}/agenda/meet?token=${newEvent.secureToken}`;
 
         let created;

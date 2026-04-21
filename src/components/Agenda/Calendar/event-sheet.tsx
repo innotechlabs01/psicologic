@@ -77,8 +77,8 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             if (res.ok) {
                 toast.success("Cita eliminada correctamente");
                 setDeleteDialogOpen(false);
-                onOpenChange(false);
                 triggerRefresh();
+                setTimeout(() => onOpenChange(false), 300);
             } else {
                 toast.error("Error al eliminar la cita");
             }
@@ -114,8 +114,8 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             if (res.ok) {
                 toast.success("Cita duplicada correctamente");
                 setDuplicateOpen(false);
-                onOpenChange(false);
                 triggerRefresh();
+                setTimeout(() => onOpenChange(false), 300);
             } else {
                 toast.error("Error al duplicar la cita");
             }
@@ -159,6 +159,10 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                 open={editDialogOpen}
                 onOpenChange={setEditDialogOpen}
                 eventToEdit={event}
+                onSuccess={() => {
+                    setEditDialogOpen(false);
+                    onOpenChange(false);
+                }}
             />
 
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
