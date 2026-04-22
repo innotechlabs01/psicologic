@@ -43,7 +43,7 @@ export async function GetUserGameHeader({ userId, isGame = false }: { userId: st
           `
             insert into user_games (userId, menu, status) values (?, ?, ?)
           `,
-          [currentUser?.id, JSON.stringify({ menu: [{ id: 1, name: "Juego", slug: "juego", status: true, subItem: [{ "id": 1, "name": "cartas", "slug": "cartas", "status": true }, { "id": 2, "name": "miedo", "slug": "globe-alt", "status": true }] }, { "id": 2, "name": "payment", "slug": "payment", "status": true }] }), true]
+          [currentUser?.id, JSON.stringify({ menu: [{ id: 1, name: "Juego", slug: "juego", status: true, subItem: [{ "id": 1, "name": "cartas", "slug": "cartas", "status": true }, { "id": 2, "name": "miedo", "slug": "globe-alt", "status": true }, { "id": 3, "name": "emociones", "slug": "emociones", "status": true }] }, { "id": 2, "name": "payment", "slug": "payment", "status": true }] }), true]
         );
 
       } else {
@@ -51,7 +51,7 @@ export async function GetUserGameHeader({ userId, isGame = false }: { userId: st
           `
             insert into user_games (userId, menu, status) values (?, ?, ?)
           `,
-          [currentUser?.id, JSON.stringify({ menu: [{ id: 1, name: "users", slug: "users", status: true }, { id: 2, name: "agenda", slug: "history", status: true }, { id: 3, name: "Historia Clinica", slug: "history", status: true }, { id: 4, name: "Juego", slug: "juego", status: true, subItem: [{ "id": 1, "name": "cartas", "slug": "cartas", "status": true }, { "id": 2, "name": "miedo", "slug": "globe-alt", "status": true }] }, { "id": 5, "name": "payment", "slug": "payment", "status": true }, { id: 6, name: "message", slug: "message", status: true }, { id: 7, name: "feedback", slug: "feedback", status: true }, { id: 8, name: "Configuraciones", slug: "settings", status: true, subItem: [{ "id": 1, "name": "template", "slug": "cartas", "status": true }] }] }), true]
+          [currentUser?.id, JSON.stringify({ menu: [{ id: 1, name: "users", slug: "users", status: true }, { id: 2, name: "agenda", slug: "history", status: true }, { id: 3, name: "Historia Clinica", slug: "history", status: true }, { id: 4, name: "Juego", slug: "juego", status: true, subItem: [{ "id": 1, "name": "cartas", "slug": "cartas", "status": true }, { "id": 2, "name": "miedo", "slug": "globe-alt", "status": true }, { "id": 3, "name": "emociones", "slug": "emociones", "status": true }] }, { "id": 5, "name": "payment", "slug": "payment", "status": true }, { id: 6, name: "message", slug: "message", status: true }, { id: 7, name: "feedback", slug: "feedback", status: true }, { id: 8, name: "Configuraciones", slug: "settings", status: true, subItem: [{ "id": 1, "name": "template", "slug": "cartas", "status": true }] }] }), true]
         );
       }
 
@@ -83,41 +83,63 @@ export async function GetUserGameHeader({ userId, isGame = false }: { userId: st
       throw new Error('Menu data is invalid');
     }
 
-    // If requested as a game session, ensure game menu exists
-    if (isGame) {
-      try {
-        // Normalize menu to an array
-        let menuArray: any[] = [];
-        let isWrapped = false;
+    // Always ensure game menu exists and includes all games
+    try {
+      // Normalize menu to an array
+      let menuArray: any[] = [];
+      let isWrapped = false;
 
-        if (Array.isArray(menu)) {
-          menuArray = menu;
-        } else if (menu && typeof menu === 'object' && Array.isArray(menu.menu)) {
-          menuArray = menu.menu;
-          isWrapped = true;
-        }
-
-        const hasGame = menuArray.some((m: any) => m && m.slug === 'juego');
-
-        if (!hasGame) {
-          const gameMenu = { id: 1, name: "Juego", slug: "juego", status: true, subItem: [{ id: 1, name: "cartas", slug: "cartas", status: true }, { id: 2, name: "miedo", slug: "globe-alt", status: true }] };
-          menuArray.unshift(gameMenu);
-
-          // Re-wrap if it was wrapped, or just save the array if that's the convention you want to enforce.
-          // Based on the insert statements, it seems the intention is { menu: [...] }
-          const newMenuData = isWrapped ? { ...menu, menu: menuArray } : menuArray;
-
-          await client.execute(
-            `update user_games set menu = ? where userId = ?`,
-            [JSON.stringify(newMenuData), currentUser?.id]
-          );
-
-          // Update local variable to reflect change
-          menu = newMenuData;
-        }
-      } catch (err) {
-        console.error('Error ensuring game menu:', err);
+      if (Array.isArray(menu)) {
+        menuArray = menu;
+      } else if (menu && typeof menu === 'object' && Array.isArray(menu.menu)) {
+        menuArray = menu.menu;
+        isWrapped = true;
       }
+
+      const gameMenuIndex = menuArray.findIndex((m: any) => m && m.slug === 'juego');
+      const allGames = [
+        { id: 1, name: "cartas", slug: "cartas", status: true },
+        { id: 2, name: "miedo", slug: "globe-alt", status: true },
+        { id: 3, name: "emociones", slug: "emociones", status: true }
+      ];
+
+      let needsUpdate = false;
+
+      if (gameMenuIndex === -1) {
+        // Game menu doesn't exist, create it
+        const gameMenu = { id: 1, name: "Juego", slug: "juego", status: true, subItem: allGames };
+        menuArray.unshift(gameMenu);
+        needsUpdate = true;
+      } else {
+        // Game menu exists, ensure all games are included
+        const gameMenu = menuArray[gameMenuIndex];
+        if (!Array.isArray(gameMenu.subItem)) {
+          gameMenu.subItem = [];
+        }
+
+        // Check if each game exists in subItem, add if missing
+        for (const game of allGames) {
+          const gameExists = gameMenu.subItem.some((s: any) => s && s.name === game.name);
+          if (!gameExists) {
+            gameMenu.subItem.push(game);
+            needsUpdate = true;
+          }
+        }
+      }
+
+      if (needsUpdate) {
+        const newMenuData = isWrapped ? { ...menu, menu: menuArray } : menuArray;
+
+        await client.execute(
+          `update user_games set menu = ? where userId = ?`,
+          [JSON.stringify(newMenuData), currentUser?.id]
+        );
+
+        // Update local variable to reflect change
+        menu = newMenuData;
+      }
+    } catch (err) {
+      console.error('Error ensuring game menu:', err);
     }
 
     // Transform data to match expected format
