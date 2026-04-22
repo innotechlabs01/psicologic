@@ -118,8 +118,16 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
         if (created) {
             // Send Email asynchronously
             // Participants is an array of strings (emails)
-            import('../../../lib/email/email-service').then(({ sendBookingEmail }) => {
-                sendBookingEmail(body.participants, created);
+            import('../../../lib/email/email-service').then(async ({ sendBookingEmail }) => {
+                try {
+                    console.log('📧 Enviando email a:', body.participants);
+                    const emailSent = await sendBookingEmail(body.participants, created);
+                    console.log(emailSent ? '✅ Email enviado correctamente' : '❌ Error al enviar email');
+                } catch (emailError) {
+                    console.error('❌ Error en sendBookingEmail:', emailError);
+                }
+            }).catch((err) => {
+                console.error('❌ Error al importar email-service:', err);
             });
 
             return new Response(JSON.stringify(created), { status: 201 });
