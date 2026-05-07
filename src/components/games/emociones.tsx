@@ -20,7 +20,7 @@ const THEMES = {
     accentLight: "#bfdbfe",
     textDark: "#1e3a5f",
     bubbleColor: "rgba(59,130,246,0.12)",
-    emoji: "🌧",
+    emoji: "😔",
     tagline: "Sentir es parte de sanar",
   },
   alegria: {
@@ -35,7 +35,7 @@ const THEMES = {
     accentLight: "#fde68a",
     textDark: "#78350f",
     bubbleColor: "rgba(245,158,11,0.12)",
-    emoji: "✨",
+    emoji: "😄",
     tagline: "La alegría es contagiosa",
   },
   enfado: {
@@ -50,7 +50,7 @@ const THEMES = {
     accentLight: "#fecaca",
     textDark: "#7f1d1d",
     bubbleColor: "rgba(239,68,68,0.12)",
-    emoji: "🔥",
+    emoji: "😡",
     tagline: "Nombrar la ira la transforma",
   },
   amor: {
@@ -65,7 +65,7 @@ const THEMES = {
     accentLight: "#fbcfe8",
     textDark: "#831843",
     bubbleColor: "rgba(236,72,153,0.12)",
-    emoji: "🌸",
+    emoji: "🫶",
     tagline: "El amor también es hacia ti",
   },
   miedo: {
@@ -80,7 +80,7 @@ const THEMES = {
     accentLight: "#ddd6fe",
     textDark: "#3b0764",
     bubbleColor: "rgba(124,58,237,0.12)",
-    emoji: "🌙",
+    emoji: "😨",
     tagline: "El miedo también te cuida",
   },
   sorpresa: {
@@ -95,7 +95,7 @@ const THEMES = {
     accentLight: "#fdba74",
     textDark: "#7c2d12",
     bubbleColor: "rgba(249,115,22,0.12)",
-    emoji: "⚡",
+    emoji: "😲",
     tagline: "Lo inesperado abre puertas",
   },
   asco: {
@@ -110,7 +110,7 @@ const THEMES = {
     accentLight: "#a7f3d0",
     textDark: "#064e3b",
     bubbleColor: "rgba(16,185,129,0.12)",
-    emoji: "🌿",
+    emoji: "🤢",
     tagline: "Rechazar también es elegir",
   },
 };
@@ -119,49 +119,49 @@ const THEMES = {
 const CATEGORIAS = [
   {
     id: "tristeza",
-    emoji: "🌧",
+    emoji: "😔",
     name: "Tristeza",
     desc: "Pena · Vacío · Nostalgia",
     emociones: ["Abandono","Abatimiento","Aflicción","Agobio","Amargura","Apatía","Arrepentimiento","Congoja","Culpa","Decepción","Depresión","Derrota","Desaliento","Desánimo","Desconsuelo","Desesperanza","Desilusión","Desolación","Dolor","Duelo","Fracaso","Humillación","Melancolía","Nostalgia","Pena","Pesimismo","Remordimiento","Resignación","Soledad","Vacío"],
   },
   {
     id: "alegria",
-    emoji: "✨",
+    emoji: "😄",
     name: "Alegría",
     desc: "Gozo · Entusiasmo · Plenitud",
     emociones: ["Alivio","Ánimo","Bienestar","Calma","Contento","Deleite","Dicha","Disfrute","Diversión","Entusiasmo","Esperanza","Euforia","Felicidad","Gozo","Ilusión","Inspiración","Júbilo","Motivación","Optimismo","Pasión","Placer","Plenitud","Satisfacción","Tranquilidad","Triunfo","Vivacidad"],
   },
   {
     id: "enfado",
-    emoji: "🔥",
+    emoji: "😡",
     name: "Enfado",
     desc: "Ira · Frustración · Rabia",
     emociones: ["Agresividad","Cólera","Coraje","Despecho","Disgusto","Enojo","Envidia","Estrés","Exasperación","Fastidio","Frustración","Furia","Hostilidad","Impaciencia","Indignación","Ira","Irritabilidad","Malhumor","Molestia","Odio","Rabia","Rencor","Resentimiento","Traición","Venganza"],
   },
   {
     id: "amor",
-    emoji: "🌸",
+    emoji: "🫶",
     name: "Amor",
     desc: "Afecto · Empatía · Conexión",
     emociones: ["Aceptación","Admiración","Adoración","Afecto","Agradecimiento","Amabilidad","Apego","Apoyo","Atracción","Bondad","Cariño","Compasión","Comprensión","Confianza","Cuidado","Deseo","Empatía","Generosidad","Gratitud","Intimidad","Paciencia","Paz","Respeto","Seguridad","Ternura"],
   },
   {
     id: "miedo",
-    emoji: "🌙",
+    emoji: "😨",
     name: "Miedo",
     desc: "Ansiedad · Inseguridad · Pavor",
     emociones: ["Alarma","Angustia","Ansiedad","Aprensión","Cautela","Desasosiego","Desconfianza","Espanto","Fobia","Horror","Indefensión","Inseguridad","Inquietud","Intimidación","Nerviosismo","Pánico","Pavor","Preocupación","Susto","Temor","Terror","Timidez","Vergüenza","Vulnerabilidad"],
   },
   {
     id: "sorpresa",
-    emoji: "⚡",
+    emoji: "😲",
     name: "Sorpresa",
     desc: "Asombro · Confusión · Duda",
     emociones: ["Alteración","Ambivalencia","Asombro","Aturdimiento","Confusión","Curiosidad","Desconcierto","Duda","Estupefacción","Expectación","Extrañeza","Impacto","Incredulidad","Intriga","Maravilla","Pasmo","Perplejidad","Shock","Sobresalto","Vacilación"],
   },
   {
     id: "asco",
-    emoji: "🌿",
+    emoji: "🤢",
     name: "Asco",
     desc: "Rechazo · Aversión · Repulsión",
     emociones: ["Aborrecimiento","Antipatía","Aversión","Censura","Desagrado","Desprecio","Distanciamiento","Grima","Hastío","Intolerancia","Náusea","Rechazo","Repudio","Repugnancia","Repulsión"],
@@ -311,7 +311,6 @@ function StepEmociones({ cat, selected, onToggle, onBack, onNext }) {
         ← Volver
       </button>
 
-      {/* Header */}
       <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 24 }}>
         <div style={{
           width: 56, height: 56, borderRadius: 16, background: t.gradient,
@@ -330,7 +329,6 @@ function StepEmociones({ cat, selected, onToggle, onBack, onNext }) {
         </div>
       </div>
 
-      {/* Counter */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 6 }}>
           {[0,1,2].map(i => (
@@ -346,7 +344,6 @@ function StepEmociones({ cat, selected, onToggle, onBack, onNext }) {
         </span>
       </div>
 
-      {/* Pills */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, overflowY: "auto", flex: 1, paddingBottom: 16 }}>
         {cat.emociones.map((e) => {
           const isActive = selected.includes(e);
@@ -487,7 +484,6 @@ function StepResultado({ cat, principal, seleccionadas, onReiniciar }) {
 
   return (
     <div style={{ animation: "fadeUp 0.5s ease", display: "flex", flexDirection: "column", height: "100%", gap: 16 }}>
-      {/* Insight card */}
       <div style={{
         background: t.gradient,
         borderRadius: 24, padding: "28px 28px 24px", position: "relative", overflow: "hidden",
@@ -515,7 +511,6 @@ function StepResultado({ cat, principal, seleccionadas, onReiniciar }) {
             </div>
           </div>
 
-          {/* Other emotions */}
           {seleccionadas.filter(e => e !== principal).length > 0 && (
             <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
               {seleccionadas.filter(e => e !== principal).map(e => (
@@ -542,7 +537,6 @@ function StepResultado({ cat, principal, seleccionadas, onReiniciar }) {
         </div>
       </div>
 
-      {/* Reflection box */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#6b7280", marginBottom: 8 }}>
           ¿Qué detonó esta emoción? <span style={{ color: "#9ca3af" }}>(opcional)</span>

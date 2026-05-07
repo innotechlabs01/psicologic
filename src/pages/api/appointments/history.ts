@@ -1,10 +1,9 @@
-import type { APIRoute } from 'astro';
+import type { APIContext, APIRoute } from 'astro';
 import { getEventsByDateRange } from '../../../lib/turso/agenda/agenda-db';
-import { getAuth } from '@clerk/astro/server';
 
-export const GET: APIRoute = async (context) => {
+export const GET: APIRoute = async (context: APIContext) => {
   try {
-    const { userId } = await getAuth(context);
+    const { userId } = context.locals.auth();
 
     if (!userId) {
       console.error('[API] No userId found in auth');
@@ -14,7 +13,6 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
-    // Get query parameters
     const url = new URL(context.request.url);
     const queryUserId = url.searchParams.get('userId');
     const startDate = url.searchParams.get('startDate');
@@ -22,8 +20,7 @@ export const GET: APIRoute = async (context) => {
 
     console.log('[API] Request:', { queryUserId, startDate, endDate, authUserId: userId });
 
-    // Security: verify that the user is requesting their own data
-    // If queryUserId is provided, it must match auth userId
+
     if (queryUserId && queryUserId !== userId) {
       console.error('[API] User ID mismatch:', { queryUserId, authUserId: userId });
       return new Response(JSON.stringify({ error: 'Forbidden', message: 'User ID mismatch' }), {
@@ -43,7 +40,6 @@ export const GET: APIRoute = async (context) => {
       );
     }
 
-    // Fetch appointments from database using authenticated userId
     console.log('[API] Fetching appointments for:', { userId, startDate, endDate });
     const appointments = await getEventsByDateRange(startDate, endDate, userId);
 
