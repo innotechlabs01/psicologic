@@ -3,7 +3,6 @@
 import { format } from "date-fns";
 import {
     Pen,
-    FileText,
     Layers,
     Trash2,
     X,
@@ -162,6 +161,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                 onSuccess={() => {
                     setEditDialogOpen(false);
                     onOpenChange(false);
+                    triggerRefresh();
                 }}
             />
 
@@ -201,10 +201,6 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                                     >
                                         <Pen className="size-4 text-muted-foreground" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="size-8 hover:bg-muted">
-                                        <FileText className="size-4 text-muted-foreground" />
-                                    </Button>
-
                                     <Popover open={duplicateOpen} onOpenChange={setDuplicateOpen}>
                                         <PopoverTrigger asChild>
                                             <Button variant="ghost" size="icon" className="size-8 hover:bg-muted">
