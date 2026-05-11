@@ -178,7 +178,7 @@ const NEEDS = {
   asco: "Escúchate: tu rechazo señala algo que importa.",
 };
 
-// ─── Floating blobs background ────────────────────────────────────────────────
+
 function Blobs({ theme }) {
   const t = THEMES[theme] || {};
   return (
