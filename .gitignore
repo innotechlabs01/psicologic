@@ -49,3 +49,5 @@ astro.lock
 
 # PDF
 public/pdfs/
+
+env.*
