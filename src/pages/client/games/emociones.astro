@@ -1,21 +1,18 @@
 ---
-import CartasGame from "@components/games/cartas";
+import EmotionsGame from "@components/games/emociones";
 import DashboardWrapper from "../../../components/Dashboard/DashboardWrapper.astro";
 import LayoutClient from "../../../layouts/LayoutClient.astro";
 import { SignedIn } from "@clerk/astro/components";
 export const prerender = false;
 ---
 
-<LayoutClient title="🃏 Cartas">
+<LayoutClient title="Emociones">
   <SignedIn>
     <DashboardWrapper
-      title="🃏 Jugamos"
-      subtitle="Anímate a jugar y compartir con tu pareja"
+      title="Emociones"
+      subtitle="Anímate a jugar y descubre cómo las emociones pueden ser divertidas y educativas al mismo tiempo."
     >
-
-    <CartasGame client:load/>
-      
+    <EmotionsGame client:only/>
     </DashboardWrapper>
   </SignedIn>
 </LayoutClient>
-

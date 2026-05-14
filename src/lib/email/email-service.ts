@@ -22,6 +22,10 @@ export async function sendBookingEmail(to: string | string[], bookingDetails: an
         const description = `Unirse a la videollamada: ${meetingLink}`;
         const location = 'Videollamada (Psicologic)';
 
+        // URL de confirmación con el token seguro
+        const siteUrl = import.meta.env.SITE_URL || 'http://localhost:4321';
+        const confirmUrl = `${siteUrl}/agenda/confirm?token=${secureToken}`;
+
         const icsContent = generateICSContent({
             date, startTime, endTime,
             title: eventTitle,
@@ -47,34 +51,96 @@ export async function sendBookingEmail(to: string | string[], bookingDetails: an
                 },
             ],
             html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #8A2BE2;">¡Cita Confirmada!</h2>
-                    <p>Hola,</p>
-                    <p>Tu cita <strong>${eventTitle}</strong> ha sido reservada con éxito.</p>
-                    
-                    <div style="background-color: #F8F9FA; padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 5px solid #8A2BE2;">
-                        <p style="margin: 8px 0; font-size: 16px;"><strong>📅 Fecha:</strong> ${date}</p>
-                        <p style="margin: 8px 0; font-size: 16px;"><strong>⏰ Hora:</strong> ${startTime} - ${endTime || ''}</p>
-                        <p style="margin: 8px 0; font-size: 14px; color: #666;"><strong>🔒 Token:</strong> ${secureToken}</p>
-                    </div>
+                <div style="font-family: Arial, sans-serif; background: #f4f4f5; padding: 32px 16px; margin: 0;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e4e4e7;">
 
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${meetingLink}" style="display: inline-block; background-color: #8A2BE2; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Unirse a la Videollamada</a>
-                    </div>
-                    
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <a href="${googleCalendarLink}" style="display: inline-block; color: #444; text-decoration: none; border: 1px solid #ddd; padding: 10px 20px; border-radius: 6px; font-size: 14px;">
-                            📅 Agregar a Google Calendar
-                        </a>
-                    </div>
+    <!-- Header -->
+    <div style="background: #6B21A8; padding: 32px 32px 24px; text-align: center;">
+      <p style="margin: 0 0 6px; font-size: 12px; color: #DDD6FE; letter-spacing: 0.08em; text-transform: uppercase;">Psicologic</p>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600; color: #ffffff;">Cita confirmada</h1>
+    </div>
 
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                    
-                    <p style="font-size: 12px; color: #888; text-align: center;">
-                        Si el botón no funciona, copia y pega este enlace: <br/>
-                        <a href="${meetingLink}" style="color: #8A2BE2;">${meetingLink}</a>
-                    </p>
-                </div>
+    <!-- Check icon -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: -20px; margin-bottom: 8px;">
+    <tr>
+        <td align="center">
+        <span style="display: inline-block; width: 40px; height: 40px; border-radius: 50%; background: #22c55e; border: 3px solid #ffffff; text-align: center; line-height: 40px; font-size: 20px; color: white;">✓</span>
+        </td>
+    </tr>
+    </table>
+
+    <!-- Body -->
+    <div style="padding: 16px 32px 24px;">
+      <p style="font-size: 15px; color: #374151; margin: 0 0 24px;">Hola, tu cita <strong>${eventTitle}</strong> ha sido reservada con éxito.</p>
+
+      <!-- Details card -->
+      <div style="background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; padding: 20px; margin-bottom: 24px;">
+        <p style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px;">Detalles de la cita</p>
+
+        <table style="width: 100%; border-collapse: collapse;">
+         <tr>
+                <td style="padding: 8px 12px 8px 0; vertical-align: middle; width: 38px; text-align: center;">
+                    <span style="display: inline-block; width: 30px; height: 30px; background: #EDE9FE; border-radius: 6px; text-align: center; line-height: 30px; font-size: 16px;">📅</span>
+                </td>
+                <td style="padding: 8px 0; vertical-align: middle;">
+                    <p style="margin: 0; font-size: 11px; color: #9ca3af;">Fecha</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111827;">${date}</p>
+                </td>
+                </tr>
+
+                <tr>
+                <td style="padding: 8px 12px 8px 0; vertical-align: middle; width: 38px; text-align: center;">
+                    <span style="display: inline-block; width: 30px; height: 30px; background: #EDE9FE; border-radius: 6px; text-align: center; line-height: 30px; font-size: 16px;">⏰</span>
+                </td>
+                <td style="padding: 8px 0; vertical-align: middle;">
+                    <p style="margin: 0; font-size: 11px; color: #9ca3af;">Hora</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 600; color: #111827;">${startTime} – ${endTime}</p>
+                </td>
+                </tr>
+
+                <tr>
+                <td style="padding: 8px 12px 8px 0; vertical-align: middle; width: 38px; text-align: center;">
+                    <span style="display: inline-block; width: 30px; height: 30px; background: #EDE9FE; border-radius: 6px; text-align: center; line-height: 30px; font-size: 16px;">🔑</span>
+                </td>
+                <td style="padding: 8px 0; vertical-align: middle;">
+                    <p style="margin: 0; font-size: 11px; color: #9ca3af;">Token de seguridad</p>
+                    <p style="margin: 0; font-size: 13px; font-weight: 600; color: #111827; font-family: monospace; letter-spacing: 0.05em;">${secureToken}</p>
+                </td>
+            </tr>
+        </table>
+      </div>
+
+      <!-- Primary CTA -->
+      <div style="text-align: center; margin-bottom: 12px;">
+        <a href="${confirmUrl}" style="display: inline-block; background: #22c55e; color: #ffffff; padding: 14px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px;">
+          ✅ Confirmar asistencia
+        </a>
+      </div>
+
+      <!-- Secondary CTAs -->
+      <div style="text-align: center; margin-bottom: 24px;">
+        <a href="${meetingLink}" style="display: inline-block; background: #6B21A8; color: #ffffff; padding: 10px 22px; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 600; margin: 4px;">
+          🎥 Unirse a la videollamada
+        </a>
+        <a href="${googleCalendarLink}" style="display: inline-block; background: #ffffff; color: #374151; padding: 10px 22px; text-decoration: none; border-radius: 8px; font-size: 14px; border: 1px solid #d1d5db; margin: 4px;">
+          📅 Google Calendar
+        </a>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 0 16px;">
+      <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0;">
+        Si los botones no funcionan, copia este enlace:<br/>
+        <a href="${meetingLink}" style="color: #6B21A8;">${meetingLink}</a>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f9fafb; border-top: 1px solid #e5e7eb; padding: 16px 32px; text-align: center;">
+      <p style="font-size: 12px; color: #9ca3af; margin: 0;">© 2025 Psicologic · Mensaje generado automáticamente</p>
+    </div>
+
+  </div>
+</div>
             `,
         });
 

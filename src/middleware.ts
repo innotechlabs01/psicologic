@@ -14,7 +14,6 @@ const client = createClient({
   authToken: import.meta.env.TURSO_AUTH_TOKEN
 });
 
-// Function to get role by userId
 async function getUserRole(userId: string): Promise<string> {
   try {
     const result = await client.execute(
@@ -23,28 +22,24 @@ async function getUserRole(userId: string): Promise<string> {
     );
 
     if (!result.rows || result.rows.length === 0) {
-      return Promise.resolve(""); // fallback role
+      return Promise.resolve("");
     }
 
     return Promise.resolve(String(result.rows[0].role || ""));
   } catch (err) {
     console.error("❌ Exception getting role:", err);
-    return Promise.reject(""); // fallback role
+    return Promise.reject("");
   }
 }
 
-// Helper to handle background tasks in serverless environments
 function waitUntil(context: APIContext, promise: Promise<any>) {
   // @ts-ignore - Vercel/Cloudflare specific
   if (context.locals?.waitUntil) {
     // @ts-ignore
     context.locals.waitUntil(promise);
   } else if (import.meta.env.DEV) {
-    // In dev, just let it run
     promise.catch(e => console.error("Background task failed:", e));
   } else {
-    // Fallback: try to run it but it might be cancelled. 
-    // For critical logs we might want to await, but for stats we skip.
     promise.catch(e => console.error("Background task failed:", e));
   }
 }
@@ -57,10 +52,9 @@ function asyncLogAccessEvent(
   route: string,
   metadata?: Record<string, any>
 ) {
-  // Return the promise so it can be awaited IF NEEDED, but mostly we will pass it to waitUntil
   const promise = triggerUserAccessEvent({
     userId,
-    email: '', // Se obtendrá en el webhook
+    email: '',
     action,
     route,
     role: orgRole,
@@ -73,14 +67,12 @@ function asyncLogAccessEvent(
       ...metadata
     }
   }).catch(error => {
-    // Logging silencioso para no afectar el middleware
     console.warn('Error registrando evento (no crítico):', error?.message || error);
   });
 
   return promise;
 }
 
-// Helper: parse cookies from header into an object
 function parseCookies(cookieHeader?: string) {
   return (cookieHeader || '').split(';').map(c => c.trim()).reduce<Record<string, string>>((acc, kv) => {
     if (!kv) return acc;
@@ -93,7 +85,6 @@ function parseCookies(cookieHeader?: string) {
 
 function redirectToRoute(route: string, message: string, status: number = 302) {
   console.log(`🔄 REDIRECT: ${message} -> ${route} (Status: ${status})`);
-  // Codificar el mensaje para pasarlo como query param
   const encodedMessage = encodeURIComponent(message);
   const redirectUrl = message ? `${route}?message=${encodedMessage}` : route;
   return new Response(null, {
@@ -109,32 +100,40 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
   const { userId, sessionId, orgRole } = auth();
   const currentPath = new URL(context.request.url).pathname;
 
+  // ✅ PRIMERO: dejar pasar archivos estáticos, APIs y rutas públicas sin ningún check
+  if (
+    currentPath.startsWith('/api/') ||
+    currentPath.startsWith('/_') ||
+    currentPath.includes('.') ||
+    currentPath === '/favicon.ico' ||
+    currentPath === '/error' ||
+    currentPath.startsWith('/agenda/meet') ||
+    currentPath.startsWith('/agenda/confirm')
+  ) {
+    return next();
+  }
+
   const cookies = parseCookies(context.request.headers.get('cookie') ?? '');
   const authSource = cookies['auth_source'];
   const isGameLogin = typeof authSource === 'string' && authSource.startsWith('game:');
   const gameId = isGameLogin ? authSource.split(':')[1] : null;
 
-  if (!userId && (currentPath.startsWith('/client') || currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin') || (currentPath.startsWith('/agenda') && !currentPath.startsWith('/agenda/meet')))) {
+  // Redirigir a login si no hay sesión en rutas protegidas
+  if (!userId && (
+    currentPath.startsWith('/client') ||
+    currentPath.startsWith('/dashboard') ||
+    currentPath.startsWith('/admin') ||
+    currentPath.startsWith('/agenda')
+  )) {
     return redirectToRoute('/', 'Debes iniciar sesión');
   }
 
-  if ((!userId && currentPath === '/') || currentPath === '/error' || currentPath.startsWith('/agenda/meet')) {
+  // Página raíz sin sesión: pasar
+  if (!userId && currentPath === '/') {
     return next();
   }
 
-  if (currentPath === '/error') {
-    return next();
-  }
-
-  // Omitir archivos estáticos y APIs
-  if (currentPath.startsWith('/api/') ||
-    currentPath.startsWith('/_') ||
-    currentPath.includes('.') ||
-    currentPath === '/favicon.ico') {
-    return next();
-  }
-
-  // ⚡ PERFORMANCE OPTIMIZATION: Do not await logging
+  // ⚡ Log de acceso
   waitUntil(context, asyncLogAccessEvent(
     context,
     userId ?? 'anonymous',
@@ -144,12 +143,10 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     { sessionId, authenticated: true }
   ));
 
-  // Si el flujo de login viene de un juego, y ya está autenticado, validar acceso al juego
+  // Validar acceso a juego
   if (isGameLogin && userId) {
     const allowed = await checkUserGameAccess(userId, gameId);
     if (!allowed) {
-      // Critical log: maybe await this one? Or just fire and return.
-      // Since we are redirecting, we should try to ensure it runs, but for speed we will use waitUntil too.
       waitUntil(context, asyncLogAccessEvent(
         context,
         userId ?? 'anonymous',
@@ -165,12 +162,6 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
   }
 
   let newAssignedRole = "";
-
-  // ----------------------------------------------------
-  // 🚩 VALIDACIÓN DE PAGO (Acceso Restringido)
-  // ----------------------------------------------------
-  // Optimization: Run checks in parallel if they don't depend on each other?
-  // But InsertUsers depends on org:admin check? No.
 
   const paymentCheckPromise = checkUserPaymentAccess(userId ?? "");
   let adminInsertPromise: Promise<void | string> = Promise.resolve();
@@ -194,18 +185,13 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       { reason: 'payment_required', daysRemaining, isExpired }
     ));
 
-    // Si la cuenta está vencida (isExpired = true), mostrar mensaje de contactar a administración
     if (isExpired) {
       return redirectToRoute('/', 'Su cuenta ha vencido. Por favor comuníquese con administración para habilitar su cuenta.');
     }
-    // Si aún está en período de gracia pero sin acceso, mostrar mensaje de pago pendiente
     return redirectToRoute('/', `Acceso restringido - por favor complete su pago (${daysRemaining} días restantes)`);
   }
 
-  // Note: handleInsertUsersAdmin was already awaited in parallel above if role is admin
-
   if (!orgRole) {
-    // ✅ safely use await
     newAssignedRole = await getUserRole(userId ?? "");
 
     if (!newAssignedRole) {
@@ -227,7 +213,6 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     newAssignedRole = orgRole;
   }
 
-
   if (newAssignedRole === "org:admin") {
     if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin')) {
       return next();
@@ -241,9 +226,7 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       '/dashboard',
       { fromRoute: currentPath, targetRole: 'admin', role: newAssignedRole }
     ));
-    const res = redirectToRoute('/dashboard', 'Redirigiendo a dashboard');
-
-    return res;
+    return redirectToRoute('/dashboard', 'Redirigiendo a dashboard');
   }
 
   if (newAssignedRole === "org:client" || newAssignedRole === "org:moderator") {
@@ -260,12 +243,10 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
       '/client',
       { fromRoute: currentPath, targetRole: 'client', role: newAssignedRole }
     ));
-    const resClient = redirectToRoute('/client', 'Redirigiendo a client');
-
-    return resClient;
+    return redirectToRoute('/client', 'Redirigiendo a client');
   }
 
-  // Si llega aquí, rol no reconocido
+  // Rol no reconocido
   waitUntil(context, asyncLogAccessEvent(
     context,
     userId ?? 'anonymous',
@@ -274,7 +255,5 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
     currentPath,
     { reason: 'unrecognized_role', role: newAssignedRole }
   ));
-  const res = redirectToRoute('/', 'Rol de usuario no válido');
-
-  return res;
+  return redirectToRoute('/', 'Rol de usuario no válido');
 });
