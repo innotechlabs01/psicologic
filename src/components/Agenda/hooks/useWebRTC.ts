@@ -191,16 +191,21 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
                 let lastId = 0;
                 
                 // Track signaling for our ref so onicecandidate can use it
+                const signalingFetch = (body: any) => {
+                    fetch("/api/agenda/signaling", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(body),
+                    }).catch((e) => console.warn("[Signaling] fetch error:", e));
+                };
+
                 channelRef.current = {
                     send: (data: any) => {
-                        fetch("/api/agenda/signaling", {
-                            method: "POST",
-                            body: JSON.stringify({ 
-                                meetingToken, 
-                                type: data.event, 
-                                payload: data.payload[data.event] || data.payload, 
-                                sender: userType 
-                            }),
+                        signalingFetch({
+                            meetingToken,
+                            type: data.event,
+                            payload: data.payload[data.event] || data.payload,
+                            sender: userType,
                         });
                     }
                 };
@@ -227,8 +232,9 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
                 // Notify join
                 fetch("/api/agenda/signaling", {
                     method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ meetingToken, type: "user-joined", payload: {}, sender: userType }),
-                });
+                }).catch((e) => console.warn("[Signaling] join error:", e));
 
                 pollInterval = setInterval(poll, 3000);
             }

@@ -95,21 +95,22 @@ function redirectToRoute(route: string, message: string, status: number = 302) {
   });
 }
 
-export const onRequest = clerkMiddleware(async (auth, context, next) => {
+// ⚡️ Separamos el handler protegido por Clerk del bypass completo
+const clerkHandler = clerkMiddleware(async (auth, context, next) => {
 
   const { userId, sessionId, orgRole } = auth();
   const currentPath = new URL(context.request.url).pathname;
 
-  // ✅ PRIMERO: dejar pasar archivos estáticos, APIs y rutas públicas sin ningún check
+  // ✅ Rutas públicas que pasan por Clerk (necesitan Astro.locals.auth()) pero no requieren auth
   if (
-    currentPath.startsWith('/api/') ||
-    currentPath.startsWith('/_') ||
-    currentPath.includes('.') ||
-    currentPath === '/favicon.ico' ||
-    currentPath === '/error' ||
     currentPath.startsWith('/agenda/meet') ||
     currentPath.startsWith('/agenda/confirm')
   ) {
+    return next();
+  }
+
+  // ✅ Otras rutas API (excepto signaling que ya bypass en el onRequest) pasan sin bloqueo
+  if (currentPath.startsWith('/api/')) {
     return next();
   }
 
@@ -257,3 +258,21 @@ export const onRequest = clerkMiddleware(async (auth, context, next) => {
   ));
   return redirectToRoute('/', 'Rol de usuario no válido');
 });
+
+// ⚡️ OnRequest principal: Clerk solo para rutas que lo necesitan
+export const onRequest = async (context: APIContext, next: any) => {
+  const currentPath = new URL(context.request.url).pathname;
+
+  // Rutas que NO necesitan Clerk en absoluto
+  if (
+    currentPath === '/api/agenda/signaling' ||
+    currentPath.startsWith('/_') ||
+    currentPath.includes('.') ||
+    currentPath === '/favicon.ico' ||
+    currentPath === '/error'
+  ) {
+    return next();
+  }
+
+  return clerkHandler(context, next);
+};
