@@ -33,9 +33,12 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         ],
     };
 
+    const [mediaError, setMediaError] = useState<{ name: string; message: string } | null>(null);
+
     const setupMedia = useCallback(async () => {
         try {
             setStatus("connecting");
+            setMediaError(null);
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
                 audio: true,
@@ -45,9 +48,10 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
                 localVideoRef.current.srcObject = stream;
             }
             return stream;
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error accessing media devices:", error);
             setStatus("error");
+            setMediaError({ name: error.name, message: error.message });
             return null;
         }
     }, []);
@@ -276,5 +280,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         toggleAudio,
         toggleVideo,
         endCall,
+        mediaError,
+        retryMedia: setupMedia,
     };
 };
