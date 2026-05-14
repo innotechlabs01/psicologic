@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createEvent, getEventsByDateRange, getEventByToken, getAgendaSettings, isTimeEnabled } from '../../../lib/turso/agenda/agenda-db';
+import { getSiteUrl } from '../../../lib/site-url';
 
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
@@ -101,11 +102,7 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
             status: 'pending' as const
         };
 
-        // Generate meeting link (pointing to the same app's video room)
-        // Always use the host from the request
-        const origin = new URL(request.url).origin;
-
-        newEvent.meetingLink = `${origin}/agenda/meet?token=${newEvent.secureToken}`;
+        newEvent.meetingLink = `${getSiteUrl(request)}/agenda/meet?token=${newEvent.secureToken}`;
 
         let created;
         try {
