@@ -4,19 +4,19 @@ import { toast } from 'react-toastify';
 import { CheckCircle2, XCircle, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import type { PropsPaymentStatus } from 'src/constants';
 
-export default function PaymentStatus({ refPayco, userId }: PropsPaymentStatus) {
+export default function PaymentStatus({ orderId, userId }: PropsPaymentStatus) {
   const [status, setStatus] = useState<'loading' | 'approved' | 'rejected' | 'pending' | 'failed' | 'error'>('loading');
   const [processed, setProcessed] = useState(false);
 
   useEffect(() => {
-    if (!refPayco || refPayco === 'undefined' || processed) return;
+    if (!orderId || orderId === 'undefined' || processed) return;
 
     const validatePayment = async () => {
       try {
-        const res = await fetch('/api/epayCO/process-validation', {
+        const res = await fetch('/api/bold/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refPayco, userId })
+          body: JSON.stringify({ orderId, userId })
         });
 
         const data = await res.json();
@@ -43,15 +43,15 @@ export default function PaymentStatus({ refPayco, userId }: PropsPaymentStatus) 
     };
 
     validatePayment();
-  }, [refPayco, userId, processed]);
+  }, [orderId, userId, processed]);
 
-  if (!refPayco || refPayco === 'undefined') return null;
+  if (!orderId || orderId === 'undefined') return null;
 
   const statusConfigs = {
     loading: {
       icon: <Loader2 className="size-8 text-indigo-500 animate-spin" />,
       title: 'Validando Transacción',
-      description: 'Estamos verificando el estado de tu pago con ePayco...',
+      description: 'Estamos verificando el estado de tu pago con Bold...',
       bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
       textColor: 'text-indigo-700 dark:text-indigo-300'
     },
@@ -65,7 +65,7 @@ export default function PaymentStatus({ refPayco, userId }: PropsPaymentStatus) 
     rejected: {
       icon: <XCircle className="size-8 text-red-500" />,
       title: 'Pago Rechazado',
-      description: 'La transacción fue declinada por la entidad bancaria. Por favor intenta de nuevo.',
+      description: 'La transacción fue declinada. Por favor intenta de nuevo.',
       bgColor: 'bg-red-50 dark:bg-red-900/20',
       textColor: 'text-red-700 dark:text-red-300'
     },
@@ -112,7 +112,3 @@ export default function PaymentStatus({ refPayco, userId }: PropsPaymentStatus) 
     </div>
   );
 }
-function uuidv4(): import("@libsql/client").InValue {
-  throw new Error('Function not implemented.');
-}
-

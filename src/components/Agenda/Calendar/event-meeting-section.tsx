@@ -13,6 +13,21 @@ function copyToClipboard(text: string) {
 }
 
 export function EventMeetingSection({ meetingLink }: EventMeetingSectionProps) {
+    const isInternal = meetingLink.includes(window.location.hostname) || meetingLink.startsWith("/");
+
+    const handleJoin = () => {
+        if (isInternal) {
+            const url = meetingLink.startsWith("/")
+                ? `${window.location.origin}${meetingLink}`
+                : meetingLink;
+            const meetingUrl = new URL(url);
+            meetingUrl.searchParams.set("userType", "host");
+            window.location.href = meetingUrl.toString();
+        } else {
+            window.open(meetingLink, "_blank");
+        }
+    };
+
     return (
         <div className="flex flex-col gap-2 pt-4 border-t border-border">
             <div className="flex items-center gap-2 mb-2">
@@ -30,20 +45,20 @@ export function EventMeetingSection({ meetingLink }: EventMeetingSectionProps) {
                     </svg>
                 </div>
                 <p className="text-xs font-medium text-muted-foreground flex-1">
-                    Meeting
+                    {isInternal ? "Consulta por Video (Interno)" : "Reunión Externa"}
                 </p>
             </div>
             <div className="flex gap-2">
                 <Button
-                    className="flex-1 h-8 bg-foreground text-background hover:bg-foreground/90 text-xs font-medium gap-2 shadow-sm"
-                    onClick={() => window.open(meetingLink, "_blank")}
+                    className="flex-1 h-8 bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-medium gap-2 shadow-sm transition-all duration-300"
+                    onClick={handleJoin}
                 >
-                    <span>Join meeting</span>
-                    <div className="flex gap-0.5">
-                        <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded">
+                    <span>{isInternal ? "Iniciar Consulta" : "Unirse a Reunión"}</span>
+                    <div className="flex gap-0.5 opacity-60">
+                        <Kbd className="bg-white/20 text-white text-[10px] px-1 py-0.5 rounded">
                             ⌘
                         </Kbd>
-                        <Kbd className="bg-white/14 text-white text-[10.8px] px-1.5 py-1 rounded w-[18px]">
+                        <Kbd className="bg-white/20 text-white text-[10px] px-1 py-0.5 rounded">
                             J
                         </Kbd>
                     </div>
@@ -51,11 +66,11 @@ export function EventMeetingSection({ meetingLink }: EventMeetingSectionProps) {
                 <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 gap-2 text-xs border-border"
+                    className="h-8 gap-2 text-xs border-border hover:bg-muted"
                     onClick={() => copyToClipboard(meetingLink)}
                 >
-                    <LinkIcon className="size-4" />
-                    <span>Copy link</span>
+                    <LinkIcon className="size-4 text-muted-foreground" />
+                    <span>Enlace</span>
                 </Button>
             </div>
         </div>

@@ -3,11 +3,11 @@ import LayoutClient from "../../layouts/LayoutClient.astro";
 import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
 
 import UserManagement from "../../components/Client/users/UserManagement.astro";
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 ---
 
 <LayoutClient>
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper>
             <div class="p-6 bg-white rounded-lg shadow-md">
                 <h1 class="text-2xl font-bold mb-4 text-gray-800">Gestión de Usuarios</h1>
@@ -31,5 +31,5 @@ import { SignedIn } from "@clerk/astro/components";
           })();
         </script>
 
-    </SignedIn>
+    </Show>
 </LayoutClient>

@@ -1,7 +1,7 @@
 ---
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
 import LayoutDashboard from "../layouts/LayoutDashboard.astro";
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import { MyLine } from "../components/Chartjs/chart.tsx";
 
 // ⚡️ SSR Data Fetching
@@ -13,26 +13,7 @@ let dashboardData = {
 };
 
 try {
-  // Fetch data directly on server
-  // Since we are on the same server, we can call the DB logic directly or fetch from localhost
-  // But calling fetch to its own API during SSR can be tricky with auth headers.
-  // Ideally we should import the logic.
-  // For now, let's keep using fetch but we need the absolute URL or use the logic directly.
-  // Recommendation: Import the DB logic directly if possible or make the API call with full URL.
-  // However, simpler for now: just call the API endpoint if it's public/protected by cookies passed along?
-  // Astro middleware handles auth.
-
-  // Better approach: Import the controller/logic if available.
-  // If not, we'll assume the API is reachable.
-  // NOTE: Calling own API in Astro SSR typically requires full URL.
-  // process.env.VERCEL_URL might help, or just request.url origin.
-
   const origin = Astro.url.origin;
-  // We need to pass the cookie for auth to work if the API caches it?
-  // Actually the API probably uses the same database so we could just query DB here.
-  // But to avoid code duplication let's try to fetch.
-  // If this fails, we fall back to client side or 0.
-
   const response = await fetch(`${origin}/api/dashboard`, {
     headers: Astro.request.headers,
   });
@@ -43,154 +24,192 @@ try {
 } catch (e) {
   console.error("Failed to fetch dashboard data server-side", e);
 }
+
+const stats = [
+  { 
+    label: "Usuarios", 
+    value: dashboardData.countUser, 
+    trend: "+12%",
+    icon: "users", 
+    color: "indigo-600",
+    gradient: "from-indigo-600 to-blue-500"
+  },
+  { 
+    label: "Pendientes", 
+    value: dashboardData.countTicket, 
+    trend: "-5%",
+    icon: "ticket", 
+    color: "amber-500",
+    gradient: "from-amber-400 to-orange-500"
+  },
+  { 
+    label: "En Curso", 
+    value: dashboardData.countChatActive, 
+    trend: "+3",
+    icon: "pulse", 
+    color: "purple-500",
+    gradient: "from-purple-500 to-pink-500"
+  },
+  { 
+    label: "Éxito", 
+    value: dashboardData.countChatClose, 
+    trend: "98%",
+    icon: "check", 
+    color: "emerald-500",
+    gradient: "from-emerald-400 to-teal-500"
+  }
+];
 ---
 
-<LayoutDashboard title="🔒 Dashboard">
-  <SignedIn>
-    <DashboardWrapper
-      title="Dashboard Principal"
-      subtitle="Bienvenido a tu panel de control"
-    >
-      <!-- Contenido principal del dashboard -->
-      <div class="space-y-6">
-        <!-- Grid de tarjetas estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
+<LayoutDashboard title="Workspace | Psicologic">
+  <Show when="signed-in">
+    <div class="min-h-screen bg-gray-50/50 dark:bg-gray-950 pb-12">
+      <!-- Header Seccion con Gradiente Atmosférico -->
+      <div class="relative bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full -mr-48 -mt-48"></div>
+        <div class="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/5 blur-[100px] rounded-full -ml-24 -mb-24"></div>
+        
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-12 relative">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-md">Live Platform</span>
+                <div class="flex items-center gap-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                  Sincronizado
+                </div>
+              </div>
+              <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+                Bienvenido de nuevo
+              </h1>
+              <p class="text-gray-500 dark:text-gray-400 text-sm sm:text-base lg:text-lg font-medium max-w-md">
+                Aquí tienes lo que está pasando en Psicologic hoy.
+              </p>
+            </div>
+            
+            <div class="flex flex-wrap gap-3">
+              <button class="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm font-bold text-gray-700 dark:text-gray-300 shadow-sm hover:shadow-md transition-all active:scale-95">
+                Exportar Reporte
+              </button>
+              <button class="px-6 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-2xl text-sm font-bold shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95">
+                Nueva Sesión
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <main class="max-w-7xl mx-auto px-4 sm:px-6 -mt-4 sm:-mt-8 space-y-6 sm:space-y-8 relative">
+        <!-- Stats Grid con Efecto Glass -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat) => (
+            <div class="group relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none hover:-translate-y-1 transition-all duration-300">
+              <div class="flex items-start justify-between mb-4">
+                <div class={`p-3 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white shadow-lg group-hover:rotate-6 transition-transform`}>
+                  {stat.icon === 'users' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>}
+                  {stat.icon === 'ticket' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5z" /></svg>}
+                  {stat.icon === 'pulse' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+                  {stat.icon === 'check' && <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                </div>
+                <span class="text-[10px] font-black px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-lg">
+                  {stat.trend}
+                </span>
+              </div>
               <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Usuarios Nuevos
+                <p class="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none mb-1">
+                  {stat.label}
                 </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="newUsersCount"
-                >
-                  {dashboardData.countUser}
-                </p>
+                <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900 dark:text-white tracking-tighter">
+                  {stat.value}
+                </h3>
               </div>
-              <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-blue-600 dark:text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  ></path>
-                </svg>
+            </div>
+          ))}
+        </div>
+
+        <!-- Main Analytics Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Central Chart Card -->
+          <div class="lg:col-span-2 bg-white dark:bg-gray-900 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 lg:p-8 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/40 dark:shadow-none flex flex-col">
+            <div class="flex items-center justify-between mb-10">
+              <div>
+                <h2 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Análisis Predictivo</h2>
+                <p class="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Actividad Semanal</p>
               </div>
+              <div class="flex bg-gray-50 dark:bg-gray-800 p-1.5 rounded-2xl">
+                <button class="px-4 py-2 bg-white dark:bg-gray-700 text-indigo-600 dark:text-white text-xs font-black rounded-xl shadow-sm">7D</button>
+                <button class="px-4 py-2 text-gray-400 text-xs font-black">30D</button>
+              </div>
+            </div>
+            
+            <div class="flex-1 min-h-[250px] sm:min-h-[350px] md:min-h-[450px]">
+              <MyLine client:only="react" />
             </div>
           </div>
 
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Mensajes Pendientes
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="ticketsCount"
-                >
-                  {dashboardData.countTicket}
-                </p>
+          <!-- Vertical Info Stack -->
+          <div class="space-y-8">
+            <!-- System Health Card -->
+            <div class="bg-indigo-600 dark:bg-indigo-700 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
+              <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-700">
+                <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
               </div>
-              <div class="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-yellow-600 dark:text-yellow-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                </svg>
+              <p class="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-4">Estado Global</p>
+              <h3 class="text-2xl font-black tracking-tight leading-tight mb-6 italic">Todo fluyendo como <br/>debería estarlo.</h3>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-white/10 rounded-3xl border border-white/10">
+                  <p class="text-[10px] font-bold text-white/50 uppercase mb-1">Latencia</p>
+                  <p class="text-xl font-black">24ms</p>
+                </div>
+                <div class="p-4 bg-white/10 rounded-3xl border border-white/10">
+                  <p class="text-[10px] font-bold text-white/50 uppercase mb-1">Uptime</p>
+                  <p class="text-xl font-black">100%</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Chats Activos
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="chatActiveCount"
-                >
-                  {dashboardData.countChatActive}
-                </p>
-              </div>
-              <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-purple-600 dark:text-purple-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  ></path>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Chats Cerrados
-                </p>
-                <p
-                  class="text-3xl font-bold text-gray-900 dark:text-white"
-                  id="chatCloseCount"
-                >
-                  {dashboardData.countChatClose}
-                </p>
-              </div>
-              <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full">
-                <svg
-                  class="w-6 h-6 text-green-600 dark:text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+            <!-- Recent Activity List -->
+            <div class="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/40 dark:shadow-none">
+              <h3 class="text-xl font-black text-gray-900 dark:text-white tracking-tight mb-8 flex items-center gap-3">
+                <div class="w-8 h-8 bg-amber-500/10 rounded-xl flex items-center justify-center">
+                  <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                Alertas
+              </h3>
+              
+              <div class="space-y-6">
+                {dashboardData.countTicket > 0 ? (
+                  <div class="group flex gap-4">
+                    <div class="w-1 h-12 bg-amber-500 rounded-full group-hover:h-14 transition-all"></div>
+                    <div>
+                      <p class="text-sm font-black text-gray-900 dark:text-white leading-none mb-1">Tickets Pendientes</p>
+                      <p class="text-xs font-bold text-gray-400 mb-3 uppercase tracking-tighter">Acción requerida inmediata</p>
+                      <a href="/dashboard/message" class="text-[10px] font-black px-4 py-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-300 rounded-xl hover:bg-gray-900 dark:hover:bg-white hover:text-white dark:hover:text-black transition-all">
+                        GESTIONAR {dashboardData.countTicket} →
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div class="text-center py-6">
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest">Sin alertas críticas</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div
-        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-      >
-        <MyLine client:only />
-      </div>
-    </DashboardWrapper>
-  </SignedIn>
+      </main>
+    </div>
+  </Show>
 </LayoutDashboard>
+
+<style>
+  @keyframes entry {
+    from { opacity: 0; transform: scale(0.98) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  main {
+    animation: entry 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+</style>

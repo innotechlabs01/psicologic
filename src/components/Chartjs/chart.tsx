@@ -6,8 +6,9 @@ import {
   LinearScale,
   Title,
   CategoryScale,
-  type ChartData,
   Tooltip,
+  Legend,
+  Filler
 } from 'chart.js';
 import React, { useEffect, useState } from 'react';
 
@@ -21,52 +22,94 @@ export const MyLine = () => {
       LinearScale,
       Title,
       CategoryScale,
-      Tooltip
+      Tooltip,
+      Legend,
+      Filler
     );
     setIsRegistered(true);
   }, []);
 
-  if (!isRegistered) return <></>;
+  if (!isRegistered) return <div className="w-full h-full flex items-center justify-center text-gray-400">Iniciando gráficos...</div>;
+
+  const data = {
+    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+    datasets: [
+      {
+        label: 'Sesiones Totales',
+        data: [12, 19, 15, 22, 28, 10, 8],
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+        borderWidth: 3,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#6366f1',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+      {
+        label: 'Tickets Resueltos',
+        data: [5, 12, 8, 15, 20, 5, 4],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#10b981',
+        pointRadius: 0, // Cleaner look
+        pointHoverRadius: 4,
+      }
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top' as const,
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12,
+            family: "'Inter', sans-serif"
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: '#1f2937',
+        padding: 12,
+        titleFont: { size: 14 },
+        bodyFont: { size: 13 },
+        cornerRadius: 8,
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          display: true,
+          color: 'rgba(156, 163, 175, 0.1)',
+        },
+        ticks: {
+          padding: 10
+        }
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          padding: 10
+        }
+      },
+    },
+  };
 
   return (
-    <Line
-      onLoad={() => console.log('loaded')}
-      data={{
-        labels: [1500, 1600, 1700, 1750, 1800, 1850, 1900, 1950, 1999, 2050],
-        datasets: [
-          {
-            data: [86, 114, 106, 106, 107, 111, 133, 221, 783, 2478],
-            label: 'Africa',
-            borderColor: '#007BFF',
-            fill: false,
-          },
-          {
-            data: [282, 350, 411, 502, 635, 809, 947, 1402, 3700, 5267],
-            label: 'Asia',
-            borderColor: '#8A2BE2',
-            fill: false,
-          },
-          {
-            data: [168, 170, 178, 190, 203, 276, 408, 547, 675, 734],
-            label: 'Europe',
-            borderColor: '#3cba9f',
-            fill: false,
-          },
-          {
-            data: [40, 20, 10, 16, 24, 38, 74, 167, 508, 784],
-            label: 'Latin America',
-            borderColor: '#e8c3b9',
-            fill: false,
-          },
-          {
-            data: [6, 3, 2, 2, 7, 26, 82, 172, 312, 433],
-            label: 'North America',
-            borderColor: '#c45850',
-            fill: false,
-          },
-        ],
-      }}
-      options={{ responsive: false }}
-    />
+    <div className="w-full h-full min-h-[400px]">
+      <Line data={data} options={options} />
+    </div>
   );
 };

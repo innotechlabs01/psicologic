@@ -7,7 +7,7 @@ export const prerender = false;
 ---
 
 <LayoutClient title="🃏 Cartas">
-  <SignedIn>
+  <Show when="signed-in">
     <DashboardWrapper
       title="🃏 Jugamos"
       subtitle="Anímate a jugar y compartir con tu pareja"
@@ -16,6 +16,6 @@ export const prerender = false;
     <CartasGame client:load/>
       
     </DashboardWrapper>
-  </SignedIn>
+  </Show>
 </LayoutClient>
 

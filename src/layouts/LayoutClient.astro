@@ -1,4 +1,7 @@
 ---
+import Footer from "../components/Footer/footer.astro";
+import HeaderClient from "../components/Header/headerClient.astro";
+import { Analytics } from "@vercel/analytics/react";
 
 import Sidebar from "@components/sidebar/Sidebar";
 import Footer from "../components/Footer/footer.astro";
@@ -18,6 +21,7 @@ const { title = "Psicologic", fullscreen = false } = Astro.props;
     <link rel="stylesheet" href="/css/main.css" />
     <title>{title}</title>
     <ClientRouter />
+    <Analytics />
   </head>
   <body>
     <!-- Progress bar — persists across navigations -->

@@ -2,7 +2,7 @@
 // Importaciones y Configuración
 import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../../layouts/LayoutClient.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import ChatInterface from '@components/Chat/ChatInterface.jsx'; 
 import { createClient } from '@libsql/client';
 
@@ -64,12 +64,12 @@ const titleText = `Conversación: ${urlTicketId.substring(0, 8)}...`;
 ---
 
 <LayoutClient title="💬 Chat">
-    <SignedIn>
+    <Show when="signed-in">
         <DashboardWrapper 
         title={titleText} 
         subtitle="Conversación activa de soporte"
         >
-            <div class="h-[75vh]">
+            <div class="h-[60vh] sm:h-[75vh]">
                 {/* 🎯 Solo muestra la interfaz si la autorización fue exitosa */}
                 {isAuthorized && currentUserId && (
                     <ChatInterface 
@@ -81,5 +81,5 @@ const titleText = `Conversación: ${urlTicketId.substring(0, 8)}...`;
                 )}
             </div>
         </DashboardWrapper>
-    </SignedIn>
+    </Show>
 </LayoutClient>

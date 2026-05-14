@@ -1,12 +1,12 @@
 ---
 import LayoutClient from '../../layouts/LayoutClient.astro';
 import FeedbackForm from '../../components/feedback/FeedbackForm.tsx';
-import { SignedIn } from '@clerk/astro/components';
+import { Show } from '@clerk/astro/components';
 import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro';
 ---
 
 <LayoutClient>
-  <SignedIn>
+  <Show when="signed-in">
     <DashboardWrapper 
         title="Feedback" 
         subtitle="Envía tu feedback y ayudanos a mejorar"
@@ -19,5 +19,5 @@ import DashboardWrapper from '../../components/Dashboard/DashboardWrapper.astro'
         <FeedbackForm client:visible />
       </div>
     </DashboardWrapper>
-  </SignedIn>
+  </Show>
 </LayoutClient>

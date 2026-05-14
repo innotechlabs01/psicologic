@@ -258,7 +258,7 @@ export function CalendarControls() {
                             }}>
                                 Reset
                             </Button>
-                            <Button variant="primary" size="sm" className="flex-1 h-9" onClick={() => {
+                            <Button variant="default" size="sm" className="flex-1 h-9" onClick={() => {
                                 applyFilters({ searchQuery: localSearch, eventTypeFilter: localEventType, participantsFilter: localParticipants });
                                 setFilterOpen(false);
                             }}>

@@ -1,14 +1,14 @@
 ---
 // src/pages/payment/success.astro
 import LayoutClient from '../../layouts/LayoutClient.astro';
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 const { searchParams } = Astro.url;
 const paymentId = searchParams.get('payment_id');
 const status = searchParams.get('status');
 ---
 
 <LayoutClient title="✅ Pago Exitoso">
-    <SignedIn>
+    <Show when="signed-in">
         <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-md w-full space-y-8">
                 <div class="text-center">
@@ -64,5 +64,5 @@ const status = searchParams.get('status');
                 </div>
             </div>
         </div>
-    </SignedIn>
+    </Show>
 </LayoutClient>
