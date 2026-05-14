@@ -15,24 +15,9 @@ export function useAgendaCache() {
         return `${CACHE_KEY_PREFIX}${date.getFullYear()}_${date.getMonth()}`;
     };
 
-    const getCachedEvents = useCallback((startDate: Date, endDate: Date) => {
-        // We typically fetch 3 months at a time in CalendarView.
-        // We will try to find cache for the "center" month (likely current or start).
-        // For simplicity, we'll check the key for the startDate's month.
-        // A more robust solution would check all involved months.
-
-        const key = getCacheKey(startDate);
-        // Note: Logic implies we cache based on the "main" month requested. 
-        // If the view requests previous/next months too, we might need a more complex strategy, 
-        // but let's stick to the dominant month for now or iterate.
-
-        // Actually, let's verify if we have data for the *current* view.
-        // If CalendarView requests -1 to +2 months, let's just use the current month as the primary key reference
-        // or check multiple keys.
-
-        // For this specific request "mostrar cache para esta semana":
-        const now = new Date();
-        const currentKey = getCacheKey(now);
+    const getCachedEvents = useCallback((year: number, month: number) => {
+        const date = new Date(year, month);
+        const currentKey = getCacheKey(date);
         const cached = localStorage.getItem(currentKey);
 
         if (cached) {
@@ -40,12 +25,8 @@ export function useAgendaCache() {
                 const entry: CacheEntry = JSON.parse(cached);
                 const entryTime = entry.timestamp;
 
-                // User wants to see cache for THIS week avoid DB query.
-                // If the stored data covers the requested range, return it.
-                // Here we simply return the data associated with the current month context.
                 if (Date.now() - entryTime < CACHE_DURATION) {
                     console.log(`[AgendaCache] Hit for ${currentKey}`);
-                    // Treat empty arrays as a cache miss so the UI will fetch fresh data
                     if (Array.isArray(entry.data) && entry.data.length === 0) {
                         console.log(`[AgendaCache] Ignoring empty cache for ${currentKey}`);
                     } else {
@@ -53,9 +34,6 @@ export function useAgendaCache() {
                     }
                 } else {
                     console.log(`[AgendaCache] Expired for ${currentKey}`);
-                    // Don't auto-remove if we want to show stale data while fetching (swr-like), 
-                    // but user requested to avoid DB if possible.
-                    // We'll remove it to force refresh if expired.
                     localStorage.removeItem(currentKey);
                 }
             } catch (e) {

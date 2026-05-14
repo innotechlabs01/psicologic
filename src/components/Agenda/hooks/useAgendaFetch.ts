@@ -31,7 +31,7 @@ export function useAgendaFetch(): UseAgendaFetchReturn {
             const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
             const end = new Date(today.getFullYear(), today.getMonth() + 2, 0);
 
-            const cachedData = getCachedEvents(today, end);
+            const cachedData = getCachedEvents(today.getFullYear(), today.getMonth());
             if (cachedData) {
                 setEvents(cachedData);
                 if (showSkeleton) {

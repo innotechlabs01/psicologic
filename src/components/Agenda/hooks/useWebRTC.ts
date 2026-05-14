@@ -149,7 +149,8 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
 
             // Signaling Choice A: Supabase (preferred)
             // check if supabase is effectively configured (real url)
-            if (supabase && (supabase as any).supabaseUrl && !(supabase as any).supabaseUrl.includes("your-project")) {
+            const supabaseUrl = supabase ? (supabase as any).supabaseUrl || (supabase as any).options?.url : null;
+            if (supabase && supabaseUrl && !String(supabaseUrl).includes("your-project")) {
                 const channel = supabase.channel(meetingToken, {
                     config: { broadcast: { self: false } },
                 });
@@ -235,7 +236,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
             active = false;
             localStream.current?.getTracks().forEach(track => track.stop());
             peerConnection.current?.close();
-            if (channelRef.current && channelRef.current.unsubscribe) {
+            if (supabase && channelRef.current && channelRef.current.unsubscribe) {
                 supabase.removeChannel(channelRef.current);
             }
             if (pollInterval) clearInterval(pollInterval);

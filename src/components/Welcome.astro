@@ -1,119 +1,635 @@
 ---
-import innoTechLogoWhite from "../../public/img/logo/logo_white.png";
 import { SignInButton } from "@clerk/astro/components";
 ---
 
-<div class="relative min-h-screen overflow-hidden bg-[#0a0a0b] flex flex-col items-center justify-center px-6 antialiased">
-  <!-- Efectos de Fondo Atmosférico -->
-  <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-600/10 blur-[150px] rounded-full"></div>
-  <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full"></div>
-  <div class="absolute top-1/2 right-0 w-[400px] h-[400px] bg-purple-600/5 blur-[100px] rounded-full"></div>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap");
 
-  <!-- Toast container -->
-  <div id="toast-container" class="fixed top-8 right-8 z-50 flex flex-col gap-3"></div>
+  * {
+    box-sizing: border-box;
+  }
 
-  <main class="relative z-10 w-full max-w-5xl flex flex-col items-center">
-    <!-- Logo con Animación Suave -->
-    <img
-      src={innoTechLogoWhite.src}
-      alt="InnoTech Logo"
-      class="mb-16 h-28 w-auto filter drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:scale-105 transition-transform duration-700"
-    />
+  .landing-root {
+    font-family: "DM Sans", sans-serif;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 3rem;
+    padding-bottom: 6rem; 
+    padding-left: 1rem;
+    padding-right: 1rem;
+    background: linear-gradient(
+      135deg,
+      #0f0c29 0%,
+      #1a1560 40%,
+      #24243e 70%,
+      #0d1b4b 100%
+    );
+    position: relative;
+    overflow: hidden;
+  }
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-      <!-- Card Profesional -->
-      <div class="group relative bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 overflow-hidden hover:border-indigo-500/30 transition-all duration-500 shadow-2xl">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        
-        <div class="relative space-y-6">
-          <div class="inline-flex px-3 py-1 bg-indigo-500/10 rounded-full border border-indigo-500/20">
-            <span class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Portal Profesional</span>
-          </div>
-          <h2 class="text-4xl font-black text-white tracking-tighter leading-tight">
-            Gestión <br/><span class="text-indigo-400 font-medium">Integral</span>
-          </h2>
-          <p class="text-gray-400 text-lg leading-relaxed font-medium">
-            Accede a herramientas de vanguardia diseñadas para potenciar el bienestar emocional a través de la analítica y el acompañamiento profesional.
-          </p>
-          
-          <div class="pt-4">
-            <div class="relative inline-block group/btn overflow-hidden rounded-2xl">
-              <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 transition-transform group-hover/btn:scale-105"></div>
-              <div class="relative px-8 py-4 text-sm font-black text-white tracking-widest uppercase cursor-pointer">
-                <SignInButton mode="modal" class="w-full h-full" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  /* Orbes de fondo animados */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    animation: floatOrb 8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb-1 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, #6366f1, #4f46e5);
+    top: -100px;
+    left: -150px;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, #a855f7, #7c3aed);
+    bottom: -80px;
+    right: -100px;
+    animation-delay: 3s;
+  }
+  .orb-3 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, #3b82f6, #1d4ed8);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: 1.5s;
+  }
 
-      <!-- Card Lúdica -->
-      <div class="group relative bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 overflow-hidden hover:border-emerald-500/30 transition-all duration-500 shadow-2xl">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        
-        <div class="relative space-y-6">
-          <div class="inline-flex px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
-            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Experiencia Lúdica</span>
-          </div>
-          <h2 class="text-4xl font-black text-white tracking-tighter leading-tight">
-            Explora <br/><span class="text-emerald-400 font-medium">Emociones</span>
-          </h2>
-          <p class="text-gray-400 text-lg leading-relaxed font-medium">
-            Fortalece habilidades sociales y emocionales a través de dinámicas seguras y experiencias transformadoras basadas en el juego.
-          </p>
-          
-          <div class="pt-4">
-            <div id="btn-game-login" class="relative inline-block group/btn overflow-hidden rounded-2xl">
-              <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 transition-transform group-hover/btn:scale-105"></div>
-              <div class="relative px-8 py-4 text-sm font-black text-white tracking-widest uppercase cursor-pointer">
-                <SignInButton mode="modal" class="w-full h-full" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  @keyframes floatOrb {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -30px) scale(1.05);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.95);
+    }
+  }
+
+  /* Partículas */
+  .particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    animation: particleDrift linear infinite;
+  }
+
+  @keyframes particleDrift {
+    0% {
+      transform: translateY(100vh) scale(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100px) scale(1);
+      opacity: 0;
+    }
+  }
+
+  .content-wrapper {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  /* Header */
+  .header-section {
+    text-align: center;
+    animation: fadeSlideDown 0.8s ease forwards;
+  }
+
+  @keyframes fadeSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    border-radius: 999px;
+    color: #a5b4fc;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(8px);
+  }
+
+  .badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: #818cf8;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 0.6;
+    }
+  }
+
+  h1 {
+    font-family: "Sora", sans-serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1.1;
+    margin: 0 0 1.2rem;
+    letter-spacing: -0.02em;
+  }
+
+  h1 .highlight {
+    background: linear-gradient(135deg, #818cf8, #c084fc, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-size: 1.05rem;
+    color: #94a3b8;
+    line-height: 1.7;
+    max-width: 600px;
+    margin: 0 auto 1.5rem;
+    font-weight: 300;
+  }
+
+  .divider {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 999px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .subtitle-2 {
+    font-size: 0.95rem;
+    color: #64748b;
+    line-height: 1.7;
+    max-width: 560px;
+    margin: 0 auto;
+    font-weight: 300;
+  }
+
+  /* Grid de cards */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    animation: fadeSlideUp 0.9s 0.3s ease both;
+  }
+
+  @keyframes fadeSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(32px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Glass card */
+  .glass-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 2.5rem;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+      border-color 0.35s ease,
+      box-shadow 0.35s ease,
+      background 0.35s ease;
+    overflow: hidden;
+  }
+
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 60%
+    );
+    pointer-events: none;
+  }
+
+  /* Shimmer en hover */
+  .glass-card::after {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: -60%;
+    width: 40%;
+    height: 300%;
+    background: linear-gradient(
+      105deg,
+      transparent,
+      rgba(255, 255, 255, 0.07),
+      transparent
+    );
+    transform: skewX(-20deg);
+    transition: left 0.6s ease;
+    pointer-events: none;
+  }
+
+  .glass-card:hover::after {
+    left: 130%;
+  }
+
+  .glass-card.card-psico:hover {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow:
+      0 24px 60px rgba(99, 102, 241, 0.25),
+      0 0 0 1px rgba(99, 102, 241, 0.15);
+    transform: translateY(-6px) scale(1.01);
+  }
+
+  .glass-card.card-player:hover {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.4);
+    box-shadow:
+      0 24px 60px rgba(168, 85, 247, 0.25),
+      0 0 0 1px rgba(168, 85, 247, 0.15);
+    transform: translateY(-6px) scale(1.01);
+  }
+
+  /* Ícono de card */
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .card-psico .card-icon {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+  }
+
+  .card-player .card-icon {
+    background: rgba(168, 85, 247, 0.2);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+  }
+
+  h2 {
+    font-family: "Sora", sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 0.75rem;
+  }
+
+  h2 .psico-accent {
+    color: #818cf8;
+  }
+  h2 .player-accent {
+    color: #c084fc;
+  }
+
+  .card-desc {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    line-height: 1.65;
+    font-weight: 300;
+    flex: 1;
+  }
+
+  /* Features mini list */
+  .card-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 1.2rem 0;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: #64748b;
+  }
+
+  .feature-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .card-psico .feature-dot {
+    background: #6366f1;
+  }
+  .card-player .feature-dot {
+    background: #a855f7;
+  }
+
+  /* Botón */
+  .card-btn-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  .card-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 1.75rem;
+    height: 44px;
+    border-radius: 12px;
+    font-family: "Sora", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition:
+      transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.25s ease,
+      filter 0.25s ease;
+    overflow: hidden;
+    min-width: 160px;
+  }
+
+  .card-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .card-btn:hover::before {
+    opacity: 1;
+  }
+
+  .card-btn:hover {
+    transform: translateY(-3px) scale(1.04);
+    filter: brightness(1.15);
+  }
+
+  .card-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .btn-psico {
+    background: linear-gradient(135deg, #4f46e5, #6366f1, #818cf8);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+  }
+
+  .btn-psico:hover {
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.55);
+  }
+
+  .btn-player {
+    background: linear-gradient(135deg, #7c3aed, #a855f7, #c084fc);
+    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35);
+  }
+
+  .btn-player:hover {
+    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.55);
+  }
+
+  /* Arrow icon dentro del botón */
+  .btn-arrow {
+    transition: transform 0.25s ease;
+    font-size: 0.9rem;
+  }
+
+  .card-btn:hover .btn-arrow {
+    transform: translateX(4px);
+  }
+
+  /* Hacer que SignInButton herede estilos */
+  .card-btn :global(button),
+  .card-btn :global(a) {
+    background: transparent !important;
+    border: none !important;
+    color: inherit !important;
+    font: inherit !important;
+    cursor: inherit !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+</style>
+
+<div class="landing-root">
+  <!-- Orbes -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Partículas -->
+  <div class="particles" id="particles-container"></div>
+
+  <div class="content-wrapper">
+    <!-- Header -->
+    <div class="header-section">
+      <div class="badge">Plataforma de Salud Mental Digital</div>
+
+      <h1>
+        Bienvenido a<br />
+        <span class="highlight">Psicologic Platform</span>
+      </h1>
+
+      <p class="subtitle">
+        Una plataforma diseñada para apoyar el trabajo profesional en salud
+        mental, mejorar el bienestar emocional y potenciar el desarrollo
+        personal a través de experiencias digitales seguras y significativas.
+      </p>
+
+      <div class="divider"></div>
+
+      <p class="subtitle-2">
+        Combinamos tecnología, acompañamiento psicológico y diseño centrado en
+        el usuario para ofrecer herramientas modernas a profesionales y
+        experiencias interactivas a los usuarios.
+      </p>
     </div>
 
-    <!-- Footer / Credenciales -->
-    <div class="mt-20 text-center">
-      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.4em]">Powered by InnoTech Labs © 2025</p>
+    <!-- Cards -->
+    <div class="cards-grid">
+      <!-- CARD PSICÓLOGOS -->
+      <div class="glass-card card-psico" id="btn-game-login">
+        <div>
+          <div class="card-icon">🧠</div>
+          <h2>Para <span class="psico-accent">Psicólogos</span></h2>
+          <p class="card-desc">
+            Herramientas clínicas, reportes y actividades digitales diseñadas
+            para apoyar procesos terapéuticos en entornos seguros.
+          </p>
+          <div class="card-features">
+            <div class="feature-item">
+              <div class="feature-dot"></div>
+              <span>Gestión de pacientes</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-dot"></div>
+              <span>Reportes y seguimiento clínico</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-dot"></div>
+              <span>Actividades terapéuticas digitales</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-btn-wrapper">
+          <SignInButton mode="modal">
+            <span class="card-btn btn-psico">Iniciar sesión</span>
+          </SignInButton>
+        </div>
+      </div>
+
+      <!-- CARD JUGADORES -->
+      <div class="glass-card card-player">
+        <div>
+          <div class="card-icon">🎮</div>
+          <h2>Para <span class="player-accent">Jugadores</span></h2>
+          <p class="card-desc">
+            Vive experiencias interactivas que fortalecen habilidades
+            emocionales, comunicación y relaciones mediante dinámicas lúdicas.
+          </p>
+          <div class="card-features">
+            <div class="feature-item">
+              <div class="feature-dot"></div>
+              <span>Juegos de bienestar emocional</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-dot"></div>
+              <span>Dinámicas de comunicación</span>
+            </div>
+            <div class="feature-item">
+              <div class="feature-dot"></div>
+              <span>Progreso personal gamificado</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-btn-wrapper">
+          <SignInButton mode="modal">
+            <span class="card-btn btn-player">Iniciar sesión</span>
+          </SignInButton>
+        </div>
+      </div>
     </div>
   </main>
 </div>
 
 <script>
-  import { showToast } from "../utils/toast.js";
-
-  document.addEventListener("DOMContentLoaded", () => {
-    // Verificar si hay un mensaje en la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const message = urlParams.get('message');
-
-    if (message) {
-      const decodedMessage = decodeURIComponent(message);
-      showToast(decodedMessage, 'error', 8000);
-
-      // Limpiar la URL para que no muestre el mensaje al recargar
-      window.history.replaceState({}, document.title, window.location.pathname);
+  // Partículas flotantes
+  const container = document.getElementById("particles-container");
+  if (container) {
+    for (let i = 0; i < 30; i++) {
+      const p = document.createElement("div");
+      p.className = "particle";
+      p.style.left = Math.random() * 100 + "%";
+      p.style.width = p.style.height = Math.random() * 2 + 1 + "px";
+      p.style.animationDuration = Math.random() * 15 + 10 + "s";
+      p.style.animationDelay = Math.random() * 15 + "s";
+      container.appendChild(p);
     }
+  }
 
-    const gameBtn = document.getElementById("btn-game-login");
-    if (gameBtn) {
-      const setGameAuth = () => {
+  // Auth source para card de psicólogos
+  document.addEventListener("DOMContentLoaded", () => {
+    const psicoButton = document.querySelector(".btn-psico");
+
+    if (psicoButton) {
+      psicoButton.addEventListener("click", () => {
         try {
-          console.log("🎮 Game login initiated - Setting auth_source");
           document.cookie =
-            "auth_source=game:memory; Path=/; Max-Age=86400; SameSite=Lax";
-          localStorage.setItem("auth_source", "game:memory");
-          window.dispatchEvent(new Event("auth_source_changed"));
+            "auth_source=psico; Path=/; Max-Age=86400; SameSite=Lax";
+          localStorage.setItem("auth_source", "psico");
         } catch (e) {
           console.warn("Error setting auth_source:", e);
         }
-      };
-
-      // Listen for both click and mousedown
-      gameBtn.addEventListener("click", setGameAuth);
-      gameBtn.addEventListener("mousedown", setGameAuth);
+      });
     }
   });
 </script>

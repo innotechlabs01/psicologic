@@ -17,9 +17,12 @@ export function EventMeetingSection({ meetingLink }: EventMeetingSectionProps) {
 
     const handleJoin = () => {
         if (isInternal) {
-            // For testing, let's just use host. In production this would be based on the logged-in user's role.
-            const url = meetingLink.startsWith("/") ? meetingLink : new URL(meetingLink).pathname;
-            window.location.href = `${url}?userType=host`;
+            const url = meetingLink.startsWith("/")
+                ? `${window.location.origin}${meetingLink}`
+                : meetingLink;
+            const meetingUrl = new URL(url);
+            meetingUrl.searchParams.set("userType", "host");
+            window.location.href = meetingUrl.toString();
         } else {
             window.open(meetingLink, "_blank");
         }

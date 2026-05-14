@@ -16,12 +16,105 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useWebRTC } from "./hooks/useWebRTC";
+import { useEmojiReactions } from "./hooks/Useemojireactions ";
+import AudioActivityIndicator from "./VideoRoom/Audioactivityindicator";
+import EmojiPicker, { ControlButton } from "./VideoRoom/EmojiPicker";
+import EmojiReaction from "./VideoRoom/EmojiReaction";
 
+
+// ─────────────────────────────────────────────
+//  Quick Reactions bar (bottom shortcut strip)
+// ─────────────────────────────────────────────
+const QUICK_EMOJIS = ["👍", "❤️", "😂", "👏", "🔥"];
+
+interface QuickReactionsProps {
+    onSelect: (emoji: string) => void;
+}
+
+const QuickReactions: React.FC<QuickReactionsProps> = ({ onSelect }) => (
+    <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 backdrop-blur-sm">
+        {QUICK_EMOJIS.map((e) => (
+            <button
+                key={e}
+                onClick={() => onSelect(e)}
+                className="text-xl transition-all duration-150 hover:scale-150 active:scale-90 select-none"
+                title={e}
+            >
+                {e}
+            </button>
+        ))}
+    </div>
+);
+
+// ─────────────────────────────────────────────
+//  Connection status badge
+// ─────────────────────────────────────────────
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+    const map: Record<string, { label: string; color: string; dot: string }> = {
+        connected: {
+            label: "Conectado",
+            color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+            dot: "bg-emerald-400",
+        },
+        connecting: {
+            label: "Conectando…",
+            color: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+            dot: "bg-amber-400 animate-pulse",
+        },
+        waiting: {
+            label: "Esperando",
+            color: "bg-sky-500/15 text-sky-400 border-sky-500/30",
+            dot: "bg-sky-400 animate-pulse",
+        },
+        error: {
+            label: "Error",
+            color: "bg-red-500/15 text-red-400 border-red-500/30",
+            dot: "bg-red-400",
+        },
+    };
+
+    const cfg = map[status] ?? map["connecting"];
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm ${cfg.color}`}
+        >
+            <span className={`size-1.5 rounded-full ${cfg.dot}`} />
+            {cfg.label}
+        </span>
+    );
+};
+
+// ─────────────────────────────────────────────
+//  Emoji toast notification
+// ─────────────────────────────────────────────
+const EmojiToast: React.FC<{ emoji: string; visible: boolean }> = ({ emoji, visible }) => (
+    <div
+        className="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+        style={{
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-12px)",
+            transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+    >
+        <div className="flex items-center gap-2 bg-zinc-900/90 border border-white/10 rounded-full px-4 py-2 shadow-lg backdrop-blur-sm text-sm text-zinc-300">
+            <span className="text-lg">{emoji}</span>
+            El otro participante reaccionó
+        </div>
+    </div>
+);
+
+// ─────────────────────────────────────────────
+//  Props
+// ─────────────────────────────────────────────
 interface VideoRoomProps {
     meetingToken: string;
     userType: "host" | "client";
 }
 
+// ─────────────────────────────────────────────
+//  Main component
+// ─────────────────────────────────────────────
 const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
     const {
         status,
@@ -32,7 +125,60 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
         toggleAudio,
         toggleVideo,
         endCall,
-    } = useWebRTC({ meetingToken, userType });
+        localStream,       // expose from hook if available (optional)
+        sendDataMessage,   // expose from hook if available (optional)
+    } = useWebRTC({ meetingToken, userType }) as ReturnType<typeof useWebRTC> & {
+        localStream?: MediaStream | null;
+        sendDataMessage?: (msg: string) => void;
+    };
+
+    // ── Emoji reactions ──
+    const sendReactionViaDC = useCallback(
+        (emoji: string) => {
+            sendDataMessage?.(JSON.stringify({ type: "reaction", emoji }));
+        },
+        [sendDataMessage]
+    );
+
+    const { reactions, sendReaction, receiveReaction } = useEmojiReactions(sendReactionViaDC);
+
+    // Toast for incoming remote reactions
+    const [toast, setToast] = useState<{ emoji: string; visible: boolean }>({
+        emoji: "",
+        visible: false,
+    });
+    const toastTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleRemoteReaction = useCallback(
+        (emoji: string) => {
+            receiveReaction(emoji);
+            setToast({ emoji, visible: true });
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+            toastTimerRef.current = setTimeout(
+                () => setToast((t) => ({ ...t, visible: false })),
+                2500
+            );
+        },
+        [receiveReaction]
+    );
+
+    // If useWebRTC exposes a way to subscribe to data messages, wire it up here.
+    // e.g.: useEffect(() => { onDataMessage?.((raw) => { ... }) }, [onDataMessage])
+
+    // ── Emoji picker state ──
+    const [pickerOpen, setPickerOpen] = useState(false);
+
+    // ── Controls hover state for auto-hide ──
+    const [controlsVisible, setControlsVisible] = useState(true);
+    const hideTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const showControls = useCallback(() => {
+        setControlsVisible(true);
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = setTimeout(() => {
+            if (status === "connected") setControlsVisible(false);
+        }, 4000);
+    }, [status]);
 
     const [isControlsVisible, setIsControlsVisible] = useState(true);
 

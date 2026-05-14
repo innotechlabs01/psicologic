@@ -16,7 +16,7 @@ export interface AgendaEvent {
     meetingLink: string;
     secureToken: string;
     userId: string;
-    status: 'confirmed' | 'cancelled' | 'completed';
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
     created_at?: string;
 }
 
@@ -69,17 +69,33 @@ export async function createEvent(event: Omit<AgendaEvent, 'created_at' | 'updat
 
 export async function getEventsByDateRange(startDate: string, endDate: string, userId: string): Promise<AgendaEvent[]> {
     try {
+        console.log('[DB] Fetching events:', { startDate, endDate, userId });
+        
         const result = await client.execute({
             sql: `SELECT * FROM agenda WHERE date >= ? AND date <= ? AND userId = ? AND status != 'cancelled'`,
             args: [startDate, endDate, userId]
         });
 
-        return result.rows.map(row => ({
-            ...row,
-            participants: JSON.parse(row.participants as string)
-        })) as unknown as AgendaEvent[];
+        console.log('[DB] Query result rows:', result.rows.length);
+
+        return result.rows.map(row => {
+            try {
+                return {
+                    ...row,
+                    participants: typeof row.participants === 'string' 
+                        ? JSON.parse(row.participants) 
+                        : row.participants || {}
+                } as unknown as AgendaEvent;
+            } catch (parseError) {
+                console.error('[DB] Error parsing participants for row:', { row, parseError });
+                return {
+                    ...row,
+                    participants: {}
+                } as unknown as AgendaEvent;
+            }
+        });
     } catch (error) {
-        console.error("Error fetching events:", error);
+        console.error('[DB] Error fetching events:', { error, startDate, endDate, userId });
         return [];
     }
 }
@@ -203,6 +219,19 @@ export async function clearSignalingRoom(meetingToken: string) {
     }
 }
 
+export async function confirmEvent(token: string): Promise<boolean> {
+    try {
+        const result = await client.execute({
+            sql: `UPDATE agenda SET status = 'confirmed' WHERE secureToken = ?`,
+            args: [token]
+        });
+        return result.rowsAffected > 0;
+    } catch (error) {
+        console.error("Error confirming event:", error);
+        return false;
+    }
+}
+
 // --- SETTINGS & VALIDATION ---
 
 export interface AgendaSettings {
@@ -288,4 +317,111 @@ export function isTimeEnabled(dateStr: string, startTime: string, settings: Agen
 
     // Simple string comparison for 'HH:MM' works lexicographically
     return startTime >= startLimit && startTime < endLimit;
+}
+
+export async function getTotalAppointmentsCount(userId: string): Promise<number> {
+    try {
+        console.log('Querying total appointments for userId:', userId);
+        const result = await client.execute({
+            sql: `SELECT COUNT(*) as count FROM agenda WHERE userId = ?`,
+            args: [userId]
+        });
+        console.log('Total query result:', result.rows);
+        const count = result.rows[0]?.count || 0;
+        console.log('Total count:', count);
+        return count as number;
+    } catch (error) {
+        console.error("Error fetching total appointments count:", error);
+        return 0;
+    }
+}
+
+export async function getPendingAppointmentsCount(userId: string, fromDate: string): Promise<number> {
+    try {
+        console.log('Querying pending for userId:', userId, 'fromDate:', fromDate);
+        const result = await client.execute({
+            sql: `SELECT COUNT(*) as count FROM agenda WHERE userId = ? AND status = 'pending' AND date >= ?`,
+            args: [userId, fromDate]
+        });
+        console.log('Pending query result:', result.rows);
+        const count = result.rows[0]?.count || 0;
+        console.log('Pending count:', count);
+        return count as number;
+    } catch (error) {
+        console.error("Error fetching pending appointments count:", error);
+        return 0;
+    }
+}
+
+export async function getConfirmedAppointmentsCount(userId: string, fromDate: string): Promise<number> {
+    try {
+        console.log('Querying confirmed for userId:', userId, 'fromDate:', fromDate);
+        const result = await client.execute({
+            sql: `SELECT COUNT(*) as count FROM agenda WHERE userId = ? AND status = 'confirmed' AND date >= ?`,
+            args: [userId, fromDate]
+        });
+        console.log('Confirmed query result:', result.rows);
+        const count = result.rows[0]?.count || 0;
+        console.log('Confirmed count:', count);
+        return count as number;
+    } catch (error) {
+        console.error("Error fetching confirmed appointments count:", error);
+        return 0;
+    }
+}
+
+export async function getNextAppointment(userId: string): Promise<AgendaEvent | null> {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        console.log('Querying next appointment for userId:', userId, 'fromDate:', today);
+        
+        // First try to get confirmed appointment
+        let result = await client.execute({
+            sql: `SELECT * FROM agenda 
+                   WHERE userId = ? AND status = 'confirmed' AND date >= ? 
+                   ORDER BY date ASC, startTime ASC 
+                   LIMIT 1`,
+            args: [userId, today]
+        });
+        
+        // If no confirmed, try pending
+        if (result.rows.length === 0) {
+            console.log('[DB] No confirmed appointments found, trying pending...');
+            result = await client.execute({
+                sql: `SELECT * FROM agenda 
+                       WHERE userId = ? AND status = 'pending' AND date >= ? 
+                       ORDER BY date ASC, startTime ASC 
+                       LIMIT 1`,
+                args: [userId, today]
+            });
+        }
+        
+        console.log('[DB] Next appointment query result:', {
+            found: result.rows.length > 0,
+            totalRows: result.rows.length,
+            appointment: result.rows.length > 0 ? {
+                id: result.rows[0].id,
+                title: result.rows[0].title,
+                date: result.rows[0].date,
+                startTime: result.rows[0].startTime,
+                status: result.rows[0].status
+            } : null
+        });
+        
+        if (result.rows.length === 0) {
+            console.log('[DB] No upcoming appointments found');
+            return null;
+        }
+        
+        const row = result.rows[0];
+        return {
+            ...row,
+            participants: typeof row.participants === 'string' 
+                ? JSON.parse(row.participants) 
+                : row.participants || {}
+        } as unknown as AgendaEvent;
+    } catch (error) {
+        console.error("Error fetching next appointment:", error);
+        return null;
+    }
 }
