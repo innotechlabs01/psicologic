@@ -98,7 +98,7 @@ export const POST: APIRoute = async ({ request, clientAddress, locals }) => {
             meetingLink: '', // Will be generated
             secureToken: crypto.randomUUID(), // Anti-fraud secure token
             userId: userId, // Ensure event is owned by logged in user
-            status: 'confirmed' as const
+            status: 'pending' as const
         };
 
         // Generate meeting link (pointing to the same app's video room)

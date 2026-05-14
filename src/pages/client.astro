@@ -1,20 +1,502 @@
 ---
-import LayoutClient from '../layouts/LayoutClient.astro'
+import LayoutClient from "../layouts/LayoutClient.astro";
 import { Show } from "@clerk/astro/components";
-import DashboardWrapper from '../components/Dashboard/DashboardWrapper.astro';
+import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
+import AppointmentsChart from "../components/Chartjs/AppointmentsChart";
+import { format, subMonths } from "date-fns";
+import { getPendingAppointmentsCount, getConfirmedAppointmentsCount, getTotalAppointmentsCount, getEventsByDateRange, getNextAppointment } from "../lib/turso/agenda/agenda-db";
+
+const { userId } = Astro.locals.auth();
+
+console.log('User ID from auth:', userId);
+
+let pendingCount = 0;
+let confirmedCount = 0;
+let appointmentsData: any[] = [];
+let nextAppointment: any = null;
+
+if (userId) {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const oneYearAgo = format(subMonths(new Date(), 12), 'yyyy-MM-dd');
+  
+  console.log('Today date:', today);
+  console.log('Getting appointments from:', oneYearAgo, 'to:', today);
+  
+  pendingCount = await getPendingAppointmentsCount(userId, today);
+  confirmedCount = await getConfirmedAppointmentsCount(userId, today);
+  const totalCount = await getTotalAppointmentsCount(userId);
+  
+  // Obtener historial completo para el gráfico - IGUAL A LAS TARJETAS
+  appointmentsData = await getEventsByDateRange(oneYearAgo, today, userId);
+  
+  // Obtener la próxima cita confirmada
+  nextAppointment = await getNextAppointment(userId);
+  
+  console.log('Pending count:', pendingCount);
+  console.log('Confirmed count:', confirmedCount);
+  console.log('Total count:', totalCount);
+  console.log('Appointments for chart:', appointmentsData.length);
+  console.log('Next appointment details:', {
+    found: nextAppointment !== null,
+    title: nextAppointment?.title,
+    date: nextAppointment?.date,
+    startTime: nextAppointment?.startTime,
+    status: nextAppointment?.status
+  });
+} else {
+  console.log('No userId found');
+}
 ---
 
-<LayoutClient title=" 🔒 Client">
-	<Show when="signed-in">
-		<DashboardWrapper title="Área de Cliente"
-	subtitle="Bienvenido a tu área de cliente">
+<LayoutClient title="🔒 Client">
+  <Show when="signed-in">
+    <DashboardWrapper
+      title="Área de Cliente"
+      subtitle="Bienvenido a tu área de cliente"
+    >
+      <!-- ── Stat cards ───────────────────────── -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon-wrap" style="background:#eef2ff; color:#6366f1">
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 0 0 1.946-.806 3.42 3.42 0 0 1 4.438 0 3.42 3.42 0 0 0 1.946.806 3.42 3.42 0 0 1 3.138 3.138 3.42 3.42 0 0 0 .806 1.946 3.42 3.42 0 0 1 0 4.438 3.42 3.42 0 0 0-.806 1.946 3.42 3.42 0 0 1-3.138 3.138 3.42 3.42 0 0 0-1.946.806 3.42 3.42 0 0 1-4.438 0 3.42 3.42 0 0 0-1.946-.806 3.42 3.42 0 0 1-3.138-3.138 3.42 3.42 0 0 0-.806-1.946 3.42 3.42 0 0 1 0-4.438 3.42 3.42 0 0 0 .806-1.946 3.42 3.42 0 0 1 3.138-3.138z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <p class="stat-label">Retos completados</p>
+            <p class="stat-value">0</p>
+          </div>
+        </div>
 
+        <div class="stat-card">
+          <div class="stat-icon-wrap" style="background:#fef9c3; color:#ca8a04">
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div>
+            <p class="stat-label">Próxima cita</p>
+            {nextAppointment ? (
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <p class="stat-value" style="font-size:0.95rem; margin:0">
+                  {format(new Date(nextAppointment.date + 'T00:00:00'), 'dd/MMM')}
+                </p>
+                <p style="font-size:0.8rem; color:#6b7280; margin:0">
+                  {nextAppointment.startTime || 'Hora por confirmar'}
+                </p>
+              </div>
+            ) : (
+              <p class="stat-value" style="font-size:1.1rem">Sin agendar</p>
+            )}
+          </div>
+        </div>
 
-		<main class="max-w-xl mx-auto py-12">
-			<h1 class="text-black text-3xl font-bold dark:text-black"> Tus retos Client</h1>
-			<p class="text-black dark:text-black mt-4">Bienvenido a tu área personal. Aquí podrás ver y gestionar tus retos.</p>
-		</main>
+        <div class="stat-card">
+          <div class="stat-icon-wrap" style="background:#fef9c3; color:#ca8a04">
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10"></circle><polyline
+                points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div>
+            <p class="stat-label">Citas pendientes</p>
+            <p class="stat-value" id="stat-pending">{pendingCount}</p>
+          </div>
+        </div>
 
-		</DashboardWrapper>
-	</Show>
+        <div class="stat-card">
+          <div class="stat-icon-wrap" style="background:#dcfce7; color:#16a34a">
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 0 0 1.946-.806 3.42 3.42 0 0 1 4.438 0 3.42 3.42 0 0 0 1.946.806 3.42 3.42 0 0 1 3.138 3.138 3.42 3.42 0 0 0 .806 1.946 3.42 3.42 0 0 1 0 4.438 3.42 3.42 0 0 0-.806 1.946 3.42 3.42 0 0 1-3.138 3.138 3.42 3.42 0 0 0-1.946.806 3.42 3.42 0 0 1-4.438 0 3.42 3.42 0 0 0-1.946-.806 3.42 3.42 0 0 1-3.138-3.138 3.42 3.42 0 0 0-.806-1.946 3.42 3.42 0 0 1 0-4.438 3.42 3.42 0 0 0 .806-1.946 3.42 3.42 0 0 1 3.138-3.138z"
+              ></path>
+            </svg>
+          </div>
+          <div>
+            <p class="stat-label">Citas confirmadas</p>
+            <p class="stat-value" id="stat-confirmed">{confirmedCount}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Dos columnas: retos + accesos rápidos ── -->
+      <!-- <div class="two-col">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">Tus retos activos</h2>
+            <span class="badge">0 activos</span>
+          </div>
+          <div class="empty-state">
+            <svg
+              width="40"
+              height="40"
+              fill="none"
+              stroke="#c7c9d9"
+              stroke-width="1.5"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>No tienes retos activos aún.</p>
+            <p class="empty-sub">Tu terapeuta los asignará próximamente.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h2 class="card-title">Accesos rápidos</h2>
+          </div>
+          <div class="quick-links">
+            <a href="/client/agenda" class="quick-link">
+              <span
+                class="quick-icon"
+                style="background:#eef2ff; color:#6366f1"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2"></rect><line
+                    x1="16"
+                    y1="2"
+                    x2="16"
+                    y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line><line
+                    x1="3"
+                    y1="10"
+                    x2="21"
+                    y2="10"></line>
+                </svg>
+              </span>
+              <div>
+                <p class="quick-label">Agenda</p>
+                <p class="quick-sub">Ver mis citas</p>
+              </div>
+            </a>
+
+            <a href="/client/Historia Clinica" class="quick-link">
+              <span
+                class="quick-icon"
+                style="background:#dcfce7; color:#16a34a"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"
+                  ></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </span>
+              <div>
+                <p class="quick-label">Historia Clínica</p>
+                <p class="quick-sub">Ver mi historial</p>
+              </div>
+            </a>
+
+            <a href="/client/Metodos de Pago" class="quick-link">
+              <span
+                class="quick-icon"
+                style="background:#fef9c3; color:#ca8a04"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <rect x="1" y="4" width="22" height="16" rx="2"></rect>
+                  <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+              </span>
+              <div>
+                <p class="quick-label">Métodos de Pago</p>
+                <p class="quick-sub">Gestionar pagos</p>
+              </div>
+            </a>
+
+            <a href="/client/games" class="quick-link">
+              <span
+                class="quick-icon"
+                style="background:#fce7f3; color:#db2777"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  viewBox="0 0 24 24"
+                >
+                  <rect x="2" y="6" width="20" height="13" rx="3"></rect>
+                  <path d="M8 12h4m-2-2v4"></path>
+                  <circle
+                    cx="16"
+                    cy="11"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"></circle>
+                  <circle
+                    cx="18"
+                    cy="13"
+                    r="1"
+                    fill="currentColor"
+                    stroke="none"></circle>
+                </svg>
+              </span>
+              <div>
+                <p class="quick-label">Juegos</p>
+                <p class="quick-sub">Ejercicios interactivos</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div> -->
+
+      <!-- ── Appointments Chart ───────────────────────── -->
+      {userId && (
+        <div class="mt-8 mb-6">
+          <AppointmentsChart 
+            userId={userId}
+            initialData={appointmentsData}
+            chartType="line" 
+            defaultView="monthly"
+            client:only="react" 
+          />
+        </div>
+      )}
+    </DashboardWrapper>
+  </Show>
 </LayoutClient>
+
+<script>
+  async function loadStats() {
+    try {
+      const res = await fetch('/api/agenda/myEvents');
+      const data = await res.json();
+      const pending = document.getElementById('stat-pending');
+      const confirmed = document.getElementById('stat-confirmed');
+      if (pending) pending.textContent = data.pending ?? '0';
+      if (confirmed) confirmed.textContent = data.confirmed ?? '0';
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  // Load stats on page load
+  loadStats();
+
+  // Expose function globally for potential updates
+  window.refreshClientStats = loadStats;
+</script>
+
+<style>
+  /* ── Stats grid ─────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition:
+      box-shadow 0.2s,
+      transform 0.2s;
+  }
+  .stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .stat-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 2px;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0;
+    line-height: 1;
+  }
+
+  /* ── Two col ────────────────────────────────── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  @media (max-width: 768px) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ── Card ───────────────────────────────────── */
+  .dashboard-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #6366f1;
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+
+  /* ── Empty state ────────────────────────────── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  .empty-state p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  .empty-sub {
+    font-size: 0.75rem !important;
+    color: #9ca3af !important;
+  }
+
+  /* ── Quick links ────────────────────────────── */
+  .quick-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .quick-link {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+  .quick-link:hover {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+  }
+
+  .quick-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .quick-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 1px;
+  }
+
+  .quick-sub {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0;
+  }
+</style>

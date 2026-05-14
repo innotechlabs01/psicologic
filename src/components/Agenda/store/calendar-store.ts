@@ -34,7 +34,7 @@ interface CalendarState {
     getWeekDays: () => Date[];
 }
 
-const BASE_WEEK_START = new Date("2024-02-04");
+const BASE_WEEK_START = startOfWeek(new Date());
 
 function getDayOfWeek(date: Date): number {
     const day = getDay(date);

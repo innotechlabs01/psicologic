@@ -1,5 +1,6 @@
 ---
-import LayoutClient from "../../layouts/LayoutClient.astro";
+// pages/agenda/video-room.astro (o como se llame tu página)
+import LayoutVideoCall from "../../layouts/LayoutVideoCall.astro";
 import VideoRoom from "../../components/Agenda/VideoRoom";
 import { getEventByToken } from "../../lib/turso/agenda/agenda-db";
 
@@ -10,10 +11,6 @@ if (!token) {
     return Astro.redirect("/agenda");
 }
 
-// Logic to determine role:
-// 1. Fetch event from DB using the secure token
-// 2. If current userId matches event.userId, they are the HOST
-// 3. Otherwise, they are the CLIENT
 const event = await getEventByToken(token);
 
 if (!event) {
@@ -23,12 +20,31 @@ if (!event) {
 const role = userId && userId === event.userId ? "host" : "client";
 ---
 
-<LayoutClient title="Video Call">
-    <div class="h-screen w-full overflow-hidden bg-black">
+<LayoutVideoCall title="Video Call">
+    <div class="video-wrapper">
         <VideoRoom
             client:only="react"
             meetingToken={token}
             userType={role as any}
         />
     </div>
-</LayoutClient>
+</LayoutVideoCall>
+
+<style>
+    .video-wrapper {
+        position: fixed;
+        inset: 0;
+        width: 100dvw;
+        height: 100dvh;
+        background: #000;
+        overflow: hidden;
+    }
+
+    /* Responsivo: en móvil aseguramos que no haya barras del navegador */
+    @media (max-width: 640px) {
+        .video-wrapper {
+            /* Usa dvh para manejar la barra de navegación del móvil */
+            height: 100dvh;
+        }
+    }
+</style>

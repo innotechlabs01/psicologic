@@ -1,10 +1,10 @@
 ---
-// src/layouts/LayoutDashboard.astro
+import Sidebar from "@components/sidebar/Sidebar";
 import Footer from "../components/Footer/footer.astro";
-import Header from "../components/Header/header.astro";
+import ToastRoot from "../components/Toast/ToastRoot";
 import { ClientRouter } from "astro:transitions";
 
-const { title } = Astro.props;
+const { title = "Psicologic", fullscreen = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -22,216 +22,169 @@ const { title } = Astro.props;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   </head>
 
-  <body class="min-h-screen bg-gray-50 dark:bg-gray-900 font-sans antialiased text-gray-900 dark:text-gray-100">
-    <!-- Sistema de carga premium -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-[9999] flex items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
-      <div class="text-center">
-        <div class="relative w-20 h-20 mx-auto mb-4">
-          <div class="absolute inset-0 border-4 border-gray-200 dark:border-gray-700 rounded-full"></div>
-          <div class="absolute inset-0 border-4 border-transparent border-t-indigo-600 rounded-full animate-spin"></div>
-          <div class="absolute inset-2 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" style="animation-duration: 1.5s; animation-direction: reverse;"></div>
-        </div>
-        <p id="loading-text" class="text-gray-600 dark:text-gray-400 font-medium text-sm">Cargando...</p>
-        <p id="loading-module" class="text-indigo-600 dark:text-indigo-400 font-semibold text-lg mt-2"></p>
-      </div>
+  <!--
+    body: flex-col
+    ├── .layout-shell   (flex-row, flex:1)  ← sidebar-spacer + main
+    └── <Footer />                          ← fuera del shell, ancho 100%
+
+    El Sidebar es position:fixed → no afecta al flujo.
+    El sidebar-spacer reserva los 232px en el flex-row.
+    Como el shell tiene flex:1 y el body es flex-col,
+    el footer siempre queda debajo y al 100% del ancho.
+  -->
+  <body class="layout-body">
+
+    <!-- Progress bar -->
+    <div id="global-page-loader" class="progress-bar-root" transition:persist="progress-bar">
+      <div class="progress-bar-fill"></div>
     </div>
 
-    <!-- Barra de progreso superior -->
-    <div id="progress-bar-container" class="fixed top-0 left-0 w-full h-1.5 z-[100] pointer-events-none opacity-0 transition-opacity duration-300">
-      <div id="progress-bar" class="h-full w-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-[0_0_10px_rgba(139,92,246,0.5)] transition-all duration-300 ease-out"></div>
+    <!-- Sidebar fixed — fuera del flujo, no afecta al layout -->
+    <Sidebar client:only="react" transition:persist="app-sidebar" />
+
+    <!-- Shell: spacer + contenido -->
+    <div class="layout-shell">
+      <div class="sidebar-spacer" transition:persist="sidebar-spacer" aria-hidden="true"></div>
+
+      <main class="main-content">
+        {fullscreen ? (
+          <div class="fullscreen-slot">
+            <div id="toast-container" class="toast-container"></div>
+            <ToastRoot client:load />
+            <slot />
+          </div>
+        ) : (
+          <div class="padded-slot">
+            <div id="toast-container" class="toast-container"></div>
+            <ToastRoot client:load />
+            <slot />
+          </div>
+        )}
+      </main>
     </div>
 
-    <!-- Indicador de carga en header -->
-    <div id="header-loading-indicator" class="fixed top-16 left-1/2 -translate-x-1/2 z-[90] opacity-0 transition-opacity duration-300 pointer-events-none">
-      <div class="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
-        <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-        <span id="header-loading-text" class="text-sm font-medium text-gray-700 dark:text-gray-300">Cargando módulo...</span>
-      </div>
-    </div>
+    <!-- Footer: hermano del shell → ocupa el 100% del ancho del body -->
+    {!fullscreen && <Footer />}
 
-    <!-- Header con sidebar incluido -->
-    <Header />
-
-    <div class="flex min-h-screen">
-      <!-- Espacio reservado para el sidebar en Desktop -->
-      <div class="hidden sm:block sm:w-64 lg:w-72 flex-shrink-0"></div>
-
-      <!-- Área de Contenido Principal -->
-      <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <main class="main-content flex-grow p-4 md:p-6 lg:p-8" transition:animate="fade">
-          <!-- Contenedor de Toasts -->
-          <div id="toast-container" class="fixed top-4 right-4 z-[100] space-y-2"></div>
-          
-          <!-- Contenido de la página -->
-          <slot />
-        </main>
-        
-        <Footer />
-      </div>
-    </div>
-
-    <script type="module" src="/js/toast.js"></script>
-    <script type="module" src="/js/dashboard/dashboardNavigation.js"></script>
-    
-    <!-- Sistema de carga controlado -->
-    <script type="module" src="/js/fetch-interceptor.js"></script>
-    
-    <!-- Sistema de carga premium -->
-    <script>
-      /* eslint-disable */
-      (function() {
-        var overlay = document.getElementById('loading-overlay');
-        var progressBar = document.getElementById('progress-bar');
-        var progressContainer = document.getElementById('progress-bar-container');
-        var headerIndicator = document.getElementById('header-loading-indicator');
-        var loadingModule = document.getElementById('loading-module');
-        var headerLoadingText = document.getElementById('header-loading-text');
-
-        var activeRequests = 0;
-        var progressTimeout = null;
-        var isNavigating = false;
-
-        function getCurrentModule() {
-          var path = window.location.pathname;
-          if (path.includes('payments')) return 'Pagos';
-          if (path.includes('message')) return 'Mensajes';
-          if (path.includes('feedback')) return 'Feedback';
-          if (path.includes('settings')) return 'Configuraciones';
-          if (path.includes('agenda')) return 'Agenda';
-          if (path.includes('patients')) return 'Pacientes';
-          if (path.includes('history')) return 'Historial';
-          return 'Dashboard';
-        }
-
-        function showLoading(moduleName) {
-          if (!overlay || !progressContainer) return;
-          
-          var module = moduleName || getCurrentModule();
-          
-          overlay.classList.remove('opacity-0', 'pointer-events-none');
-          progressContainer.classList.remove('opacity-0');
-          
-          if (loadingModule) loadingModule.textContent = module;
-          if (headerLoadingText) headerLoadingText.textContent = 'Cargando ' + module + '...';
-          
-          headerIndicator.classList.remove('opacity-0');
-          
-          var progress = 0;
-          progressBar.style.width = '0%';
-          
-          progressTimeout = setInterval(function() {
-            if (progress < 85) {
-              progress += Math.random() * 15;
-              progressBar.style.width = Math.min(progress, 85) + '%';
-            }
-          }, 200);
-        }
-
-        function hideLoading() {
-          if (!overlay || !progressContainer) return;
-          
-          if (progressTimeout) {
-            clearInterval(progressTimeout);
-            progressTimeout = null;
-          }
-          
-          progressBar.style.width = '100%';
-          
-          setTimeout(function() {
-            overlay.classList.add('opacity-0', 'pointer-events-none');
-            progressContainer.classList.add('opacity-0');
-            headerIndicator.classList.add('opacity-0');
-            progressBar.style.width = '0%';
-          }, 200);
-        }
-
-        window.addEventListener('global:fetch-start', function() {
-          activeRequests++;
-          if (activeRequests === 1) {
-            showLoading();
-          }
-        });
-
-        window.addEventListener('global:fetch-end', function() {
-          activeRequests = Math.max(0, activeRequests - 1);
-          if (activeRequests === 0) {
-            hideLoading();
-          }
-        });
-
-        window.addEventListener('dashboard:loading-start', function(e) {
-          activeRequests++;
-          showLoading(e.detail && e.detail.module);
-        });
-
-        window.addEventListener('dashboard:loading-end', function() {
-          activeRequests = Math.max(0, activeRequests - 1);
-          if (activeRequests === 0) {
-            hideLoading();
-          }
-        });
-
-        document.addEventListener('astro:before-preparation', function() {
-          isNavigating = true;
-          var moduleName = 'Cargando...';
-          var url = window.location.pathname;
-          
-          if (url.includes('payments')) moduleName = 'Pagos';
-          else if (url.includes('message')) moduleName = 'Mensajes';
-          else if (url.includes('feedback')) moduleName = 'Feedback';
-          else if (url.includes('settings')) moduleName = 'Configuraciones';
-          else if (url.includes('agenda')) moduleName = 'Agenda';
-          else if (url.includes('patients')) moduleName = 'Pacientes';
-          else if (url.includes('history')) moduleName = 'Historial';
-          
-          showLoading(moduleName);
-        });
-
-        document.addEventListener('astro:after-swap', function() {
-          hideLoading();
-          isNavigating = false;
-        });
-
-        document.addEventListener('astro:page-load', function() {
-          if (!isNavigating) {
-            setTimeout(function() {
-              hideLoading();
-            }, 500);
-          }
-        });
-
-        window.addEventListener('load', function() {
-          setTimeout(function() {
-            hideLoading();
-          }, 300);
-        });
-      })();
-    </script>
   </body>
 </html>
 
-<style is:global>
-  :root {
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-  
-  body {
-    font-family: var(--font-sans);
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
   }
 
-  /* Animaciones suaves para transiciones de Astro */
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 0.3s;
-    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  /* ── Body: flex COLUMN ─────────────────────────
+     Apila .layout-shell (crece) y <footer> (fijo abajo).
+  ────────────────────────────────────────────────*/
+  .layout-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background: #f5f5f9;
   }
 
-  /* Ocultar scrollbar innecesario pero permitir scroll */
-  .hide-scrollbar::-webkit-scrollbar {
+  /* ── Shell: flex ROW ───────────────────────────
+     flex:1 → ocupa todo el espacio antes del footer.
+     El sidebar fixed NO vive aquí; el spacer reserva su hueco.
+  ────────────────────────────────────────────────*/
+  .layout-shell {
+    display: flex;
+    flex-direction: row;
+    flex: 1;           /* empuja el footer hacia abajo */
+    min-height: 0;
+  }
+
+  /* Reserva el ancho del sidebar fixed (232px) */
+  .sidebar-spacer {
     display: none;
+    width: 232px;
+    flex-shrink: 0;
   }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  @media (min-width: 640px) {
+    .sidebar-spacer { display: block; }
+  }
+
+  /* ── Main ──────────────────────────────────────*/
+  .main-content {
+    flex: 1;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .padded-slot {
+    padding: 24px;
+    max-width: 100%;
+    position: relative;
+  }
+
+  .fullscreen-slot {
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── Footer ────────────────────────────────────
+     Hijo directo del body flex-col → ancho 100% natural.
+     flex-shrink:0 evita que se comprima.
+  ────────────────────────────────────────────────*/
+  :global(footer) {
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  /* ── Progress bar ──────────────────────────────*/
+  .progress-bar-root {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    z-index: 200;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #6366f1);
+    width: 0;
+    transition: width .3s ease-out;
+    box-shadow: 0 0 10px rgba(99,102,241,.5);
+  }
+
+  /* ── Toast ─────────────────────────────────────*/
+  .toast-container {
+    position: fixed;
+    top: 16px; right: 16px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 </style>
+
+<script>
+  const loader = () => document.getElementById("global-page-loader");
+  const bar = () => loader()?.firstElementChild as HTMLElement | null;
+
+  document.addEventListener("astro:before-preparation", () => {
+    const l = loader(), b = bar();
+    if (!l || !b) return;
+    l.style.opacity = "1";
+    b.style.width = "60%";
+  });
+
+  document.addEventListener("astro:page-load", () => {
+    const l = loader(), b = bar();
+    if (!l || !b) return;
+    b.style.width = "100%";
+    setTimeout(() => {
+      l.style.opacity = "0";
+      setTimeout(() => { b.style.width = "0%"; }, 300);
+    }, 150);
+  });
+</script>
