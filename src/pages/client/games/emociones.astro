@@ -2,17 +2,17 @@
 import EmotionsGame from "@components/games/emociones";
 import DashboardWrapper from "../../../components/Dashboard/DashboardWrapper.astro";
 import LayoutClient from "../../../layouts/LayoutClient.astro";
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 export const prerender = false;
 ---
 
 <LayoutClient title="Emociones">
-  <SignedIn>
+  <Show when="signed-in">
     <DashboardWrapper
       title="Emociones"
       subtitle="Anímate a jugar y descubre cómo las emociones pueden ser divertidas y educativas al mismo tiempo."
     >
     <EmotionsGame client:only/>
     </DashboardWrapper>
-  </SignedIn>
+  </Show>
 </LayoutClient>

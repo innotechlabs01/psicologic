@@ -1,6 +1,6 @@
 ---
 import LayoutClient from "../layouts/LayoutClient.astro";
-import { SignedIn } from "@clerk/astro/components";
+import { Show } from "@clerk/astro/components";
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
 import AppointmentsChart from "../components/Chartjs/AppointmentsChart";
 import { format, subMonths } from "date-fns";
@@ -49,7 +49,7 @@ if (userId) {
 ---
 
 <LayoutClient title="🔒 Client">
-  <SignedIn>
+  <Show when="signed-in">
     <DashboardWrapper
       title="Área de Cliente"
       subtitle="Bienvenido a tu área de cliente"
@@ -312,7 +312,7 @@ if (userId) {
         </div>
       )}
     </DashboardWrapper>
-  </SignedIn>
+  </Show>
 </LayoutClient>
 
 <script>
