@@ -110,12 +110,13 @@ const EmojiToast: React.FC<{ emoji: string; visible: boolean }> = ({ emoji, visi
 interface VideoRoomProps {
     meetingToken: string;
     userType: "host" | "client";
+    isAuthenticated?: boolean;
 }
 
 // ─────────────────────────────────────────────
 //  Main component
 // ─────────────────────────────────────────────
-const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
+const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthenticated }) => {
     const {
         status,
         localVideoRef,
@@ -168,6 +169,24 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
 
     // ── Emoji picker state ──
     const [pickerOpen, setPickerOpen] = useState(false);
+
+    // ── Call ended state ──
+    const [callEnded, setCallEnded] = useState(false);
+
+    const handleEndCall = useCallback(() => {
+        setCallEnded(true);
+        endCall();
+    }, [endCall]);
+
+    useEffect(() => {
+        if (!callEnded) return;
+        const t = setTimeout(() => {
+            if (isAuthenticated) {
+                window.location.href = "/client/agenda";
+            }
+        }, 3000);
+        return () => clearTimeout(t);
+    }, [callEnded, isAuthenticated]);
 
     // ── Permission error detection ──
     const isPermissionError = mediaError?.name === "NotAllowedError" || mediaError?.name === "PermissionDeniedError";
@@ -256,6 +275,34 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
         window.addEventListener("mousemove", handleMouseMove);
         return () => window.removeEventListener("mousemove", handleMouseMove);
     }, [status]);
+
+    if (callEnded) {
+        return (
+            <div className="relative flex flex-col h-screen bg-[#050505] text-white overflow-hidden font-sans select-none items-center justify-center">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+                <div className="flex flex-col items-center gap-6 text-center px-6">
+                    <div className="size-20 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                        <PhoneOff className="size-10 text-emerald-400" />
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Llamada finalizada</h2>
+                    <p className="text-zinc-400 text-sm md:text-base max-w-sm">
+                        {isAuthenticated
+                            ? "Serás redirigido en unos segundos."
+                            : "Puedes cerrar esta ventana."}
+                    </p>
+                    {!isAuthenticated && (
+                        <button
+                            onClick={() => window.close()}
+                            className="mt-4 px-8 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-semibold transition-all"
+                        >
+                            Cerrar ventana
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative flex flex-col h-screen bg-[#050505] text-white overflow-hidden font-sans select-none">
@@ -442,7 +489,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
                     <div className="w-px h-8 bg-white/10 mx-2" />
 
                     <button
-                        onClick={endCall}
+                        onClick={handleEndCall}
                         className="size-16 rounded-[1.5rem] bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center transition-all duration-300 shadow-[0_10px_30px_rgba(225,29,72,0.3)] hover:shadow-[0_15px_40px_rgba(225,29,72,0.4)]"
                         title="Finalizar consulta"
                     >

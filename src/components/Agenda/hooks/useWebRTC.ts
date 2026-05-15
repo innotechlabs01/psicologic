@@ -441,7 +441,8 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
     };
 
     const endCall = () => {
-        window.location.href = "/agenda";
+        localStream.current?.getTracks().forEach(track => track.stop());
+        peerConnection.current?.close();
     };
 
     return {
