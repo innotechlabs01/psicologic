@@ -28,6 +28,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
     const peerConnection = useRef<RTCPeerConnection | null>(null);
     const localStream = useRef<MediaStream | null>(null);
+    const remoteStream = useRef<MediaStream>(new MediaStream());
     const channelRef = useRef<any>(null);
     const iceRestartCount = useRef(0);
     const negotiatingRef = useRef(false);
@@ -183,8 +184,13 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         });
 
         pc.ontrack = (event) => {
-            if (remoteVideoRef.current && event.streams[0]) {
-                remoteVideoRef.current.srcObject = event.streams[0];
+            if (event.streams[0]) {
+                event.streams[0].getTracks().forEach((track) => {
+                    remoteStream.current.addTrack(track);
+                });
+            }
+            if (remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = remoteStream.current;
             }
             setStatus("connected");
             clearConnectionTimeout();
@@ -404,6 +410,8 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
             active = false;
             clearConnectionTimeout();
             localStream.current?.getTracks().forEach(track => track.stop());
+            remoteStream.current.getTracks().forEach(track => track.stop());
+            remoteStream.current = new MediaStream();
             peerConnection.current?.close();
             if (supabase && channelRef.current && channelRef.current.unsubscribe) {
                 supabase.removeChannel(channelRef.current);
@@ -433,7 +441,8 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
     };
 
     const endCall = () => {
-        window.location.href = "/agenda";
+        localStream.current?.getTracks().forEach(track => track.stop());
+        peerConnection.current?.close();
     };
 
     return {

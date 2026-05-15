@@ -26,6 +26,7 @@ const role = userId && userId === event.userId ? "host" : "client";
             client:only="react"
             meetingToken={token}
             userType={role as any}
+            isAuthenticated={!!userId}
         />
     </div>
 </LayoutVideoCall>
