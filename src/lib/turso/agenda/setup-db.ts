@@ -34,21 +34,21 @@ export async function setupAgendaTable() {
     `);
 
         // Create table for simple signaling (WebRTC)
-        console.log('Creating agenda_signaling table...');
+        console.log('Creating webrtc_signaling table...');
         await client.execute(`
-      CREATE TABLE IF NOT EXISTS agenda_signaling (
+      CREATE TABLE IF NOT EXISTS webrtc_signaling (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         meetingToken TEXT NOT NULL,
-        type TEXT NOT NULL, -- 'offer', 'answer', 'ice-candidate'
+        type TEXT NOT NULL,
         payload TEXT NOT NULL,
-        sender TEXT NOT NULL, -- 'host' or 'client'
+        sender TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
         // Index for signaling lookups
         await client.execute(`
-        CREATE INDEX IF NOT EXISTS idx_signaling_token ON agenda_signaling(meetingToken);
+        CREATE INDEX IF NOT EXISTS idx_webrtc_signaling_token ON webrtc_signaling(meetingToken);
       `);
 
         console.log('Tables created successfully!');

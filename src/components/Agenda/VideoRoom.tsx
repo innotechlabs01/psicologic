@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
     Video, 
     Mic, 
@@ -110,12 +110,13 @@ const EmojiToast: React.FC<{ emoji: string; visible: boolean }> = ({ emoji, visi
 interface VideoRoomProps {
     meetingToken: string;
     userType: "host" | "client";
+    isAuthenticated?: boolean;
 }
 
 // ─────────────────────────────────────────────
 //  Main component
 // ─────────────────────────────────────────────
-const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
+const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthenticated }) => {
     const {
         status,
         localVideoRef,
@@ -125,6 +126,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
         toggleAudio,
         toggleVideo,
         endCall,
+        mediaError,
         localStream,       // expose from hook if available (optional)
         sendDataMessage,   // expose from hook if available (optional)
     } = useWebRTC({ meetingToken, userType }) as ReturnType<typeof useWebRTC> & {
@@ -168,6 +170,84 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
     // ── Emoji picker state ──
     const [pickerOpen, setPickerOpen] = useState(false);
 
+    // ── Call ended state ──
+    const [callEnded, setCallEnded] = useState(false);
+
+    const handleEndCall = useCallback(() => {
+        setCallEnded(true);
+        endCall();
+    }, [endCall]);
+
+    useEffect(() => {
+        if (!callEnded) return;
+        const t = setTimeout(() => {
+            if (isAuthenticated) {
+                window.location.href = "/client/agenda";
+            }
+        }, 3000);
+        return () => clearTimeout(t);
+    }, [callEnded, isAuthenticated]);
+
+    // ── Permission error detection ──
+    const isPermissionError = mediaError?.name === "NotAllowedError" || mediaError?.name === "PermissionDeniedError";
+    const isPolicyError = mediaError?.message?.includes("policy") || mediaError?.message?.includes("Permissions-Policy");
+
+    // ── Browser detection ──
+    const getBrowser = () => {
+        const ua = navigator.userAgent;
+        if (ua.includes("Chrome") && !ua.includes("Edg")) return "chrome";
+        if (ua.includes("Firefox")) return "firefox";
+        if (ua.includes("Safari") && !ua.includes("Chrome")) return "safari";
+        if (ua.includes("Edg")) return "edge";
+        return "other";
+    };
+    const browser = getBrowser();
+
+    const browserInstructions: Record<string, { name: string; steps: string[] }> = {
+        chrome: {
+            name: "Chrome",
+            steps: [
+                "Haz clic en el ícono del candado (🔒) o Información del sitio a la izquierda de la barra de direcciones.",
+                "Busca la sección 'Cámara' y 'Micrófono'.",
+                'Cambia la opción a "Permitir".',
+                "Recarga la página e intenta de nuevo.",
+            ],
+        },
+        firefox: {
+            name: "Firefox",
+            steps: [
+                "Haz clic en el ícono del candado (🔒) a la izquierda de la barra de direcciones.",
+                'Ve a "Más información" → "Permisos".',
+                "Activa Cámara y Micrófono.",
+                "Recarga la página e intenta de nuevo.",
+            ],
+        },
+        safari: {
+            name: "Safari",
+            steps: [
+                'Ve a Safari → "Ajustes" → "Sitios web" → "Cámara" y "Micrófono".',
+                "Asegúrate de que este sitio esté configurado como 'Permitir'.",
+                "Recarga la página e intenta de nuevo.",
+            ],
+        },
+        edge: {
+            name: "Edge",
+            steps: [
+                "Haz clic en el ícono del candado (🔒) a la izquierda de la barra de direcciones.",
+                "Busca 'Permisos del sitio' y activa Cámara y Micrófono.",
+                "Recarga la página e intenta de nuevo.",
+            ],
+        },
+        other: {
+            name: "tu navegador",
+            steps: [
+                "Revisa la configuración de permisos de cámara y micrófono en tu navegador.",
+                "Asegúrate de permitir el acceso a este sitio.",
+                "Recarga la página e intenta de nuevo.",
+            ],
+        },
+    };
+
     // ── Controls hover state for auto-hide ──
     const [controlsVisible, setControlsVisible] = useState(true);
     const hideTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -195,6 +275,34 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
         window.addEventListener("mousemove", handleMouseMove);
         return () => window.removeEventListener("mousemove", handleMouseMove);
     }, [status]);
+
+    if (callEnded) {
+        return (
+            <div className="relative flex flex-col h-screen bg-[#050505] text-white overflow-hidden font-sans select-none items-center justify-center">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+                <div className="flex flex-col items-center gap-6 text-center px-6">
+                    <div className="size-20 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                        <PhoneOff className="size-10 text-emerald-400" />
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Llamada finalizada</h2>
+                    <p className="text-zinc-400 text-sm md:text-base max-w-sm">
+                        {isAuthenticated
+                            ? "Serás redirigido en unos segundos."
+                            : "Puedes cerrar esta ventana."}
+                    </p>
+                    {!isAuthenticated && (
+                        <button
+                            onClick={() => window.close()}
+                            className="mt-4 px-8 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-semibold transition-all"
+                        >
+                            Cerrar ventana
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative flex flex-col h-screen bg-[#050505] text-white overflow-hidden font-sans select-none">
@@ -254,23 +362,70 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
                                 </div>
                             </div>
                             
-                            <div className="text-center px-6 max-w-md">
-                                <h3 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">
-                                    {status === "error" ? "Error de Conexión" : "Sala de Espera"}
-                                </h3>
-                                <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
-                                    {status === "error" 
-                                        ? "Hubo un problema con los medios. Verifica que no haya otra pestaña usando tu cámara." 
-                                        : (userType === "host" ? "Esperando a que el paciente se una a la sesión..." : "El doctor aún no ha iniciado la sesión. Por favor, espera un momento.")
-                                    }
-                                </p>
-                                {status === "error" && (
-                                    <Button 
-                                        onClick={() => window.location.reload()}
-                                        className="mt-6 bg-white text-black hover:bg-zinc-200 rounded-full px-8 py-6 font-bold"
-                                    >
-                                        Reintentar
-                                    </Button>
+                            <div className="text-center px-6 max-w-lg">
+                                {status === "error" && isPermissionError ? (
+                                    <>
+                                        <div className="mb-6 inline-flex items-center justify-center size-20 rounded-[2rem] bg-rose-500/20 border border-rose-500/30">
+                                            <AlertTriangle className="size-10 text-rose-500" />
+                                        </div>
+                                        <h3 className="text-2xl md:text-3xl font-bold mb-2 tracking-tight">
+                                            {isPolicyError ? "Bloqueado por el Navegador" : "Permiso denegado"}
+                                        </h3>
+                                        <p className="text-zinc-400 text-sm md:text-base leading-relaxed mb-6">
+                                            {isPolicyError
+                                                ? "El navegador bloqueó el acceso a la cámara y micrófono por política de seguridad."
+                                                : "No podemos acceder a tu cámara y micrófono porque el permiso fue denegado."
+                                            }
+                                        </p>
+                                        <div className="bg-zinc-800/50 backdrop-blur-sm rounded-2xl border border-white/10 p-5 text-left mb-6">
+                                            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+                                                Cómo activarlos en {browserInstructions[browser].name}:
+                                            </p>
+                                            <ol className="space-y-2">
+                                                {browserInstructions[browser].steps.map((step, i) => (
+                                                    <li key={i} className="flex gap-3 text-sm text-zinc-300">
+                                                        <span className="flex-shrink-0 flex items-center justify-center size-5 rounded-full bg-indigo-500/20 text-indigo-400 text-[10px] font-bold">
+                                                            {i + 1}
+                                                        </span>
+                                                        <span>{step}</span>
+                                                    </li>
+                                                ))}
+                                            </ol>
+                                        </div>
+                                        <Button
+                                            onClick={() => window.location.reload()}
+                                            className="mt-2 bg-white text-black hover:bg-zinc-200 rounded-full px-10 py-6 font-bold text-base"
+                                        >
+                                            Reintentar
+                                        </Button>
+                                    </>
+                                ) : status === "error" ? (
+                                    <>
+                                        <h3 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">
+                                            Error de Conexión
+                                        </h3>
+                                        <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
+                                            Hubo un problema con los medios. Verifica que no haya otra pestaña usando tu cámara.
+                                        </p>
+                                        <Button
+                                            onClick={() => window.location.reload()}
+                                            className="mt-6 bg-white text-black hover:bg-zinc-200 rounded-full px-8 py-6 font-bold"
+                                        >
+                                            Reintentar
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h3 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">
+                                            Sala de Espera
+                                        </h3>
+                                        <p className="text-zinc-400 text-sm md:text-base leading-relaxed">
+                                            {userType === "host"
+                                                ? "Esperando a que el paciente se una a la sesión..."
+                                                : "El doctor aún no ha iniciado la sesión. Por favor, espera un momento."
+                                            }
+                                        </p>
+                                    </>
                                 )}
                             </div>
                             
@@ -334,7 +489,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType }) => {
                     <div className="w-px h-8 bg-white/10 mx-2" />
 
                     <button
-                        onClick={endCall}
+                        onClick={handleEndCall}
                         className="size-16 rounded-[1.5rem] bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center transition-all duration-300 shadow-[0_10px_30px_rgba(225,29,72,0.3)] hover:shadow-[0_15px_40px_rgba(225,29,72,0.4)]"
                         title="Finalizar consulta"
                     >

@@ -161,6 +161,8 @@ export async function updateEvent(event: Partial<AgendaEvent> & { id: string, us
 
 // --- SIGNALING HELPER (DB-based WebRTC) ---
 
+const SIGNALING_TABLE = "webrtc_signaling";
+
 export async function addSignalingMessage(meetingToken: string, type: string, payload: any, sender: 'host' | 'client') {
     try {
         if (!meetingToken || !type || !payload || !sender) {
@@ -170,15 +172,13 @@ export async function addSignalingMessage(meetingToken: string, type: string, pa
 
         const payloadStr = JSON.stringify(payload);
 
-        // Manual cleanup to ensure it's a valid string for the DB
-        const sql = "INSERT INTO webrtc_signals (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)";
+        const sql = `INSERT INTO ${SIGNALING_TABLE} (meetingToken, type, payload, sender) VALUES (?, ?, ?, ?)`;
         const args = [meetingToken as string, type as string, payloadStr as string, sender as string];
 
         await client.execute({ sql, args });
         return true;
     } catch (error) {
         console.error("DB Error adding signaling:", error);
-        // Throw the error so the API route can catch it and show details
         throw error;
     }
 }
@@ -186,7 +186,7 @@ export async function addSignalingMessage(meetingToken: string, type: string, pa
 export async function getSignalingMessages(meetingToken: string, afterId: number = 0) {
     try {
         const result = await client.execute({
-            sql: `SELECT * FROM webrtc_signals WHERE meetingToken = ? AND id > ? ORDER BY id ASC`,
+            sql: `SELECT * FROM ${SIGNALING_TABLE} WHERE meetingToken = ? AND id > ? ORDER BY id ASC`,
             args: [meetingToken, afterId]
         });
 
@@ -210,7 +210,7 @@ export async function getSignalingMessages(meetingToken: string, afterId: number
 export async function clearSignalingRoom(meetingToken: string) {
     try {
         if (!meetingToken) return false;
-        const sql = "DELETE FROM webrtc_signals WHERE meetingToken = ?";
+        const sql = `DELETE FROM ${SIGNALING_TABLE} WHERE meetingToken = ?`;
         await client.execute({ sql, args: [meetingToken] });
         return true;
     } catch (error) {

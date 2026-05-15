@@ -1,56 +1,55 @@
 import nodemailer from 'nodemailer';
 import { generateICSContent, generateGoogleCalendarLink } from './calendar-utils';
+import { getSiteUrl } from '../site-url';
 
 // Configurar transporter de Gmail
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: import.meta.env.EMAIL_USER,
-        pass: import.meta.env.EMAIL_PASS,
-    },
+  service: 'gmail',
+  auth: {
+    user: import.meta.env.EMAIL_USER,
+    pass: import.meta.env.EMAIL_PASS,
+  },
 });
 
 export async function sendBookingEmail(to: string | string[], bookingDetails: any) {
-    if (!import.meta.env.EMAIL_USER || !import.meta.env.EMAIL_PASS) {
-        console.warn("Credenciales de Gmail no encontradas. Email no enviado.");
-        return false;
-    }
+  if (!import.meta.env.EMAIL_USER || !import.meta.env.EMAIL_PASS) {
+    console.warn("Credenciales de Gmail no encontradas. Email no enviado.");
+    return false;
+  }
 
-    try {
-        const { date, startTime, endTime, meetingLink, secureToken, title } = bookingDetails;
-        const eventTitle = title || 'Cita de Asesoría - Psicologic';
-        const description = `Unirse a la videollamada: ${meetingLink}`;
-        const location = 'Videollamada (Psicologic)';
+  try {
+    const { date, startTime, endTime, meetingLink, secureToken, title } = bookingDetails;
+    const eventTitle = title || 'Cita de Asesoría - Psicologic';
+    const description = `Unirse a la videollamada: ${meetingLink}`;
+    const location = 'Videollamada (Psicologic)';
 
-        // URL de confirmación con el token seguro
-        const siteUrl = import.meta.env.SITE_URL || 'http://localhost:4321';
-        const confirmUrl = `${siteUrl}/agenda/confirm?token=${secureToken}`;
+    const confirmUrl = `${getSiteUrl()}/agenda/confirm?token=${secureToken}`;
 
-        const icsContent = generateICSContent({
-            date, startTime, endTime,
-            title: eventTitle,
-            description, location,
-            url: meetingLink
-        });
+    const icsContent = generateICSContent({
+      date, startTime, endTime,
+      title: eventTitle,
+      description, location,
+      url: meetingLink
+    });
 
-        const googleCalendarLink = generateGoogleCalendarLink({
-            date, startTime, endTime,
-            title: eventTitle,
-            description, location
-        });
+    const googleCalendarLink = generateGoogleCalendarLink({
+      date, startTime, endTime,
+      title: eventTitle,
+      description, location
+    });
 
-        await transporter.sendMail({
-            from: `"Psicologic" <${import.meta.env.EMAIL_USER}>`,
-            to: Array.isArray(to) ? to.join(', ') : to,
-            subject: `Confirmación de Cita: ${eventTitle}`,
-            attachments: [
-                {
-                    filename: 'invite.ics',
-                    content: Buffer.from(icsContent),
-                    contentType: 'text/calendar',
-                },
-            ],
-            html: `
+    await transporter.sendMail({
+      from: `"Psicologic" <${import.meta.env.EMAIL_USER}>`,
+      to: Array.isArray(to) ? to.join(', ') : to,
+      subject: `Confirmación de Cita: ${eventTitle}`,
+      attachments: [
+        {
+          filename: 'invite.ics',
+          content: Buffer.from(icsContent),
+          contentType: 'text/calendar',
+        },
+      ],
+      html: `
                 <div style="font-family: Arial, sans-serif; background: #f4f4f5; padding: 32px 16px; margin: 0;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e4e4e7;">
 
@@ -142,12 +141,12 @@ export async function sendBookingEmail(to: string | string[], bookingDetails: an
   </div>
 </div>
             `,
-        });
+    });
 
-        console.log("Email enviado correctamente a:", to);
-        return true;
-    } catch (error) {
-        console.error("Error enviando email:", error);
-        return false;
-    }
+    console.log("Email enviado correctamente a:", to);
+    return true;
+  } catch (error) {
+    console.error("Error enviando email:", error);
+    return false;
+  }
 }
