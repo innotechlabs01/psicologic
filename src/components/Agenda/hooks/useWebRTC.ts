@@ -31,7 +31,6 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
     const channelRef = useRef<any>(null);
     const iceRestartCount = useRef(0);
     const negotiatingRef = useRef(false);
-    const startedRef = useRef(false);
     const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const configuration: RTCConfiguration = {
@@ -158,14 +157,16 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
     const startCall = useCallback(async () => {
         if (!peerConnection.current) return;
         try {
-            const offer = await peerConnection.current.createOffer();
-            await peerConnection.current.setLocalDescription(offer);
-
-            if (channelRef.current?.send) {
+            if (peerConnection.current.signalingState === "stable") {
+                const offer = await peerConnection.current.createOffer();
+                await peerConnection.current.setLocalDescription(offer);
+            }
+            const desc = peerConnection.current.localDescription;
+            if (desc && channelRef.current?.send) {
                 channelRef.current.send({
                     type: "broadcast",
                     event: "offer",
-                    payload: { offer, from: userType },
+                    payload: { offer: desc, from: userType },
                 });
             }
         } catch (e) {
@@ -175,7 +176,6 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
 
     const createPeerConnection = useCallback((stream: MediaStream, iceServers?: RTCIceServer[]) => {
         iceRestartCount.current = 0;
-        startedRef.current = false;
         const pc = new RTCPeerConnection(iceServers ? { ...configuration, iceServers } : configuration);
 
         stream.getTracks().forEach((track) => {
@@ -223,8 +223,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
             negotiatingRef.current = true;
             console.log("[WebRTC] Negotiation needed");
             try {
-                if (userType === "host" && !startedRef.current) {
-                    startedRef.current = true;
+                if (userType === "host") {
                     await startCall();
                 }
             } catch (e) {
@@ -247,7 +246,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         return pc;
     }, [userType, attemptIceRestart, setCodecPreferences, startCall]);
 
-    const handleOffer = async (offer: RTCSessionDescriptionInit) => {
+    const handleOffer = useCallback(async (offer: RTCSessionDescriptionInit) => {
         if (!peerConnection.current || !localStream.current) return;
         try {
             if (peerConnection.current.signalingState !== "stable") {
@@ -267,9 +266,9 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         } catch (e) {
             console.error("[WebRTC] Error handling offer:", e);
         }
-    };
+    }, [userType]);
 
-    const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
+    const handleAnswer = useCallback(async (answer: RTCSessionDescriptionInit) => {
         if (!peerConnection.current) return;
         try {
             if (peerConnection.current.signalingState === "have-local-offer") {
@@ -278,9 +277,9 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         } catch (e) {
             console.error("[WebRTC] Error handling answer:", e);
         }
-    };
+    }, []);
 
-    const handleCandidate = async (candidate: RTCIceCandidateInit) => {
+    const handleCandidate = useCallback(async (candidate: RTCIceCandidateInit) => {
         if (!peerConnection.current) return;
         if (!peerConnection.current.remoteDescription) {
             console.warn("[WebRTC] Skipping ICE candidate: no remote description yet");
@@ -291,7 +290,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         } catch (e) {
             console.error("[WebRTC] Error adding ice candidate:", e);
         }
-    };
+    }, []);
 
     useEffect(() => {
         let active = true;
@@ -325,8 +324,11 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
                     .on("broadcast", { event: "candidate" }, ({ payload }: RealtimePayload) => {
                         if (payload.from !== userType) handleCandidate(payload.candidate);
                     })
-                    .on("broadcast", { event: "user-joined" }, () => {
+                    .on("broadcast", { event: "user-joined" }, ({ payload }: RealtimePayload) => {
                         console.log("[WebRTC] Remote user joined");
+                        if (payload.from !== userType && userType === "host") {
+                            startCall();
+                        }
                     })
                     .subscribe(async (status: string) => {
                         if (status === "SUBSCRIBED") {
