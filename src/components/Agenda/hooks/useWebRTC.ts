@@ -180,7 +180,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         const pc = new RTCPeerConnection(iceServers ? { ...configuration, iceServers } : configuration);
 
         stream.getTracks().forEach((track) => {
-            pc.addTransceiver(track, { direction: "sendrecv" });
+            pc.addTrack(track, stream);
         });
 
         pc.ontrack = (event) => {
