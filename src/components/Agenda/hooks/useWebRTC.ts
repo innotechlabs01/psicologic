@@ -30,6 +30,8 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
     const localStream = useRef<MediaStream | null>(null);
     const channelRef = useRef<any>(null);
     const iceRestartCount = useRef(0);
+    const negotiatingRef = useRef(false);
+    const startedRef = useRef(false);
     const connectionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const configuration: RTCConfiguration = {
@@ -173,6 +175,7 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
 
     const createPeerConnection = useCallback((stream: MediaStream, iceServers?: RTCIceServer[]) => {
         iceRestartCount.current = 0;
+        startedRef.current = false;
         const pc = new RTCPeerConnection(iceServers ? { ...configuration, iceServers } : configuration);
 
         stream.getTracks().forEach((track) => {
@@ -216,13 +219,18 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
         };
 
         pc.onnegotiationneeded = async () => {
+            if (negotiatingRef.current) return;
+            negotiatingRef.current = true;
             console.log("[WebRTC] Negotiation needed");
             try {
-                if (userType === "host") {
+                if (userType === "host" && !startedRef.current) {
+                    startedRef.current = true;
                     await startCall();
                 }
             } catch (e) {
                 console.error("[WebRTC] Negotiation failed:", e);
+            } finally {
+                negotiatingRef.current = false;
             }
         };
 
@@ -274,6 +282,10 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
 
     const handleCandidate = async (candidate: RTCIceCandidateInit) => {
         if (!peerConnection.current) return;
+        if (!peerConnection.current.remoteDescription) {
+            console.warn("[WebRTC] Skipping ICE candidate: no remote description yet");
+            return;
+        }
         try {
             await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (e) {
@@ -313,10 +325,8 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
                     .on("broadcast", { event: "candidate" }, ({ payload }: RealtimePayload) => {
                         if (payload.from !== userType) handleCandidate(payload.candidate);
                     })
-                    .on("broadcast", { event: "user-joined" }, ({ payload }: RealtimePayload) => {
-                        if (payload.from !== userType && userType === "host") {
-                            startCall();
-                        }
+                    .on("broadcast", { event: "user-joined" }, () => {
+                        console.log("[WebRTC] Remote user joined");
                     })
                     .subscribe(async (status: string) => {
                         if (status === "SUBSCRIBED") {
@@ -353,16 +363,23 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
                 const poll = async () => {
                     try {
                         const res = await fetch(`/api/agenda/signaling?token=${meetingToken}&afterId=${lastId}`);
+                        if (!res.ok) {
+                            console.warn("[Polling] API responded with", res.status);
+                            return;
+                        }
                         const messages = await res.json();
+                        if (!Array.isArray(messages)) {
+                            console.warn("[Polling] Unexpected response format");
+                            return;
+                        }
 
                         for (const msg of messages) {
                             lastId = Math.max(lastId, msg.id);
                             if (msg.sender === userType) continue;
 
-                            if (msg.type === "offer") handleOffer(msg.payload);
-                            if (msg.type === "answer") handleAnswer(msg.payload);
-                            if (msg.type === "candidate") handleCandidate(msg.payload);
-                            if (msg.type === "user-joined" && userType === "host") startCall();
+                            if (msg.type === "offer") await handleOffer(msg.payload);
+                            if (msg.type === "answer") await handleAnswer(msg.payload);
+                            if (msg.type === "candidate") await handleCandidate(msg.payload);
                         }
                     } catch (e) {
                         console.error("[Polling] error:", e);
