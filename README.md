@@ -1,87 +1,134 @@
-# Psicologic — Proyecto
+# MR Training — The Operating System for Sports Coaching
 
-**Psicologic** es una aplicación construida con Astro y Tailwind CSS para la gestión de citas, historial de pacientes, y herramientas de apoyo para terapeutas y pacientes.
+MR Training is a premium SaaS platform that unifies the entire ecosystem of athletic development — coaches, athletes, academies, sports clubs, nutritionists, and physical therapists — into one seamless experience.
 
-## 🧩 Resumen del proyecto
+## Architecture
 
-- Stack: **Astro**, **TailwindCSS**, **TypeScript**, **Clerk** (autenticación) y servicios propios.
-- Estructura principal: `src/` para componentes, layouts y páginas; `public/` para assets estáticos.
-- Tests: `playwright` para E2E y specs con Vitest/Playwright según la carpeta `tests/`.
+Monorepo with three applications and shared packages:
 
-## ⚙️ Comandos útiles
+```
+apps/
+├── web/          # Next.js 14+ (App Router) frontend
+├── mobile/       # Flutter mobile app (iOS + Android)
+└── api/          # Go (Fiber) backend API
+
+packages/
+├── shared/       # Shared TypeScript types, DTOs, utilities
+├── ui/           # Design system components (shadcn/ui + Tailwind)
+└── config/       # Shared configuration (ESLint, TypeScript, Tailwind)
+```
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Web Frontend | Next.js 14+, React 18+, TypeScript 5.x, Tailwind CSS 3.4+, shadcn/ui, TanStack Query, Zustand |
+| Mobile | Flutter 3.24+, Riverpod, Drift (SQLite), GoRouter, Dio |
+| Backend API | Go 1.22+, Fiber 2.x, pgx 5.x, NATS, Redis, gRPC |
+| Database | PostgreSQL 16+ |
+| Auth | Clerk (organization-aware, social SSO) |
+| Payments | Paddle (subscriptions, one-time) |
+| Infrastructure | Docker, GitHub Actions, Coolify, Hetzner, Terraform |
+| Monitoring | Prometheus, Grafana, Loki, OpenTelemetry |
+
+## Documentation
+
+| Document | Description |
+|----------|------------|
+| [MASTER_PROMPT.md](./MASTER_PROMPT.md) | Architectural constitution — principles, philosophy, rules |
+| [00-product-vision.md](./00-product-vision.md) | Product vision, personas, modules, roadmap, business model |
+| [01-brand-guidelines.md](./01-brand-guidelines.md) | Brand identity, colors, typography, voice & tone, motion |
+| [02-design-system.md](./02-design-system.md) | Design tokens, layout, components, dark mode, responsive |
+| [03-ux-workflows.md](./03-ux-workflows.md) | UX principles, onboarding, coach/athlete/admin workflows, AI flows |
+| [04-database-design.md](./04-database-design.md) | PostgreSQL schema, indexing, partitioning, migration strategy |
+| [05-backend-architecture.md](./05-backend-architecture.md) | Go Clean Architecture, DDD, CQRS, event-driven patterns |
+| [06-frontend-architecture.md](./06-frontend-architecture.md) | Next.js App Router, Server Components, state management, testing |
+| [07-mobile-architecture.md](./07-mobile-architecture.md) | Flutter Clean Architecture, Riverpod, offline-first, Drift |
+| [08-api-specification.md](./08-api-specification.md) | RESTful API design, endpoints, webhooks, rate limiting, SDK |
+| [09-ai-specification.md](./09-ai-specification.md) | AI/ML architecture, models, training pipelines, integration |
+| [10-devops.md](./10-devops.md) | CI/CD, Docker, Coolify, monitoring, infrastructure as code |
+| [11-security.md](./11-security.md) | Security architecture, OWASP, data protection, compliance |
+| [12-coding-standards.md](./12-coding-standards.md) | Coding conventions for TypeScript, Go, Dart, SQL |
+| [13-testing.md](./13-testing.md) | Testing strategy, coverage targets, tools, patterns |
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+ with pnpm 9+
+- Go 1.22+
+- Flutter 3.24+
+- Docker & Docker Compose
+- PostgreSQL 16+ (or Docker)
+
+### Environment Setup
 
 ```bash
-pnpm install     # Instala dependencias
-pnpm dev         # Inicia servidor de desarrollo
-pnpm build       # Genera el build de producción
-pnpm preview     # Previsualiza el build
-pnpm test        # Ejecuta pruebas (si aplica)
+# Clone repository
+git clone <repo-url>
+cd mr-training
+
+# Copy and configure environment variables
+cp .env.example .env.local
+# Edit .env.local with your Clerk, Paddle, and database credentials
+
+# Install frontend dependencies
+pnpm install
+
+# Start development infrastructure (PostgreSQL, Redis, NATS)
+docker compose up -d
+
+# Start web frontend
+pnpm --filter web dev
+
+# Start API server
+cd apps/api && go run cmd/api/main.go
+
+# Start mobile app
+cd apps/mobile && flutter run
 ```
 
----
+### Development Workflow
 
-## 🎨 Paleta de colores (IT InnoTech Labs SAS) 💡
+1. Understand the requirement
+2. Design the workflow before the UI
+3. Model the domain before the database
+4. Define the API contract before implementation
+5. Implement frontend and backend independently against the contract
+6. Test at every layer
+7. Review against Product Principles (see MASTER_PROMPT.md)
+8. Deploy incrementally
 
-Usamos una paleta reducida y coherente para mantener la identidad visual. A continuación los tokens y ejemplos de uso:
+### Available Commands
 
-| Token CSS | Color (HEX) | Uso recomendado |
-|-----------|-------------|-----------------|
-| `--color-azul-principal` | `#007BFF` | Acciones principales: botones, links, borders importantes ✅ |
-| `--color-morado-principal` | `#8A2BE2` | Acentos secundarios, loaders, highlights 🔮 |
-| `--color-azul-oscuro` | `#0A1F44` | Texto principal, títulos, cuerpos de texto 📝 |
-| `--color-lavanda` | `#C3A6FF` | Fondos suaves, badges, estados neutrales 💜 |
-| `--color-gris-claro` | `#F5F5F5` | Fondos de pantalla y contenedores claros 🪶 |
+```bash
+# Web
+pnpm --filter web dev           # Start Next.js dev server
+pnpm --filter web build         # Production build
+pnpm --filter web lint          # Lint with Biome
+pnpm --filter web typecheck     # TypeScript check
+pnpm --filter web test          # Run Vitest tests
+pnpm --filter web test:e2e      # Run Playwright E2E tests
 
-### Ejemplo rápido (CSS)
+# API
+cd apps/api
+go run cmd/api/main.go          # Start API server
+go test ./...                   # Run all tests
+go run cmd/migrate/main.go      # Run database migrations
 
-```css
-:root {
-  --color-azul-principal: #007BFF;
-  --color-morado-principal: #8A2BE2;
-  --color-azul-oscuro: #0A1F44;
-  --color-lavanda: #C3A6FF;
-  --color-gris-claro: #F5F5F5;
-}
-
-body {
-  background-color: var(--color-gris-claro);
-  color: var(--color-azul-oscuro);
-}
-
-button.primary {
-  background-color: var(--color-azul-principal);
-  color: white;
-}
-
-button.primary:hover {
-  background-color: var(--color-morado-principal);
-}
+# Mobile
+cd apps/mobile
+flutter run                     # Start on connected device
+flutter test                    # Run unit/widget tests
+flutter build apk               # Build Android APK
+flutter build ios               # Build iOS
 ```
 
-> Consejo: preferir tokens CSS (`var(--color-...)`) para que el tema sea fácil de mantener y reusar.
+## Contributing
 
----
+See [12-coding-standards.md](./12-coding-standards.md) for code conventions and [13-testing.md](./13-testing.md) for testing requirements. All contributions must follow the development workflow documented in [MASTER_PROMPT.md](./MASTER_PROMPT.md).
 
-## 🧪 Cambios aplicados (resumen)
+## License
 
-- Añadidos tokens de color en `src/styles/global.css`.
-- Actualizados estilos y componentes clave para usar la paleta (loader, skeleton, charts, emails, estilos globales).
-- Reemplazados colores directos por tokens o por los hex de la paleta donde aplica.
-- Seguridad y APIs: añadido verificación `verifyClerkUser` en endpoints, validadores de entrada (`validateName`, `validateCedula`, `validateEmail`) y endpoint `POST /api/client/patients/reactivate` para reactivar pacientes (soft-delete pattern).
-
-Si quieres que sustituya más colores (ej. paleta de gráficas completa o paleta de los juegos), dímelo y lo aplico en los archivos restantes.
-
----
-
-## 📦 Contribuir
-
-1. Clona el repo
-2. Instala dependencias: `pnpm install`
-3. Corre en modo desarrollo: `pnpm dev`
-
----
-
-## 📬 Contacto
-
-Si necesitas ayuda con la implementación del diseño, o quieres que haga una revisión completa de estilos para dejar todo 100% alineado con la paleta, dime y lo dejo listo.
-
+Proprietary. All rights reserved. MR Training Inc.
+# mrTraining
