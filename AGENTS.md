@@ -1,0 +1,269 @@
+# MR TRAINING — AGENTS.md (Rule Manager)
+
+## REGLA DE ORO
+
+**ANTES de cualquier cambio de codigo, diseño, arquitectura, o configuracion, DEBES leer los archivos de reglas relevantes en `apps/rules/`.**
+
+Si no sabes que regla aplica, lee `apps/rules/MASTER_PROMPT.md` primero.
+
+---
+
+## MAPA DE REGLAS POR TIPO DE CAMBIO
+
+| Tipo de cambio | Reglas obligatorias |
+|---|---|
+| **Nuevo feature/producto** | `00-product-vision.md` + `03-ux-workflows.md` |
+| **UI / Diseño / Estilos** | `01-brand-guidelines.md` + `02-design-system.md` |
+| **Flujos de usuario / UX** | `03-ux-workflows.md` |
+| **Base de datos / Schema** | `04-database-design.md` |
+| **Backend / API / Go** | `05-backend-architecture.md` + `08-api-specification.md` |
+| **Frontend / Next.js / React** | `06-frontend-architecture.md` |
+| **APIs / Endpoints** | `08-api-specification.md` |
+| **AI / ML** | `09-ai-specification.md` |
+| **DevOps / CI/CD / Docker** | `10-devops.md` |
+| **Seguridad / Auth** | `11-security.md` |
+| **Coding style / Linting** | `12-coding-standards.md` |
+| **Testing** | `13-testing.md` |
+| **Team workflow / Worktrees / Caveman** | `14-team-workflow.md` |
+| **Mobile / React Native** | `mobile-rules/*` (ver seccion abajo) |
+| **Cualquier cosa** | `MASTER_PROMPT.md` (siempre) |
+
+### Reglas Mobile (React Native)
+
+Cuando trabajes en `apps/mobile/`, React Native, o cualquier feature mobile, activa TODAS estas reglas:
+
+| Regla | Archivo | Cuando aplica |
+|---|---|---|
+| **Arquitectura** | `mobile-rules/00-mobile-architecture.md` | Estructura del proyecto, capas, navegacion |
+| **UI/UX** | `mobile-rules/01-mobile-ui-ux.md` | Diseño de pantallas, componentes, estados |
+| **Codigo** | `mobile-rules/02-mobile-code-quality.md` | TypeScript, naming, hooks, componentes |
+| **Testing** | `mobile-rules/03-mobile-testing.md` | Unit tests, coverage, bug fixes |
+| **Seguridad** | `mobile-rules/04-mobile-security.md` | OWASP, almacenamiento seguro, API |
+| **Performance** | `mobile-rules/05-mobile-performance.md` | 60 FPS, FlashList, bundles, memoria |
+| **QA / Bugs** | `mobile-rules/06-mobile-bug-hunter.md` | Edge cases, doble tap, offline, rotacion |
+
+---
+
+## GLOBAL MOBILE UI VALIDATION RULE
+
+**Scope: Only applies when working in `apps/mobile/` (React Native app).**
+
+For every mobile task that changes UI, navigation, interaction, state, or user flow **inside `apps/mobile/`**, the task is NOT complete until the real application has been tested on a running Android emulator/device or iOS simulator/device using the available mobile MCP (Maestro).
+
+### Mandatory workflow
+
+1. Read and understand the task requirements.
+2. Implement the change.
+3. Build the mobile application.
+4. Launch/install the application on the available mobile target.
+5. Use the mobile MCP to interact with the REAL rendered UI.
+6. Validate:
+
+   * screen rendering
+   * navigation
+   * buttons and touch interactions
+   * text inputs
+   * forms
+   * lists/scrolling
+   * loading states
+   * success states
+   * error states
+   * empty states when applicable
+   * keyboard behavior when applicable
+   * back navigation
+   * permissions when applicable
+7. Take screenshots when visual validation is relevant.
+8. Compare the actual result against the task requirements and expected UX.
+9. If anything fails, is visually incorrect, inaccessible, broken, or inconsistent:
+
+   * diagnose the root cause
+   * fix the implementation
+   * rebuild/reload the application
+   * repeat the real-device/emulator validation
+10. Continue until the affected flow passes.
+
+### Strict completion rule
+
+NEVER mark a mobile task as completed because:
+
+* the code compiles
+* TypeScript/Dart checks pass
+* unit tests pass
+* static analysis passes
+* the implementation looks correct from the source code
+* the UI was only inspected from screenshots provided by the user
+
+Those checks are necessary but NOT sufficient.
+
+The actual running mobile application MUST be validated.
+
+### MCP requirement
+
+Prefer the configured mobile MCP/ Maestro tools for UI interaction and validation.
+
+If the mobile MCP is unavailable:
+
+1. Do NOT falsely claim that the UI was validated.
+2. Report that real mobile validation could not be performed.
+3. Continue with code-level validation if possible.
+4. Mark the task as BLOCKED rather than COMPLETE.
+
+### Final response requirement
+
+Before declaring completion, report:
+
+* Build result
+* Mobile target tested
+* Screens/flows tested
+* UI interactions tested
+* E2E result
+* Any remaining issues
+
+Use one of these final statuses:
+
+PASS — implementation and real mobile UI validation passed.
+
+PASS WITH LIMITATIONS — implementation passed but a clearly documented validation limitation remains.
+
+BLOCKED — real mobile UI validation could not be performed.
+
+NEVER report PASS when the real mobile UI was not actually tested.
+
+---
+
+## WORKFLOW OBLIGATORIO
+
+```
+Recibes una tarea
+  ↓
+0. Invoca el skill `pipeline-init` (carga mr-context + herdr-setup,
+    y herdr si HERDR_ENV=1). Trabaja SIEMPRE en tu worktree (un branch = un worktree).
+   Si no tenes uno: scripts/worktree.sh new feature/<nombre>
+   NUNCA trabajar en main. Detalle: 14-team-workflow.md
+  ↓
+1. Identifica el tipo de cambio
+  ↓
+2. Lee el/los archivo(s) de reglas de `apps/rules/` correspondientes
+  ↓
+3. Lee el MASTER_PROMPT.md si tienes dudas
+  ↓
+4. Ejecuta el cambio siguiendo las reglas
+  ↓
+5. Verifica con lint, build, tests segun 13-testing.md
+  ↓
+6. Commit atomico convencional + PR a main. Limpia el worktree tras merge.
+```
+
+---
+
+## TEAM WORKFLOW (detalle en `14-team-workflow.md`)
+
+ - **Paso 0 u2014 pipeline-init:** todo agente invoca el skill `pipeline-init`
+   ANTES de tocar cu00f3digo. Carga `mr-context` (mapa repo, no-negociables,
+   barra senior) + `herdr-setup` (conceptos Herdr) + `herdr` su00f3lo si
+   `HERDR_ENV=1` (corre dentro de un pane Herdr).
+---
+
+## STACK
+
+| Capa | Tecnologia |
+|---|---|
+| Frontend | Next.js 14 (App Router) + React 18 + TypeScript strict + Tailwind CSS 3 |
+| Auth | Clerk v6 (`@clerk/nextjs`) |
+| Backend | **Go 1.25 API (FIBER) — FUENTE DE VERDAD** |
+| Database | Turso/LibSQL (principal) |
+| Cache | Redis 7 |
+| Event Bus | NATS 2.10 con JetStream |
+| Mobile | React Native CLI + TypeScript strict + React Navigation + React Query |
+| Monorepo | pnpm workspaces |
+
+---
+
+## REGLA DE ORO — API-FIRST
+
+**TODA la comunicación entre apps DEBE ir a través del Go API (`apps/api`).**
+
+| App | Role | Regla |
+|---|---|---|
+| **Go API** (`apps/api`) | **Backend principal** | ÚNICA fuente de verdad para datos |
+| **Web** (`apps/web`) | Frontend coach | Lee/escribe SOLO vía Go API |
+| **Mobile** (`apps/mobile`) | Frontend athlete | Lee/escribe SOLO vía Go API |
+
+### Flujo correcto
+```
+Mobile/Web → Go API → Database
+Go API → Database → Mobile/Web
+```
+
+### Flujo INCORRECTO (NUNCA hacer esto)
+```
+Mobile → Next.js API Routes → Database  ❌
+Web → Next.js API Routes → Database  ❌
+Mobile → Next.js API Routes → Web  ❌
+```
+
+### Excepciones permitidas
+- Next.js API Routes solo sirven para: webhooks de Clerk, server-side rendering data, y archivos estáticos
+- Si necesitás datos en Next.js, consumí el Go API desde el server component
+
+### Coordinación de contratos
+1. **Cambios de contrato** → coordinar entre API, Web, y Mobile
+2. **Nuevos endpoints** → agregar en Go API primero, luego actualizar clientes
+3. **Migraciones DB** → Go API es el dueño del schema
+
+---
+
+## COMANDOS UTILES
+
+```bash
+# Frontend (apps/web)
+cd apps/web && pnpm dev          # Dev server en :3000
+cd apps/web && pnpm build        # Build de produccion
+cd apps/web && pnpm lint         # ESLint
+cd apps/web && pnpm test         # Jest
+
+# Backend (apps/api — Go/Fiber)
+cd apps/api && go build ./... # Compilar
+cd apps/api && go test ./...  # Tests
+
+# Mobile (apps/mobile)
+cd apps/mobile && npx react-native run-ios     # iOS Simulator
+cd apps/mobile && npx react-native run-android # Android Emulator
+cd apps/mobile && npm test                      # Jest tests
+
+# Infra (Redis para dev)
+docker compose -f apps/api/docker-compose.dev.yml up -d redis
+```
+
+---
+
+## ESTRUCTURA DEL PROYECTO
+
+```
+apps/
+├── web/          # Next.js frontend (coach dashboard + landing)
+├── api/          # Go API (Fiber, Clean Architecture, CQRS) — backend
+├── rules/        # 16 archivos de reglas (esta es LA fuente de verdad)
+│   └── mobile-rules/  # Reglas especificas para React Native
+└── mobile/       # React Native (iOS + Android)
+
+docs/
+└── superpowers/  # Specs y planes generados por AI
+    ├── plans/
+    └── specs/
+```
+
+---
+
+## PRINCIPIOS CLAVE (del MASTER_PROMPT)
+
+1. Arquitectura antes que codigo
+2. Features antes que paginas
+3. Dominio antes que framework
+4. Reutilizable antes que duplicado
+5. Legible antes que inteligente
+6. Simple antes que complejo
+7. Mantenible antes que rapido
+8. Nunca optimizar por velocidad. Siempre optimizar por calidad.
+9. Pensar antes de codificar.
+# Test change Sat Oct 10 22:21:11 -05 2026
