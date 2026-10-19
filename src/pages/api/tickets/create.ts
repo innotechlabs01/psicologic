@@ -1,10 +1,5 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
+import { db } from '../../../lib/turso/client';
 
 // Función auxiliar para generar un UUID simple (o puedes usar la función DEFAULT de tu tabla)
 const generateUUID = () => crypto.randomUUID().replace(/-/g, ''); 

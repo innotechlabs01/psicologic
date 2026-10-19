@@ -1,14 +1,9 @@
 // src/pages/api/webhooks/clerk.ts
 import type { APIContext, APIRoute } from 'astro';
 import { Webhook } from 'svix';
-import { createClient } from '@libsql/client';
 import { clerkClient } from '@clerk/astro/server';
+import { db as client } from '../../../lib/turso/client';
 import type { ClerkUserEvent } from './interface';
-
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
 
 // 🆕 FUNCIÓN PARA CREAR USUARIO DESDE CLERK (LLAMADA DESDE MIDDLEWARE)
 export async function createUserFromClerk(userData: ClerkUserEvent['data'], context?: APIContext, isGameLogin: boolean = false): Promise<any> {
