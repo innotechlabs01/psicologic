@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher, clerkClient } from "@clerk/astro/server";
 import { isAdminRole, isClientRole } from "./lib/clerk/roles";
-import { createUserFromClerk, triggerUserAccessEvent } from "./pages/api/webhooks/clerk";
+import { createUserFromClerk, triggerUserAccessEvent } from "./lib/clerk/user-provisioning";
 import type { APIContext } from "astro";
 import { checkUserGameAccess } from "./utils/checkUserGameAccess";
 

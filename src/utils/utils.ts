@@ -1,5 +1,5 @@
 import { clerkClient } from "@clerk/astro/server";
-import { createUserFromAdminClerk, createUserFromClerk } from "../pages/api/webhooks/clerk";
+import { createUserFromAdminClerk, createUserFromClerk } from "../lib/clerk/user-provisioning";
 import type { APIContext } from "astro";
 import { db as client } from '../lib/turso/client';
 import { v4 as uuidv4 } from 'uuid';
