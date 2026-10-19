@@ -13,7 +13,8 @@ for f in \
   scripts/worktree.sh .githooks/pre-commit \
   docs/superpowers/specs/TEMPLATE-coach-feature.md \
   .github/workflows/ci.yml .github/workflows/deploy-vercel.yml \
-  playwright.config.ts src/middleware.ts src/lib/turso/turso.js \
+  playwright.config.ts src/middleware.ts src/lib/turso/client.ts \
+  src/lib/payments/save-payment.ts \
   src/pages/index.astro src/styles/global.css \
   .agents/skills/pipeline-init/SKILL.md .agents/skills/mr-context/SKILL.md \
   .agents/skills/astro/SKILL.md; do
