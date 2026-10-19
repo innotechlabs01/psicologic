@@ -1,12 +1,9 @@
 // src/lib/services/paymentService.ts
-import { createClient, type Value } from '@libsql/client';
+import { type Value } from '@libsql/client';
+import { db as client } from '../turso/client';
 import type { paymentHistory, PaymentInfo } from 'src/constants/interfaces';
 
 // Initialize Supabase client with service role key
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
 
 // 🇪🇸 Formato YYYY-MM-DD
 const processDate = (date: string | number | null | undefined): string => {

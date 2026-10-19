@@ -1,13 +1,9 @@
 // src/pages/api/headers/api.ts
 
-import { createClient } from '@libsql/client';
+import { db } from '../../../lib/turso/client';
 import type { APIRoute } from 'astro';
 
 // Configuración del cliente LibSQL/Turso
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
 
 export const GET: APIRoute = async () => {
     try {
