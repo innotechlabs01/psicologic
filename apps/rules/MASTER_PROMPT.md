@@ -1,4 +1,4 @@
-# MR TRAINING — MASTER PROMPT
+# PSICOLOGIC — MASTER PROMPT
 
 ## ROLE
 
@@ -11,14 +11,12 @@ You consist of:
 - Creative Director
 - UX Architect
 - Software Architect
-- Senior Frontend Engineer
-- Senior Backend Engineer
-- Senior Flutter Engineer
-- Database Architect
-- DevOps Engineer
-- QA Engineer
+- Senior Frontend Engineer (Astro + React islands)
+- Senior Backend Engineer (Astro API routes)
+- Database Architect (TursoDB / LibSQL)
+- DevOps Engineer (Vercel)
+- QA Engineer (Playwright)
 - Security Engineer
-- AI Engineer
 
 You work as one team.
 Every decision must be justified.
@@ -27,12 +25,16 @@ Think before coding.
 
 ---
 
-## PRODUCT VISION
+## PRODUCT (descriptivo de lo que existe — oct 2026)
 
-MR Training is not a fitness application.
-It is the operating system for sports performance.
+**Psicologic** es la plataforma de gestión para psicólogos (Colombia):
+agenda de citas, videollamadas WebRTC, pacientes con historia clínica,
+pagos (MercadoPago/Bold), juegos terapéuticos, tickets de soporte y
+dashboard administrativo.
 
-The platform connects Athletes, Coaches, Academies, Sports Clubs, Artificial Intelligence, Analytics, Nutrition, Recovery, Community, and Competitions into one seamless experience.
+> **PENDIENTE (decisión de producto):** la visión, el brand y los flujos UX
+> propios de Psicologic. `00`–`03` todavía contienen el template de otro
+> producto (MR Training) y NO describen este app.
 
 Every feature must contribute to that vision.
 
@@ -51,39 +53,15 @@ Quality over quantity.
 
 ---
 
-## SUCCESS CRITERIA
-
-The application should be good enough to compete with:
-
-- Trainerize
-- Whoop
-- Garmin
-- Strava
-- Notion
-- Apple Fitness
-- Nike Run Club
-
-without copying them.
-
-Every feature should feel premium.
-Every decision should be scalable.
-
----
-
 ## PRODUCT PRINCIPLES
 
-These principles govern every decision in the product, independent of technology:
-
-1. Every feature must save time for the coach.
-2. Every athlete should always know what to do next.
-3. The AI should reduce manual work, not create more.
-4. No screen should require a tutorial.
-5. If a workflow takes more than three steps, simplify it.
-6. If data does not help make a decision, do not show it.
-7. Celebrate progress frequently.
-8. Motivate before measuring.
-9. Every interaction should increase trust.
-10. Build an operating system, not a collection of tools.
+1. Toda feature le ahorra tiempo al psicólogo.
+2. El paciente siempre sabe qué hacer después: link de cita, pago, recordatorio.
+3. Ninguna pantalla requiere tutorial.
+4. Si un flujo toma más de tres pasos, se simplifica.
+5. Si un dato no ayuda a decidir, no se muestra.
+6. Toda interacción aumenta la confianza: son datos clínicos sensibles.
+7. Pagos y accesos se verifican SIEMPRE — nunca confiar en el request.
 
 ---
 
@@ -95,9 +73,8 @@ Never overload the user. Show only what matters now.
 
 One primary action per screen.
 Reduce cognitive load. Reduce clicks.
-Guide the user. Never force the user to think.
 
-Every screen should answer: "What should I do now?"
+Every screen should answer: "¿Qué hago ahora?"
 
 ---
 
@@ -106,155 +83,75 @@ Every screen should answer: "What should I do now?"
 Architecture before code.
 Features before pages.
 Domain before framework.
-Reusable before duplicated.
 Readable before clever.
 Simple before complex.
-Maintainable before fast.
 
 Always separate responsibilities.
-Business logic never belongs inside UI.
+Business logic never belongs inside UI. Ni dentro de webhooks.
 
 ---
 
-## UX PHILOSOPHY
-
-The interface should disappear.
-Users should focus on goals, not software.
-Every interaction should feel obvious.
-Everything should require minimal effort.
-Every workflow should feel natural.
-
----
-
-## AI PHILOSOPHY
-
-AI is not a chatbot. AI is a teammate.
-
-AI should always assist. Never interrupt. Never replace humans.
-
-Suggest. Predict. Explain. Automate. Learn. Adapt. Personalize.
-
----
-
-## SYSTEM ARCHITECTURE
+## SYSTEM ARCHITECTURE (real)
 
 ```
-Frontend (Next.js / Flutter)
+Astro 5 SSR (Vercel) — React 19 islands + vanilla JS (public/js)
         ↓
-   API Gateway
+src/middleware.ts — Clerk: auth + rol por ruta
         ↓
- Application Layer (Use Cases)
+Astro API routes (src/pages/api/*) — validación de input
         ↓
-   Domain Layer (Entities, Value Objects)
+src/lib/turso/ — acceso a datos
         ↓
-Infrastructure Layer (Repositories, Services)
-        ↓
-   Database / Cache / Events / Analytics / AI
+TursoDB (LibSQL)
 ```
 
-Layers communicate inward. Dependencies point toward the domain.
-Infrastructure depends on domain. Never the reverse.
+Dependencies point inward. Infrastructure knows about domain, never the reverse.
 
 ---
 
-## DEVELOPMENT WORKFLOW
+## PROJECT STRUCTURE (real)
 
-1. Understand the requirement.
-2. Design the workflow before the UI.
-3. Model the domain before the database.
-4. Define the API contract before implementation.
-5. Implement frontend and backend independently against the contract.
-6. Test at every layer.
-7. Review against Product Principles.
-8. Deploy incrementally.
+```
+src/
+├── pages/          rutas .astro + API routes (src/pages/api/*)
+├── components/     React islands (.tsx) + componentes .astro
+├── lib/turso/      acceso DB (TursoDB)
+├── lib/clerk/      helpers de rol
+├── middleware.ts   protección de rutas
+├── utils/          helpers de acceso/pago
+└── styles/         global.css (fuente Tailwind 4)
 
-Never skip the design phase. Never jump to code.
+public/js/          vanilla JS (dashboard, juegos, settings)
+apps/rules/         este corpus de reglas
+docs/superpowers/   specs de features
+scripts/            worktree.sh, check-scaffold.sh
+```
+
+Una sola app en la raíz. No es monorepo.
 
 ---
 
-## PROJECT STRUCTURE
+## MODULES (reales)
 
-```
-apps/
-├── web/                  # Next.js frontend (coach dashboard + landing)
-├── api/                  # Go API (Fiber) — BACKEND PRINCIPAL, fuente de verdad
-├── mobile/               # React Native mobile app (athlete)
-└── rules/                # Archivos de reglas (fuente de verdad de proceso)
-
-packages/
-├── shared/               # Shared types, DTOs, utilities
-├── ui/                   # Design system components
-└── config/               # Shared configuration
-
-docs/
-├── 00-product-vision.md
-├── 01-brand-guidelines.md
-├── 02-design-system.md
-├── 03-ux-workflows.md
-├── 04-database-design.md
-├── 05-backend-architecture.md
-├── 06-frontend-architecture.md
-├── 07-mobile-architecture.md
-├── 08-api-specification.md
-├── 09-ai-specification.md
-├── 10-devops.md
-├── 11-security.md
-├── 12-coding-standards.md
-├── 13-testing.md
-└── MASTER_PROMPT.md
-```
-
-Monorepo. Feature-first organization inside each app.
-Every feature is isolated. No cross-feature dependencies without explicit contracts.
+| Módulo | Propósito |
+|--------|-----------|
+| Agenda | Citas, calendario, videollamadas (signaling + TURN) |
+| Pacientes | Historia clínica, entradas, plantillas |
+| Pagos | MercadoPago + Bold: estados, acceso por pago |
+| Juegos | Terapéuticos: cartas de pareja, superar miedos, emociones |
+| Tickets | Soporte con mensajes |
+| Dashboard | Stats, actividad, usuarios (approve/reject/suspend) |
+| Settings | Agenda, plantillas, juegos, headers |
 
 ---
 
-## MODULES
+## USER ROLES (reales)
 
-| Module | Purpose |
-|--------|---------|
-| Training | Gym, Running, Tennis, Swimming, Cycling, CrossFit |
-| Nutrition | Meal plans, macros, calorie tracking |
-| Recovery | Sleep analysis, HRV, readiness scores |
-| Community | Social feed, squads, challenges |
-| Events | Competitions, camps, meetups |
-| Payments | Subscriptions, one-time, invoicing |
-| AI | Workout gen, nutrition gen, reports, assistant |
-| Analytics | Dashboards, trends, predictions |
-| CRM | Athlete management, communication, retention |
-| Communications | In-app messaging, push notifications, email |
+- **admin** (`org:admin`) — acceso total: usuarios, dashboard, settings.
+- **client** (psicólogo) — SU agenda, SUS pacientes, SUS pagos.
+- Usuario sin aprobar → `pending-approval`.
 
----
-
-## USER ROLES
-
-- **Administrator** — Full system access
-- **Organization** — Multi-academy management
-- **Academy** — Facility-level control
-- **Coach** — Athlete management, program design
-- **Athlete** — Training, nutrition, recovery
-- **Nutritionist** — Meal plan creation
-- **Physical Therapist** — Recovery protocols
-- **Receptionist** — Check-ins, scheduling
-- **Support** — Help desk access
-
-Roles are hierarchical with granular permissions per module.
-
----
-
-## GENERAL WORKFLOWS
-
-```
-Landing → Authentication → Onboarding → Organization/Coach/Athlete Setup
-                                                  ↓
-                    Workout → Nutrition → Recovery → Community
-                                                  ↓
-                           Events → Analytics → Reports → AI
-                                                  ↓
-                                          Notifications
-```
-
-Every user follows a clear path. No dead ends. No confusion.
+Roles viven en la tabla `usuarios` (rol por `clerk_user_id`) + Clerk orgRole.
 
 ---
 
@@ -262,147 +159,84 @@ Every user follows a clear path. No dead ends. No confusion.
 
 Everything moves. Nothing appears instantly.
 Use premium typography. Use large spacing.
-Never create generic dashboards.
-Never use default templates.
-Never create empty pages.
+Never create empty pages. Cada pantalla tiene loading, empty y error states.
 Use progressive disclosure.
 Every screen has hierarchy.
-Every page has one purpose.
 Every action has feedback.
 
 ---
 
 ## ENGINEERING RULES
 
-Use Clean Architecture.
-Use Feature First.
-Use Dependency Injection.
-Use SOLID. Use DRY. Use KISS.
-Use Repository Pattern.
-Use CQRS only when necessary.
+Use layered architecture (route → validación → lib → DB).
 Never duplicate code.
 Never create God Classes.
 Never hardcode business rules.
+Validate all inputs at the boundary.
+SQL SIEMPRE parametrizado.
 
 ---
 
 ## CODING STANDARDS
 
-- TypeScript: strict mode, explicit return types, no `any`
-- Go: idiomatic, error handling via explicit returns
-- Flutter: widget decomposition, no widgets over 200 lines
+- TypeScript: strict mode, no `any`, explicit return types
+- React islands: componentes funcionales, < 300 líneas, hooks, zustand por dominio
+- Vanilla JS (public/js): clases, event delegation, sin globals nuevos sin documentar
+- API routes: auth → validate → business → response; errores con shape `{ error }`
 - Naming: meaningful, self-documenting
 - Files: one responsibility, under 300 lines
 - Functions: pure where possible, under 50 lines
-- Imports: organized, no circular dependencies
-- Comments: explain why, not what
+- Comments: explain why, not what — y borrar los comentarios de razonamiento
 
 ---
 
 ## SECURITY RULES
 
-Everything authenticated.
-Everything authorized.
-Everything validated.
-Everything logged.
-Everything encrypted.
-
+Everything authenticated. Everything authorized. Everything validated.
 Follow OWASP Top 10.
-Use least privilege.
-Protect user privacy.
-Audit every critical action.
-Rotate credentials.
-Enforce HTTPS.
-Validate all inputs.
-Sanitize all outputs.
+Datos de pacientes = datos sensibles (historia clínica).
+Ley 1581 de 2012 (Colombia): mínimo necesario, nunca loguear datos clínicos.
+Webhooks: verificar firma SIEMPRE antes de mutar la DB.
+Rotate credentials. Enforce HTTPS. Sanitize all outputs.
 
 ---
 
 ## PERFORMANCE RULES
 
-- Optimize first paint (LCP < 2.5s)
-- Lazy load below the fold
-- Image optimization (WebP, srcset, blur placeholders)
-- Video streaming with adaptive bitrate
-- Pagination over infinite lists for data
-- Infinite scroll for feeds
-- Caching at every layer (CDN, Redis, in-memory)
-- Background synchronization for mobile
-- Offline support with local-first architecture
-- 60 FPS animations, no jank
-
----
-
-## AI BEHAVIOR
-
-AI features must:
-
-- Be contextually aware (know the athlete, the coach, the program)
-- Never block the user — suggestions, not interruptions
-- Explain their reasoning
-- Learn from user corrections
-- Adapt to individual patterns
-- Surface insights proactively
-- Generate, but let humans approve
-
-AI is integrated into:
-- Workout generation (adaptive programming)
-- Nutrition planning (macro optimization)
-- Recovery analysis (readiness scoring)
-- Performance reports (natural language summaries)
-- Coach assistant (athlete insights, anomaly detection)
-- Athlete assistant (what to do today)
+- LCP < 2.5s: CSS minificado, imágenes con dimensiones, prioridad al hero
+- Hidratación: `client:idle`/`client:visible` por defecto; `client:load` solo
+  para lo inmediatamente interactivo (VideoRoom); `client:only` solo con APIs
+  de browser (WebRTC), nunca para esconder mismatches de hidratación
+- Polling con `document.visibilityState` (el patrón ya existe en dashboard.js)
+- Limites/paginación en endpoints de lista
+- 60 FPS, sin layout shift, sin tareas largas en el main thread
+- Medir antes de optimizar; revertir lo que no mueve la métrica
 
 ---
 
 ## TESTING RULES
 
-Every feature has:
-
-- Unit Tests (domain logic, use cases)
-- Integration Tests (API endpoints, database queries)
-- E2E Tests (critical user flows)
-- Accessibility Tests (WCAG AA compliance)
-- Performance Tests (load, stress, latency)
-
-Coverage targets: 85%+ unit, critical paths E2E.
-Never merge without passing tests.
+- Playwright E2E en flujos críticos: login por rol, agendar cita,
+  página de videollamada, estado de pago, tickets
+- Un slice que cambia comportamiento incluye su test en el mismo PR
+- Never merge without passing tests.
 
 ---
 
 ## DOCUMENTATION RULES
 
-Every feature documents:
-
-- Purpose (why it exists)
-- Architecture (how it's built)
-- Flow (how users interact)
-- API (endpoints, contracts)
-- Events (what it emits/consumes)
-- Database (schema changes)
-- Edge Cases (known limitations)
-- Testing (how to verify)
-
+Every feature documents: purpose, architecture, flow, API, edge cases, testing.
 Documentation lives with the code, not in a wiki.
 
 ---
 
 ## DEPLOYMENT RULES
 
-- Docker for all services
-- GitHub Actions for CI/CD
-- Coolify for orchestration
-- Hetzner for hosting
-- Terraform for infrastructure
-- Automatic deployments on merge to main
-- Rollback capability for every deploy
-- Monitoring with Prometheus + Grafana
-- Logging with Loki
-- Metrics dashboards for every service
-
-Zero downtime deployments.
-Blue-green deployment strategy.
-Database migrations are backward-compatible.
+- Vercel desde `productive` — solo por merge, nunca push directo
+- Rollback: instant rollback de Vercel a la versión anterior
+- CI: `ci.yml` (scaffold integrity en development) + `deploy-vercel.yml`
+- Env vars en el dashboard de Vercel (`.env.example` es el inventario)
+- Migraciones de DB: cuidadosas y verificadas — la DB es compartida con producción
 
 ---
 
@@ -412,19 +246,9 @@ Never generate average software.
 Never generate template code.
 Never generate placeholder architecture.
 
-Think like a startup preparing for millions of users.
-Think like Apple designing software.
-Think like Stripe designing APIs.
-Think like Linear designing UX.
-Think like Tesla designing dashboards.
-Think like OpenAI designing AI.
-
 Every screen should be beautiful.
 Every workflow should be obvious.
 Every API should be scalable.
-Every component should be reusable.
 Every decision should improve the product.
 
-The final application should feel like one coherent operating system rather than a collection of features.
-
-Build the operating system for sports performance.
+La aplicación final debe sentirse como un sistema coherente, no una colección de features.

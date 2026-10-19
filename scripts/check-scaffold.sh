@@ -21,12 +21,12 @@ for f in \
 done
 if [ -x scripts/worktree.sh ]; then ok "scripts/worktree.sh is executable"; else bad "scripts/worktree.sh is NOT executable"; fi
 
-echo "[2/5] Rule corpus (apps/rules — template, must stay coherent)"
-for f in apps/rules/*.md apps/rules/mobile-rules/*.md; do
+echo "[2/5] Rule corpus (apps/rules — rewritten for this app)"
+for f in apps/rules/*.md; do
   if [ -e "$f" ]; then ok "$f"; else bad "missing: $f"; fi
 done
-[ "$(find apps/rules -maxdepth 1 -name '*.md' | wc -l)" -ge 16 ] || bad "apps/rules must have >= 16 rule files"
-[ "$(find apps/rules/mobile-rules -name '*.md' | wc -l)" -ge 7 ] || bad "apps/rules/mobile-rules must have >= 7 files"
+[ "$(find apps/rules -maxdepth 1 -name '*.md' | wc -l)" -ge 14 ] || bad "apps/rules must have >= 14 rule files"
+if [ -d apps/rules/mobile-rules ]; then bad "apps/rules/mobile-rules should not exist (no mobile app)"; else ok "no mobile-rules (correctly removed)"; fi
 
 echo "[3/5] .github/workflows must be a directory"
 if [ -d .github/workflows ]; then ok ".github/workflows is a directory"; else bad ".github/workflows must be a directory (regression: it was once a misnamed file)"; fi

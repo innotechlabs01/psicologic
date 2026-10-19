@@ -170,16 +170,18 @@ make install-hooks           # instala .githooks/pre-commit
 
 ---
 
-## `apps/rules/` — CORPUS TEMPLATE (NO operativo)
+## `apps/rules/` — REGLAS DEL PROYECTO
 
-`apps/rules/` (00-14 + mobile-rules) es un corpus traido de otro producto
-("MR Training": Next.js + Go API + React Native + Flutter/PostgreSQL).
-**No describe este repo.** Reglas de uso:
+Los docs TECNICOS del corpus fueron **reescritos para ESTA app** (oct 2026):
+`04-database` (TursoDB real), `05-backend` (API routes), `06-frontend`
+(islands + vanilla JS), `08-api` (44 endpoints), `10-devops` (Vercel),
+`11-security`, `12-coding-standards`, `13-testing` (Playwright),
+`MASTER_PROMPT` y `14-team-workflow` (proceso de equipo).
 
-- Este archivo y el codigo real son la fuente de verdad.
-- Del corpus solo aplican los PRINCIPIOS generales (calidad, testing) y el
-  proceso de equipo en `14-team-workflow.md`.
-- Cualquier referencia en el corpus a Go / React Native / Flutter / Next.js /
-  PostgreSQL-RLS / monorepo `apps/` NO aplica a este proyecto.
-- Disposicion final del corpus (cuarentena / reescritura / borrado):
-  decision pendiente del usuario.
+- `07-mobile-architecture` y `09-ai-specification` fueron eliminados (no hay
+  mobile ni AI en este repo; recuperables desde historial git).
+- `00`–`03` (product-vision, brand, design-system, ux-workflows) siguen
+  siendo contenido del template MR Training — PENDIENTES de decision de
+  producto. No usarlos como referencia de este producto.
+- Fuente de verdad para trabajar: este archivo + el mapa de skills + los
+  docs 04-14 del corpus.
