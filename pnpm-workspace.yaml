@@ -1,3 +1,5 @@
+# Target monorepo layout. apps/web does not exist yet (only apps/rules);
+# pnpm ignores missing workspace paths until the apps land.
 packages:
   - 'apps/web'
   - 'packages/*'

@@ -1,31 +1,32 @@
 #!/usr/bin/env bash
-# worktree.sh — one branch = one worktree. See apps/rules/14-git-workflow.md
+# worktree.sh — one branch = one worktree. See apps/rules/14-team-workflow.md
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 WT_BASE="$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")-worktrees"
+INTEGRATION_BRANCH="development"
 
 usage() {
   cat <<EOF
 Usage: scripts/worktree.sh <command> [args]
 
 Commands:
-  new <branch> [base]   Create worktree for branch (base default: origin/main)
+  new <branch> [base]   Create worktree for branch (base default: origin/$INTEGRATION_BRANCH)
   list                  List worktrees
   remove <branch>       Remove worktree for branch (branch kept)
-  sync [branch]         Fetch origin + update main
+  sync [branch]         Fetch origin + update $INTEGRATION_BRANCH
 
 Options for 'new':
   --no-install          Skip pnpm install
 
 Branch naming: feature|fix|chore|refactor/<short-description>
-See apps/rules/14-git-workflow.md
+See apps/rules/14-team-workflow.md
 EOF
   exit 1
 }
 
 cmd_new() {
-  local branch="" base="origin/main" install=1
+  local branch="" base="origin/$INTEGRATION_BRANCH" install=1
   for arg in "$@"; do
     case "$arg" in
       --no-install) install=0 ;;
@@ -39,7 +40,7 @@ cmd_new() {
   if git show-ref --verify --quiet "refs/heads/$branch"; then
     git worktree add "$dir" "$branch"
   else
-    git fetch origin main --quiet
+    git fetch origin "$INTEGRATION_BRANCH" --quiet
     git worktree add -b "$branch" "$dir" "$base"
   fi
 
@@ -74,8 +75,8 @@ cmd_remove() {
 
 cmd_sync() {
   git fetch origin
-  git -C "$REPO_ROOT" pull --ff-only origin main
-  echo "main updated. Worktrees keep their own branches — rebase each before PR."
+  git -C "$REPO_ROOT" pull --ff-only "origin/$INTEGRATION_BRANCH"
+  echo "$INTEGRATION_BRANCH updated. Worktrees keep their own branches — rebase each before PR."
 }
 
 case "${1:-}" in
