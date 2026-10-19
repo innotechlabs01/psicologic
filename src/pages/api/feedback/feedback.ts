@@ -1,12 +1,18 @@
-import { createClient } from '@libsql/client';
 import type { APIRoute } from 'astro';
+import { db as client } from '../../../lib/turso/client';
+import { checkRateLimit } from '../../../lib/turso/rate-limit';
 
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+export const POST: APIRoute = async ({ request, clientAddress }) => {
+  // Rate limit (endpoint público sin auth): 5 req/min por IP
+  const ip = request.headers.get('x-forwarded-for') || clientAddress || 'unknown';
+  const limit = await checkRateLimit(ip);
+  if (!limit.success) {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Demasiadas solicitudes. Intenta de nuevo en un minuto.' }),
+      { status: 429 }
+    );
+  }
 
-export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
   const { mood, rating, comment } = body;
 
