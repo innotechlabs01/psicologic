@@ -22,6 +22,7 @@ const role = userId && userId === event.userId ? "host" : "client";
 
 <LayoutVideoCall title="Video Call">
     <div class="video-wrapper">
+        <!-- client:only justified: WebRTC/getUserMedia need browser APIs at init -->
         <VideoRoom
             client:only="react"
             meetingToken={token}
