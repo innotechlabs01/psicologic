@@ -2,24 +2,26 @@
 
 ## Current state (Oct 2026)
 
-`apps/api` (Go) and `apps/web` (Next.js) do not exist yet. What is testable
-today: the workflow scaffold itself (integrity checks below) and the legacy
-Astro app from the `productive` branch (old toolchain, old lockfile).
+The testable surface today: the workflow scaffold (integrity checks below)
+and Playwright E2E for the Astro app (`tests/` — currently one example spec;
+coverage grows per feature slice). App builds run in CI on `productive`
+(deploy); `development` pushes run the scaffold check.
 
 ## Local Commands
 
 ```bash
 # Scaffold integrity — what CI runs (works today)
-scripts/check-scaffold.sh        # or: pnpm scaffold:check
+scripts/check-scaffold.sh        # or: make scaffold-check
 
-# Go API tests (when apps/api exists)
-cd apps/api && go test ./internal/... -v -race
+# App (needs .env with Clerk + Turso keys — copy from .env.example)
+pnpm dev                         # dev server
+pnpm build                       # production build
+pnpm build:style                 # tailwind: global.css → public/css/main.css
 
-# Web tests (when apps/web exists)
-cd apps/web && pnpm test && pnpm lint && pnpm build
-
-# E2E tests (when apps/web + apps/api exist; requires both dev servers)
-cd apps/web && pnpm test:e2e
+# E2E
+npx playwright test              # headless
+npx playwright test --headed     # watch it run
+npx playwright codegen           # record new flows
 ```
 
 ## CI Pipelines (`.github/workflows/`)
@@ -27,10 +29,7 @@ cd apps/web && pnpm test:e2e
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `ci.yml` | push/PR to `development` | `scripts/check-scaffold.sh` + shellcheck on workflow scripts |
-| `deploy-vercel.yml` | push/PR to `productive` | Builds the legacy Astro app and deploys to Vercel |
-
-Target additions once the apps exist: `go-api-tests`, `web-tests`, and an
-`all-tests-passed` merge gate (see `apps/rules/13-testing.md`).
+| `deploy-vercel.yml` | push/PR to `productive` | Builds the Astro app and deploys to Vercel |
 
 ## Pre-commit Hook (`.githooks/pre-commit`)
 
@@ -40,29 +39,20 @@ Installs once per clone (`make install-hooks`). Blocks commits that stage:
 - secrets: `.env*` (except `.env.example`), `*.pem`, `e2e/credentials.env`
 - any file larger than 1 MB
 
-## E2E Requirements (target state)
+## E2E Requirements
 
-Playwright tests need the Go API on `localhost:8080`, the web app on
-`localhost:3000`, and Clerk test users:
-
-| Role | Email | Password |
-|------|-------|----------|
-| Coach | `coach@test.com` | `test123` |
-| Athlete | `athlete@test.com` | `test123` |
-
-Create them in Clerk Dashboard → Users.
+Playwright tests need the dev server running (`pnpm dev`, Astro default
+port 4321) and Clerk test users with valid roles in the `usuarios` table.
 
 ## Emergency bypass (use sparingly)
 
 ```bash
-# Skip pre-commit hook (NOT recommended)
-git commit --no-verify -m "emergency fix"
-
-# Skip CI on push (NOT recommended)
-git push --no-verify
+git commit --no-verify -m "emergency fix"   # skip pre-commit (NOT recommended)
+git push --no-verify                        # skip CI on push (NOT recommended)
 ```
 
 ## Rule Enforcement
 
-**NEVER push without tests passing.** When CI jobs exist for an app, a red
-job blocks the merge. Do not disable a job to merge — fix the failure.
+**NEVER push without the relevant checks passing.** A slice that changes
+behavior ships with its test in the same PR. Do not disable a check to merge —
+fix the failure.
