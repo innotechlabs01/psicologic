@@ -17,34 +17,37 @@ principal para trabajar en paralelo — eso es lo que pisa el trabajo de otros.
 
 ```bash
 scripts/worktree.sh new feature/invite-redesign       # crea worktree + pnpm install
-scripts/worktree.sh new fix/ios-bundle main           # desde base custom
+scripts/worktree.sh new fix/ios-bundle origin/productive  # desde base custom
 scripts/worktree.sh list                              # lista worktrees activos
 scripts/worktree.sh remove feature/invite-redesign    # limpia (branch queda)
-scripts/worktree.sh sync                              # fetch + update main
+scripts/worktree.sh sync                              # fetch + update development
 ```
 
-Los worktrees viven en `../mr-training-worktrees/<branch>` (fuente del repo
-principal, un directorio por branch).
+Los worktrees viven en `../<repo>-worktrees/<branch>` — hoy
+`../psicologic-worktrees/` (el script usa el nombre del repo), un directorio
+por branch.
 
 ### Convención de branches
 
 ```
-main                  # siempre deployable — direct push PROHIBIDO
+development           # integracion — PRs aca. Direct push al integrador: PROHIBIDO
   ├── feature/<desc>  # features nuevas (vida corta: 1-3 días)
   ├── fix/<desc>      # bugs
   ├── chore/<desc>    # deps, tooling, docs
   └── refactor/<desc> # refactor sin cambio de comportamiento
+productive            # deploy (Vercel) — solo se actualiza por merge, nunca directo
+main                  # stub sin uso — NO crear worktrees ni PRs contra aca
 ```
 
 ### Flujo completo por tarea
 
 ```
-1. scripts/worktree.sh sync              # main al día
+1. scripts/worktree.sh sync              # development al día
 2. scripts/worktree.sh new feature/x     # worktree dedicado
-3. cd ../mr-training-worktrees/x         # trabajar AHÍ, no en main
+3. cd ../psicologic-worktrees/x          # trabajar AHÍ, no en development
 4. Commits atómicos (ver 12-coding-standards.md §7.2)
 5. git push -u origin feature/x
-6. PR a main (ver 12-coding-standards.md §7.3)
+6. PR a development (ver 12-coding-standards.md §7.3)
 7. Tras merge: scripts/worktree.sh remove feature/x
 ```
 
@@ -71,7 +74,7 @@ Worktree (sección 1)
   ↓
 Implement + Validación (13-testing.md, mobile validation rule de AGENTS.md)
   ↓
-PR a main → Review → Done
+PR a development → Review → Done
 ```
 
 Reglas:

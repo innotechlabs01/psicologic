@@ -1,84 +1,68 @@
 # Test Suite Quick Reference
 
+## Current state (Oct 2026)
+
+`apps/api` (Go) and `apps/web` (Next.js) do not exist yet. What is testable
+today: the workflow scaffold itself (integrity checks below) and the legacy
+Astro app from the `productive` branch (old toolchain, old lockfile).
+
 ## Local Commands
 
 ```bash
-# Run all Go tests
+# Scaffold integrity — what CI runs (works today)
+scripts/check-scaffold.sh        # or: pnpm scaffold:check
+
+# Go API tests (when apps/api exists)
 cd apps/api && go test ./internal/... -v -race
 
-# Run all Web tests
+# Web tests (when apps/web exists)
 cd apps/web && pnpm test && pnpm lint && pnpm build
 
-# Run E2E tests (requires running servers)
+# E2E tests (when apps/web + apps/api exist; requires both dev servers)
 cd apps/web && pnpm test:e2e
-
-# Full suite (what CI runs)
-make test-all
 ```
 
-## CI Pipeline (`.github/workflows/ci.yml`)
+## CI Pipelines (`.github/workflows/`)
 
-| Job | Runs On | What It Does |
-|-----|---------|--------------|
-| `go-api-tests` | push/PR | Go build, test, lint, race detector |
-| `web-tests` | push/PR | Web lint, typecheck, build, unit tests |
-| `all-tests-passed` | after above | Blocks push if any job fails |
-| `deploy-preview` | PR merged | Deploy preview |
-| `deploy-production` | push to main | Deploy production |
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `ci.yml` | push/PR to `development` | `scripts/check-scaffold.sh` + shellcheck on workflow scripts |
+| `deploy-vercel.yml` | push/PR to `productive` | Builds the legacy Astro app and deploys to Vercel |
+
+Target additions once the apps exist: `go-api-tests`, `web-tests`, and an
+`all-tests-passed` merge gate (see `apps/rules/13-testing.md`).
 
 ## Pre-commit Hook (`.githooks/pre-commit`)
 
-Runs automatically on `git commit`:
-- `go mod tidy` check
-- `go build ./...` 
-- Go unit tests (short)
-- `pnpm lint`
-- `pnpm build` (type check)
+Installs once per clone (`make install-hooks`). Blocks commits that stage:
 
-Install: `cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`
+- build artifacts: `dist/`, `.astro/`, `.DS_Store`
+- secrets: `.env*` (except `.env.example`), `*.pem`, `e2e/credentials.env`
+- any file larger than 1 MB
 
-## E2E Tests Requirements
+## E2E Requirements (target state)
 
-Playwright tests need:
-1. Go API running on `localhost:8080`
-2. Web running on `localhost:3000`
-3. Clerk test users configured
-
-```bash
-# Terminal 1: Start Go API
-cd apps/api && go run cmd/api/main.go
-
-# Terminal 2: Start Web
-cd apps/web && pnpm dev
-
-# Terminal 3: Run E2E
-cd apps/web && pnpm test:e2e
-```
-
-## Test Users (Configure in Clerk Dashboard)
+Playwright tests need the Go API on `localhost:8080`, the web app on
+`localhost:3000`, and Clerk test users:
 
 | Role | Email | Password |
 |------|-------|----------|
 | Coach | `coach@test.com` | `test123` |
 | Athlete | `athlete@test.com` | `test123` |
 
-Add these in Clerk Dashboard → Users → Create test users.
+Create them in Clerk Dashboard → Users.
 
-## Bypass Emergency (Use Sparingly)
+## Emergency bypass (use sparingly)
 
 ```bash
 # Skip pre-commit hook (NOT recommended)
 git commit --no-verify -m "emergency fix"
 
-# Skip CI (NOT recommended)
+# Skip CI on push (NOT recommended)
 git push --no-verify
 ```
 
 ## Rule Enforcement
 
-**NEVER push without tests passing.** CI will block the push/merge if:
-- Any Go test fails
-- Any Web lint/typecheck fails
-- Go build fails
-- Go race detector finds issues
-- `go mod tidy` needed
+**NEVER push without tests passing.** When CI jobs exist for an app, a red
+job blocks the merge. Do not disable a job to merge — fix the failure.

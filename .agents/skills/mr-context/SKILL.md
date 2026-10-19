@@ -8,25 +8,31 @@ metadata:
 
 # MR Context — Senior Bar for This Repo
 
-Load this before starting any task in mr-training. It gives orientation and
-the quality bar. It does NOT replace the rules — it tells you which rules to
-read for your change.
+Load this before starting any task in this repo. It gives orientation and
+the quality bar. It does NOT replace the rules — it tells you which rules
+to read for your change.
 
 ## Repo map (30 seconds)
 
 ```
-apps/web      Next.js 14 coach dashboard + landing (Clerk v6, Tailwind 3)
-apps/api      Go 1.25 Fiber API — SINGLE SOURCE OF TRUTH for data
-apps/mobile   React Native athlete app (React Navigation + React Query)
-apps/rules/   The rules. Read the ones your change touches.
+apps/rules/   The rules. EXISTS today — the only app dir so far. Read the
+              ones your change touches.
+apps/web      Next.js 14 coach dashboard + landing (Clerk v6, Tailwind 3) — PENDING, not created yet
+apps/api      Go 1.25 Fiber API — SINGLE SOURCE OF TRUTH for data — PENDING, not created yet
+apps/mobile   React Native athlete app (React Navigation + React Query) — PENDING, not created yet
 packages/     Empty by design — see 14-team-workflow.md §4 before adding
 ```
+
+Mid-migration repo: the legacy Psicologic Astro app still lives in `src/` +
+`public/`; production deploys from the `productive` branch (Vercel workflow).
+Integration branch is `development` (PRs go here); `main` is an unused stub.
 
 ## Non-negotiables (violating any of these = rework)
 
 1. **API-first:** web and mobile talk ONLY to `apps/api`. No Next.js API
    routes for data (webhooks/SSR/static excepted).
-2. **Never work on `main`.** One branch = one worktree:
+2. **Never work on `main`** (unused stub here — integration happens on
+   `development`). One branch = one worktree:
    `scripts/worktree.sh new feature/<name>`.
 3. **Read rules before code.** Rules map in `AGENTS.md` — match your change
    type (UI, API, DB, mobile, security...) to its rule files, read them,
@@ -67,7 +73,7 @@ Entry point: `pipeline-init` skill (loads this + herdr context). Then:
    (template: TEMPLATE-coach-feature.md)
 4. Implement — small slices, commit each
 5. Verify: lint, typecheck, tests (+ real-device run for mobile UI)
-6. PR to main → clean up worktree
+6. PR to development → clean up worktree
 ```
 
 Full workflow detail: `apps/rules/14-team-workflow.md`.

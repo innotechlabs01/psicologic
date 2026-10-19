@@ -8,6 +8,21 @@ Si no sabes que regla aplica, lee `apps/rules/MASTER_PROMPT.md` primero.
 
 ---
 
+## ESTADO ACTUAL DEL REPO (octubre 2026)
+
+Migracion en curso de **Psicologic** (app Astro legacy) hacia **MR Training**.
+
+- La app Astro legacy sigue en `src/` y `public/`; el deploy vigente sale de
+  la rama `productive` (workflow `.github/workflows/deploy-vercel.yml`).
+- `apps/` hoy SOLO contiene `apps/rules/` (16 reglas + mobile-rules).
+  `apps/web`, `apps/api` y `apps/mobile` AUN NO EXISTEN — sus reglas si.
+- Ramas reales: `development` = integracion (PRs aca), `productive` = deploy,
+  `main` = stub sin uso. NUNCA pushear directo a `productive`.
+- Todo comando que toque `apps/web|api|mobile` es target-state: aplica cuando
+  esa app exista. No intentes "arreglar" el comando de una app que no existe.
+
+---
+
 ## MAPA DE REGLAS POR TIPO DE CAMBIO
 
 | Tipo de cambio | Reglas obligatorias |
@@ -151,16 +166,16 @@ Recibes una tarea
   ↓
 5. Verifica con lint, build, tests segun 13-testing.md
   ↓
-6. Commit atomico convencional + PR a main. Limpia el worktree tras merge.
+6. Commit atomico convencional + PR a development. Limpia el worktree tras merge.
 ```
 
 ---
 
 ## TEAM WORKFLOW (detalle en `14-team-workflow.md`)
 
- - **Paso 0 u2014 pipeline-init:** todo agente invoca el skill `pipeline-init`
-   ANTES de tocar cu00f3digo. Carga `mr-context` (mapa repo, no-negociables,
-   barra senior) + `herdr-setup` (conceptos Herdr) + `herdr` su00f3lo si
+ - **Paso 0 — pipeline-init:** todo agente invoca el skill `pipeline-init`
+   ANTES de tocar codigo. Carga `mr-context` (mapa repo, no-negociables,
+   barra senior) + `herdr-setup` (conceptos Herdr) + `herdr` solo si
    `HERDR_ENV=1` (corre dentro de un pane Herdr).
 ---
 
@@ -176,6 +191,13 @@ Recibes una tarea
 | Event Bus | NATS 2.10 con JetStream |
 | Mobile | React Native CLI + TypeScript strict + React Navigation + React Query |
 | Monorepo | pnpm workspaces |
+
+> **Consistencia del corpus:** `04-database-design.md` y
+> `07-mobile-architecture.md` describen el spec original del producto
+> (PostgreSQL + Flutter). La decision operativa vigente es ESTA tabla
+> (React Native + Turso/LibSQL), alineada con `mobile-rules/*` y BOARD.md.
+> Alinear el corpus 00-14 completo es decision pendiente del equipo; mientras
+> tanto, esta tabla y `mobile-rules/` son la verdad operativa para agentes.
 
 ---
 
@@ -216,22 +238,28 @@ Mobile → Next.js API Routes → Web  ❌
 ## COMANDOS UTILES
 
 ```bash
-# Frontend (apps/web)
+# Workflow de agentes (disponibles HOY)
+scripts/worktree.sh new feature/<nombre>  # worktree desde origin/development
+scripts/check-scaffold.sh                # integridad del scaffold (lo que corre CI)
+pnpm scaffold:check                       # idem, via npm script
+make install-hooks                        # instala .githooks/pre-commit
+
+# Frontend (apps/web) — target: requiere crear la app primero
 cd apps/web && pnpm dev          # Dev server en :3000
 cd apps/web && pnpm build        # Build de produccion
 cd apps/web && pnpm lint         # ESLint
 cd apps/web && pnpm test         # Jest
 
-# Backend (apps/api — Go/Fiber)
+# Backend (apps/api — Go/Fiber) — target: requiere crear la app primero
 cd apps/api && go build ./... # Compilar
 cd apps/api && go test ./...  # Tests
 
-# Mobile (apps/mobile)
+# Mobile (apps/mobile) — target: requiere crear la app primero
 cd apps/mobile && npx react-native run-ios     # iOS Simulator
 cd apps/mobile && npx react-native run-android # Android Emulator
 cd apps/mobile && npm test                      # Jest tests
 
-# Infra (Redis para dev)
+# Infra (Redis para dev) — target: requiere apps/api primero
 docker compose -f apps/api/docker-compose.dev.yml up -d redis
 ```
 
@@ -241,11 +269,11 @@ docker compose -f apps/api/docker-compose.dev.yml up -d redis
 
 ```
 apps/
-├── web/          # Next.js frontend (coach dashboard + landing)
-├── api/          # Go API (Fiber, Clean Architecture, CQRS) — backend
-├── rules/        # 16 archivos de reglas (esta es LA fuente de verdad)
-│   └── mobile-rules/  # Reglas especificas para React Native
-└── mobile/       # React Native (iOS + Android)
+├── rules/        # 16 archivos de reglas (esta es LA fuente de verdad) — EXISTE
+│   └── mobile-rules/  # Reglas especificas para React Native — EXISTE
+├── web/          # Next.js frontend (coach dashboard + landing) — PENDIENTE
+├── api/          # Go API (Fiber, Clean Architecture, CQRS) — PENDIENTE
+└── mobile/       # React Native (iOS + Android) — PENDIENTE
 
 docs/
 └── superpowers/  # Specs y planes generados por AI
@@ -266,4 +294,3 @@ docs/
 7. Mantenible antes que rapido
 8. Nunca optimizar por velocidad. Siempre optimizar por calidad.
 9. Pensar antes de codificar.
-# Test change Sat Oct 10 22:21:11 -05 2026
