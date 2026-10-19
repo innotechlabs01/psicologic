@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { Send, MessageSquare, Star, Heart } from 'lucide-react';
 
-export default function FeedbackForm() {
+export default function FeedbackForm({ onSuccess }: { onSuccess?: () => void } = {}) {
   const [mood, setMood] = useState('');
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
@@ -37,6 +37,7 @@ export default function FeedbackForm() {
         setMood('');
         setRating(5);
         setComment('');
+        onSuccess?.();
       } else {
         toast.error('No se pudo enviar el feedback.');
       }

@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/react";
 import Sidebar from "@components/sidebar/Sidebar";
 import Footer from "../components/Footer/footer.astro";
 import ToastRoot from "../components/Toast/ToastRoot";
+import FeedbackPrompt from "@components/feedback/FeedbackPrompt";
 import { ClientRouter } from "astro:transitions";
 
 const { title = "Psicologic", fullscreen = false } = Astro.props;
@@ -39,6 +40,10 @@ const { title = "Psicologic", fullscreen = false } = Astro.props;
       client:only="react" = never SSR'd, avoids hydration mismatch.
     -->
     <Sidebar client:only="react" transition:persist="app-sidebar" />
+
+    <!-- Prompt de feedback recurrente (psicólogos) — persiste entre
+         navegaciones: consulta el status UNA vez por sesión -->
+    <FeedbackPrompt client:only="react" transition:persist="feedback-prompt" />
 
     <!-- Page shell — only this part swaps on navigation -->
     <div class="layout-shell">
