@@ -1,45 +1,6 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
-
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
-
-const saveStatusPayment = async (userId: string, paymentId: string, amount: number, status: string) => {
-  try {
-    function isLeapYear(year: number): boolean {
-      return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-    }
-
-    const today = new Date();
-    const daysInMonth = [31, isLeapYear(today.getFullYear()) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    const actualDays = daysInMonth[today.getMonth()];
-
-    const nextPaymentDate = new Date(today);
-    nextPaymentDate.setDate(today.getDate() + actualDays);
-
-    const blockedPaymentDate = new Date(nextPaymentDate);
-    blockedPaymentDate.setDate(nextPaymentDate.getDate() + 5);
-
-    await client.execute({
-      sql: `INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        paymentId,
-        userId,
-        amount,
-        status,
-        new Date().toISOString(),
-        nextPaymentDate.toISOString(),
-        blockedPaymentDate.toISOString(),
-        new Date().toISOString()
-      ]
-    });
-  } catch (error) {
-    console.error('Error al guardar el estado de la transacción:', error);
-  }
-};
+import { db as client } from '../../../lib/turso/client';
+import { saveStatusPayment } from '../../../lib/payments/save-payment';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
