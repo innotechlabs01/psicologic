@@ -113,6 +113,21 @@ Reglas:
 | `herdr-setup` | Cuando el humano pregunta por Herdr, quiere panes paralelos de agentes, o ver estados de agentes entre proyectos (lo carga pipeline-init) |
 | `herdr` | Controlar Herdr desde dentro de un pane (inicia sesión en pane: `HERDR_ENV=1`) — arrancar agentes, leer output, esperar estados |
 
+### Skills del proyecto por dominio (mapa completo en AGENTS.md)
+
+| Dominio | Skills |
+|---|---|
+| Git / commits / PR | `git-workflow-and-versioning`, `work-unit-commits`, `branch-pr`, `caveman-commit` |
+| Modo reply / review | `caveman`, `caveman-review` |
+| Calidad | `code-review-and-quality`, `test-driven-development`, `code-simplification`, `debugging-and-error-recovery`, `incremental-implementation`, `planning-and-task-breakdown` |
+| UI (Astro + React islands) | `astro`, `frontend-design`, `frontend-ui-engineering`, `tailwind-css-patterns`, `accessibility` |
+| Backend / API routes | `api-and-interface-design`, `nodejs-backend-patterns`, `nodejs-best-practices`, `clerk-backend-api` |
+| Performance / seguridad | `performance-optimization`, `security-and-hardening` |
+| Testing E2E | `playwright-best-practices` |
+| Deploy | `deploy-to-vercel` |
+| TypeScript / React avanzado | `typescript-advanced-types`, `vercel-react-best-practices`, `vercel-composition-patterns` |
+| SEO landing | `seo` |
+
 
 Nuevo skill oficial ⇒ agregarlo a esta tabla + mención en AGENTS.md.
 

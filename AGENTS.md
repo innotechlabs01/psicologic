@@ -1,148 +1,131 @@
-# MR TRAINING — AGENTS.md (Rule Manager)
+# PSICOLOGIC — AGENTS.md (Rule Manager)
+
+## ESTA ES LA APP (verificado en codigo, octubre 2026)
+
+**Psicologic** — plataforma de gestion para psicologos (Colombia): agenda de
+citas, videollamadas WebRTC, pacientes con historia clinica, pagos, juegos
+terapeuticos, tickets de soporte y dashboard. UNA app Astro en la raiz del
+repo. No es monorepo.
+
+### Stack real (con evidencia en el codigo)
+
+| Capa | Tecnologia |
+|---|---|
+| Framework | **Astro 5 SSR** (`output: 'server'`, adapter `@astrojs/vercel`) |
+| UI | **React 19 islands** (`@astrojs/react`) + Alpine.js + vanilla JS (`public/js/`) |
+| Estilos | **Tailwind CSS 4** (`src/styles/global.css` → build a `public/css/main.css`) + radix/shadcn + lucide + tw-animate |
+| Auth | **Clerk** (`@clerk/astro`, esES) + `src/middleware.ts` (route matcher por rol) + webhook svix |
+| Backend | **Astro API routes** — `src/pages/api/*` (44 endpoints TypeScript). NO hay Go API ni Next.js |
+| Database | **TursoDB** via `@libsql/client` — helpers en `src/lib/turso/` |
+| Pagos | **MercadoPago** + **Bold** (webhooks propios en `src/pages/api/bold/`) |
+| Email | **MailerSend** (via API) |
+| PDF | htmldocs / pdfkit / react-pdf (`src/pages/api/clinic_pdf/`) |
+| Video | **WebRTC custom** (`useWebRTC`) + `signaling.ts` + TURN (`turn-credentials.ts`) |
+| Charts | chart.js + react-chartjs-2 |
+| Tests | Playwright (`playwright.config.ts`, `tests/`) |
+| Deploy | Vercel, desde branch `productive` (`.github/workflows/deploy-vercel.yml`) |
+
+### LO QUE NO EXISTE (no lo asumas, no lo "arregles")
+
+- **No hay mobile**: sin React Native, Flutter ni Expo. Los tasks T-001/T-002
+  del BOARD vienen de OTRO proyecto.
+- No hay `apps/api` (Go), `apps/web` (Next.js), `packages/` ni workspaces.
+- `apps/rules/` es un corpus **template de otro producto** ("MR Training"):
+  no es fuente de verdad tecnica de este repo (ver seccion final).
+
+---
+
+## RAMAS
+
+- `development` = integracion — PRs aca.
+- `productive` = deploy (Vercel) — solo se actualiza por merge, NUNCA push directo.
+- `main` = stub sin uso. No branchear de aca.
+
+---
 
 ## REGLA DE ORO
 
-**ANTES de cualquier cambio de codigo, diseño, arquitectura, o configuracion, DEBES leer los archivos de reglas relevantes en `apps/rules/`.**
+**ANTES de cualquier cambio de codigo, diseño o configuracion:**
 
-Si no sabes que regla aplica, lee `apps/rules/MASTER_PROMPT.md` primero.
+1. Lee este archivo completo.
+2. Identifica que zona de la app tocas (pages / api / components / lib / public/js).
+3. Lee el CODIGO REAL de esa zona antes de modificarla.
 
----
-
-## ESTADO ACTUAL DEL REPO (octubre 2026)
-
-Migracion en curso de **Psicologic** (app Astro legacy) hacia **MR Training**.
-
-- La app Astro legacy sigue en `src/` y `public/`; el deploy vigente sale de
-  la rama `productive` (workflow `.github/workflows/deploy-vercel.yml`).
-- `apps/` hoy SOLO contiene `apps/rules/` (16 reglas + mobile-rules).
-  `apps/web`, `apps/api` y `apps/mobile` AUN NO EXISTEN — sus reglas si.
-- Ramas reales: `development` = integracion (PRs aca), `productive` = deploy,
-  `main` = stub sin uso. NUNCA pushear directo a `productive`.
-- Todo comando que toque `apps/web|api|mobile` es target-state: aplica cuando
-  esa app exista. No intentes "arreglar" el comando de una app que no existe.
+No inventes estructura que no existe. Si algo de este archivo contradice al
+codigo, el codigo gana — y corregi este archivo.
 
 ---
 
-## MAPA DE REGLAS POR TIPO DE CAMBIO
+## MAPA DEL APP
 
-| Tipo de cambio | Reglas obligatorias |
+```
+src/
+├── pages/          54 rutas .astro (index, dashboard, client, games,
+│                   agenda/, admin/, payment/, pending-approval)
+│                   + API routes en pages/api/ (44 endpoints: agenda, bold,
+│                   client/patients, dashboard, feedback, games, patients,
+│                   payment, settings, tickets, users, webhooks/clerk)
+├── components/     48 componentes React (.tsx islands): Agenda/ (calendario
+│                   + VideoRoom WebRTC + hooks), Admin/, Chat/, Client/,
+│                   Dashboard/, games/, Payment/, Skeleton/, Toast/, Chartjs/
+├── lib/turso/      acceso DB: turso.js, Settings/, agenda/, userControl/, Header/
+├── lib/supabaseClient.ts   cliente supabase auxiliar (storage/realtime)
+├── lib/clerk/roles.ts      helpers de rol (isAdminRole, isClientRole)
+├── middleware.ts   proteccion de rutas por rol (clerkMiddleware)
+├── utils/          getUserRole, checkUserPaymentAccess, checkUserGameAccess
+└── styles/global.css   fuente Tailwind 4 → pnpm build:style → public/css/main.css
+
+public/js/          vanilla JS: dashboard/, games/ (cartas, overcome_fears),
+                   settings, agenda/, toast, fetch-interceptor
+public/img/         assets estaticos (png/svg)
+docs/superpowers/   specs de features (template: TEMPLATE-coach-feature.md)
+scripts/            worktree.sh, check-scaffold.sh
+.agents/skills/     skills del proyecto (ver mapa abajo)
+```
+
+---
+
+## MAPA DE SKILLS POR TIPO DE CAMBIO
+
+**Bootstrap obligatorio en CADA task:** skill `pipeline-init` (carga
+mr-context + herdr-setup, y herdr si HERDR_ENV=1).
+
+| Tipo de cambio | Skills a cargar |
 |---|---|
-| **Nuevo feature/producto** | `00-product-vision.md` + `03-ux-workflows.md` |
-| **UI / Diseño / Estilos** | `01-brand-guidelines.md` + `02-design-system.md` |
-| **Flujos de usuario / UX** | `03-ux-workflows.md` |
-| **Base de datos / Schema** | `04-database-design.md` |
-| **Backend / API / Go** | `05-backend-architecture.md` + `08-api-specification.md` |
-| **Frontend / Next.js / React** | `06-frontend-architecture.md` |
-| **APIs / Endpoints** | `08-api-specification.md` |
-| **AI / ML** | `09-ai-specification.md` |
-| **DevOps / CI/CD / Docker** | `10-devops.md` |
-| **Seguridad / Auth** | `11-security.md` |
-| **Coding style / Linting** | `12-coding-standards.md` |
-| **Testing** | `13-testing.md` |
-| **Team workflow / Worktrees / Caveman** | `14-team-workflow.md` |
-| **Mobile / React Native** | `mobile-rules/*` (ver seccion abajo) |
-| **Cualquier cosa** | `MASTER_PROMPT.md` (siempre) |
-
-### Reglas Mobile (React Native)
-
-Cuando trabajes en `apps/mobile/`, React Native, o cualquier feature mobile, activa TODAS estas reglas:
-
-| Regla | Archivo | Cuando aplica |
-|---|---|---|
-| **Arquitectura** | `mobile-rules/00-mobile-architecture.md` | Estructura del proyecto, capas, navegacion |
-| **UI/UX** | `mobile-rules/01-mobile-ui-ux.md` | Diseño de pantallas, componentes, estados |
-| **Codigo** | `mobile-rules/02-mobile-code-quality.md` | TypeScript, naming, hooks, componentes |
-| **Testing** | `mobile-rules/03-mobile-testing.md` | Unit tests, coverage, bug fixes |
-| **Seguridad** | `mobile-rules/04-mobile-security.md` | OWASP, almacenamiento seguro, API |
-| **Performance** | `mobile-rules/05-mobile-performance.md` | 60 FPS, FlashList, bundles, memoria |
-| **QA / Bugs** | `mobile-rules/06-mobile-bug-hunter.md` | Edge cases, doble tap, offline, rotacion |
+| Feature nueva | `planning-and-task-breakdown` + spec en docs/superpowers/ + `frontend-ui-engineering` |
+| UI / estilos | `frontend-design` + `frontend-ui-engineering` + `tailwind-css-patterns` + `accessibility` |
+| API route nueva o cambio | `api-and-interface-design` + `nodejs-backend-patterns` + `security-and-hardening` + `clerk-backend-api` |
+| DB (src/lib/turso) | `nodejs-best-practices` + `security-and-hardening` |
+| Pagos (MercadoPago/Bold) | `security-and-hardening` — webhooks: verificar firma SIEMPRE |
+| Bug | `debugging-and-error-recovery` (root cause primero) + test que reproduzca |
+| Fluidez / rendimiento | `performance-optimization` |
+| Tests E2E | `playwright-best-practices` |
+| Refactor | `code-simplification` + `incremental-implementation` |
+| Review / PR | `code-review-and-quality` + `work-unit-commits` + `branch-pr` + `caveman-commit` |
+| Deploy / CI | `deploy-to-vercel` |
+| TypeScript avanzado | `typescript-advanced-types` |
+| React patrones | `vercel-react-best-practices` + `vercel-composition-patterns` |
+| SEO (landing) | `seo` |
 
 ---
 
-## GLOBAL MOBILE UI VALIDATION RULE
+## REGLAS TECNICAS OBLIGATORIAS
 
-**Scope: Only applies when working in `apps/mobile/` (React Native app).**
-
-For every mobile task that changes UI, navigation, interaction, state, or user flow **inside `apps/mobile/`**, the task is NOT complete until the real application has been tested on a running Android emulator/device or iOS simulator/device using the available mobile MCP (Maestro).
-
-### Mandatory workflow
-
-1. Read and understand the task requirements.
-2. Implement the change.
-3. Build the mobile application.
-4. Launch/install the application on the available mobile target.
-5. Use the mobile MCP to interact with the REAL rendered UI.
-6. Validate:
-
-   * screen rendering
-   * navigation
-   * buttons and touch interactions
-   * text inputs
-   * forms
-   * lists/scrolling
-   * loading states
-   * success states
-   * error states
-   * empty states when applicable
-   * keyboard behavior when applicable
-   * back navigation
-   * permissions when applicable
-7. Take screenshots when visual validation is relevant.
-8. Compare the actual result against the task requirements and expected UX.
-9. If anything fails, is visually incorrect, inaccessible, broken, or inconsistent:
-
-   * diagnose the root cause
-   * fix the implementation
-   * rebuild/reload the application
-   * repeat the real-device/emulator validation
-10. Continue until the affected flow passes.
-
-### Strict completion rule
-
-NEVER mark a mobile task as completed because:
-
-* the code compiles
-* TypeScript/Dart checks pass
-* unit tests pass
-* static analysis passes
-* the implementation looks correct from the source code
-* the UI was only inspected from screenshots provided by the user
-
-Those checks are necessary but NOT sufficient.
-
-The actual running mobile application MUST be validated.
-
-### MCP requirement
-
-Prefer the configured mobile MCP/ Maestro tools for UI interaction and validation.
-
-If the mobile MCP is unavailable:
-
-1. Do NOT falsely claim that the UI was validated.
-2. Report that real mobile validation could not be performed.
-3. Continue with code-level validation if possible.
-4. Mark the task as BLOCKED rather than COMPLETE.
-
-### Final response requirement
-
-Before declaring completion, report:
-
-* Build result
-* Mobile target tested
-* Screens/flows tested
-* UI interactions tested
-* E2E result
-* Any remaining issues
-
-Use one of these final statuses:
-
-PASS — implementation and real mobile UI validation passed.
-
-PASS WITH LIMITATIONS — implementation passed but a clearly documented validation limitation remains.
-
-BLOCKED — real mobile UI validation could not be performed.
-
-NEVER report PASS when the real mobile UI was not actually tested.
+1. **Toda API route valida auth con Clerk** — sigue el patron existente
+   (`verifyClerkUser`, middleware por rol) y los validadores de input
+   (`validateName`, `validateCedula`, `validateEmail`).
+2. **DB solo con el patron `src/lib/turso/`** — no crees clientes
+   @libsql/client sueltos en pages/components.
+3. **Estilos:** edita `src/styles/global.css` y corre `pnpm build:style`.
+   `public/css/main.css` es build output — nunca lo edites a mano.
+4. **Secretos nunca al repo.** `.env*` esta ignorado; solo `.env.example`
+   con placeholders.
+5. **WebRTC:** todo cambio de video toca `signaling.ts` y
+   `turn-credentials.ts` — validalo con DOS navegadores reales.
+6. **Pagos:** los webhooks de Bold y MercadoPago verifican firma/estado antes
+   de mutar la DB. Nunca confies en el request sin validar.
+7. **Datos de pacientes = datos sensibles.** No los loguees, no los expongas
+   en respuestas API innecesarias, no los copies a specs/docs.
 
 ---
 
@@ -151,146 +134,52 @@ NEVER report PASS when the real mobile UI was not actually tested.
 ```
 Recibes una tarea
   ↓
-0. Invoca el skill `pipeline-init` (carga mr-context + herdr-setup,
-    y herdr si HERDR_ENV=1). Trabaja SIEMPRE en tu worktree (un branch = un worktree).
-   Si no tenes uno: scripts/worktree.sh new feature/<nombre>
-   NUNCA trabajar en main. Detalle: 14-team-workflow.md
+0. Skill `pipeline-init`. Trabaja SIEMPRE en tu worktree:
+   scripts/worktree.sh new feature/<nombre> (base origin/development)
   ↓
-1. Identifica el tipo de cambio
+1. Identifica el tipo de cambio (mapa de skills arriba)
   ↓
-2. Lee el/los archivo(s) de reglas de `apps/rules/` correspondientes
+2. Lee el codigo real de la zona afectada
   ↓
-3. Lee el MASTER_PROMPT.md si tienes dudas
+3. Ejecuta en slices chicos, commit atomico convencional por slice
   ↓
-4. Ejecuta el cambio siguiendo las reglas
+4. Verifica: pnpm build + build:style + playwright (lo que aplique)
   ↓
-5. Verifica con lint, build, tests segun 13-testing.md
-  ↓
-6. Commit atomico convencional + PR a development. Limpia el worktree tras merge.
+5. PR a development. Limpia el worktree tras merge.
 ```
+
+- Commits: convencionales, atomicos, sin atribucion AI (`caveman-commit`).
+- Reply al usuario: modo caveman salvo excepciones (ver 14-team-workflow.md §5).
+- Review antes de merge: `code-review-and-quality` como gate.
 
 ---
 
-## TEAM WORKFLOW (detalle en `14-team-workflow.md`)
-
- - **Paso 0 — pipeline-init:** todo agente invoca el skill `pipeline-init`
-   ANTES de tocar codigo. Carga `mr-context` (mapa repo, no-negociables,
-   barra senior) + `herdr-setup` (conceptos Herdr) + `herdr` solo si
-   `HERDR_ENV=1` (corre dentro de un pane Herdr).
----
-
-## STACK
-
-| Capa | Tecnologia |
-|---|---|
-| Frontend | Next.js 14 (App Router) + React 18 + TypeScript strict + Tailwind CSS 3 |
-| Auth | Clerk v6 (`@clerk/nextjs`) |
-| Backend | **Go 1.25 API (FIBER) — FUENTE DE VERDAD** |
-| Database | Turso/LibSQL (principal) |
-| Cache | Redis 7 |
-| Event Bus | NATS 2.10 con JetStream |
-| Mobile | React Native CLI + TypeScript strict + React Navigation + React Query |
-| Monorepo | pnpm workspaces |
-
-> **Consistencia del corpus:** `04-database-design.md` y
-> `07-mobile-architecture.md` describen el spec original del producto
-> (PostgreSQL + Flutter). La decision operativa vigente es ESTA tabla
-> (React Native + Turso/LibSQL), alineada con `mobile-rules/*` y BOARD.md.
-> Alinear el corpus 00-14 completo es decision pendiente del equipo; mientras
-> tanto, esta tabla y `mobile-rules/` son la verdad operativa para agentes.
-
----
-
-## REGLA DE ORO — API-FIRST
-
-**TODA la comunicación entre apps DEBE ir a través del Go API (`apps/api`).**
-
-| App | Role | Regla |
-|---|---|---|
-| **Go API** (`apps/api`) | **Backend principal** | ÚNICA fuente de verdad para datos |
-| **Web** (`apps/web`) | Frontend coach | Lee/escribe SOLO vía Go API |
-| **Mobile** (`apps/mobile`) | Frontend athlete | Lee/escribe SOLO vía Go API |
-
-### Flujo correcto
-```
-Mobile/Web → Go API → Database
-Go API → Database → Mobile/Web
-```
-
-### Flujo INCORRECTO (NUNCA hacer esto)
-```
-Mobile → Next.js API Routes → Database  ❌
-Web → Next.js API Routes → Database  ❌
-Mobile → Next.js API Routes → Web  ❌
-```
-
-### Excepciones permitidas
-- Next.js API Routes solo sirven para: webhooks de Clerk, server-side rendering data, y archivos estáticos
-- Si necesitás datos en Next.js, consumí el Go API desde el server component
-
-### Coordinación de contratos
-1. **Cambios de contrato** → coordinar entre API, Web, y Mobile
-2. **Nuevos endpoints** → agregar en Go API primero, luego actualizar clientes
-3. **Migraciones DB** → Go API es el dueño del schema
-
----
-
-## COMANDOS UTILES
+## COMANDOS
 
 ```bash
-# Workflow de agentes (disponibles HOY)
-scripts/worktree.sh new feature/<nombre>  # worktree desde origin/development
-scripts/check-scaffold.sh                # integridad del scaffold (lo que corre CI)
-pnpm scaffold:check                       # idem, via npm script
-make install-hooks                        # instala .githooks/pre-commit
+pnpm dev          # dev server (necesita .env con Clerk + Turso — ver .env.example)
+pnpm build        # build produccion
+pnpm preview      # preview del build
+pnpm build:style  # tailwind: src/styles/global.css → public/css/main.css
+pnpm watch:style  # tailwind watch
 
-# Frontend (apps/web) — target: requiere crear la app primero
-cd apps/web && pnpm dev          # Dev server en :3000
-cd apps/web && pnpm build        # Build de produccion
-cd apps/web && pnpm lint         # ESLint
-cd apps/web && pnpm test         # Jest
-
-# Backend (apps/api — Go/Fiber) — target: requiere crear la app primero
-cd apps/api && go build ./... # Compilar
-cd apps/api && go test ./...  # Tests
-
-# Mobile (apps/mobile) — target: requiere crear la app primero
-cd apps/mobile && npx react-native run-ios     # iOS Simulator
-cd apps/mobile && npx react-native run-android # Android Emulator
-cd apps/mobile && npm test                      # Jest tests
-
-# Infra (Redis para dev) — target: requiere apps/api primero
-docker compose -f apps/api/docker-compose.dev.yml up -d redis
+npx playwright test          # E2E
+scripts/check-scaffold.sh    # integridad del scaffold (lo que corre CI)
+make install-hooks           # instala .githooks/pre-commit
 ```
 
 ---
 
-## ESTRUCTURA DEL PROYECTO
+## `apps/rules/` — CORPUS TEMPLATE (NO operativo)
 
-```
-apps/
-├── rules/        # 16 archivos de reglas (esta es LA fuente de verdad) — EXISTE
-│   └── mobile-rules/  # Reglas especificas para React Native — EXISTE
-├── web/          # Next.js frontend (coach dashboard + landing) — PENDIENTE
-├── api/          # Go API (Fiber, Clean Architecture, CQRS) — PENDIENTE
-└── mobile/       # React Native (iOS + Android) — PENDIENTE
+`apps/rules/` (00-14 + mobile-rules) es un corpus traido de otro producto
+("MR Training": Next.js + Go API + React Native + Flutter/PostgreSQL).
+**No describe este repo.** Reglas de uso:
 
-docs/
-└── superpowers/  # Specs y planes generados por AI
-    ├── plans/
-    └── specs/
-```
-
----
-
-## PRINCIPIOS CLAVE (del MASTER_PROMPT)
-
-1. Arquitectura antes que codigo
-2. Features antes que paginas
-3. Dominio antes que framework
-4. Reutilizable antes que duplicado
-5. Legible antes que inteligente
-6. Simple antes que complejo
-7. Mantenible antes que rapido
-8. Nunca optimizar por velocidad. Siempre optimizar por calidad.
-9. Pensar antes de codificar.
+- Este archivo y el codigo real son la fuente de verdad.
+- Del corpus solo aplican los PRINCIPIOS generales (calidad, testing) y el
+  proceso de equipo en `14-team-workflow.md`.
+- Cualquier referencia en el corpus a Go / React Native / Flutter / Next.js /
+  PostgreSQL-RLS / monorepo `apps/` NO aplica a este proyecto.
+- Disposicion final del corpus (cuarentena / reescritura / borrado):
+  decision pendiente del usuario.
