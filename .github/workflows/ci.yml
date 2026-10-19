@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+jobs:
+  scaffold-integrity:
+    name: Scaffold integrity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Scaffold integrity checks
+        run: bash scripts/check-scaffold.sh
+      - name: Shellcheck workflow scripts
+        run: shellcheck scripts/worktree.sh scripts/check-scaffold.sh .githooks/pre-commit
