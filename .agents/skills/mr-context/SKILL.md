@@ -1,46 +1,51 @@
 ---
 name: mr-context
-description: Senior engineering context for the MR Training monorepo. Load at the start of ANY task in this repo — gives the repo map, non-negotiable rules, and the senior quality bar before touching code.
+description: Senior engineering context for this repo (Psicologic, Astro app). Load at the start of ANY task in this repo — gives the repo map, non-negotiable rules, and the senior quality bar before touching code.
 metadata:
   audience: all-developers
   workflow: team
 ---
 
-# MR Context — Senior Bar for This Repo
+# Context — Senior Bar for This Repo
 
-Load this before starting any task in this repo. It gives orientation and
-the quality bar. It does NOT replace the rules — it tells you which rules
-to read for your change.
+Load this before starting any task here. It gives orientation and the
+quality bar. It does NOT replace the rules — `AGENTS.md` is the rule manager.
 
 ## Repo map (30 seconds)
 
 ```
-apps/rules/   The rules. EXISTS today — the only app dir so far. Read the
-              ones your change touches.
-apps/web      Next.js 14 coach dashboard + landing (Clerk v6, Tailwind 3) — PENDING, not created yet
-apps/api      Go 1.25 Fiber API — SINGLE SOURCE OF TRUTH for data — PENDING, not created yet
-apps/mobile   React Native athlete app (React Navigation + React Query) — PENDING, not created yet
-packages/     Empty by design — see 14-team-workflow.md §4 before adding
+Psicologic — ONE Astro 5 SSR app at the repo root (NOT a monorepo).
+src/pages/       54 .astro routes + api/ (44 TypeScript API routes)
+src/components/  48 React 19 islands (Agenda + WebRTC VideoRoom, Dashboard,
+                games, Payment, Admin, Chat…)
+src/lib/turso/  TursoDB access (@libsql/client) — the only DB pattern
+src/middleware.ts  Clerk route protection by role
+public/js/       vanilla JS islands (dashboard, games, settings)
 ```
 
-Mid-migration repo: the legacy Psicologic Astro app still lives in `src/` +
-`public/`; production deploys from the `productive` branch (Vercel workflow).
-Integration branch is `development` (PRs go here); `main` is an unused stub.
+Stack: Astro 5 (SSR, Vercel) + React 19 islands + Tailwind CSS 4 + Clerk +
+TursoDB (LibSQL) + MercadoPago/Bold + MailerSend + Playwright.
+
+Deploy: Vercel from `productive`. Integration: `development` (PRs here).
+`main` is an unused stub.
+
+NOT in this repo: no mobile (RN/Flutter/Expo), no Go API, no Next.js, no
+`packages/`. `apps/rules/` is a template corpus from another product —
+principles only, never a technical source of truth.
 
 ## Non-negotiables (violating any of these = rework)
 
-1. **API-first:** web and mobile talk ONLY to `apps/api`. No Next.js API
-   routes for data (webhooks/SSR/static excepted).
-2. **Never work on `main`** (unused stub here — integration happens on
-   `development`). One branch = one worktree:
-   `scripts/worktree.sh new feature/<name>`.
-3. **Read rules before code.** Rules map in `AGENTS.md` — match your change
-   type (UI, API, DB, mobile, security...) to its rule files, read them,
-   then code. No guessing.
-4. **Mobile UI changes aren't done until validated on a real device/emulator.**
-   Code compiling is NOT validation. See the mobile validation rule in
-   `AGENTS.md`.
+1. **Every API route validates Clerk auth** (existing pattern:
+   `verifyClerkUser` + middleware role matcher) and input validators.
+2. **Never work on `productive`** (deploy branch — merge only, never push).
+   One branch = one worktree:
+   `scripts/worktree.sh new feature/<name>` (base `origin/development`).
+3. **Read the real code before changing it.** AGENTS.md + the zone you
+   touch. No guessing, no inventing structure.
+4. **DB via the `src/lib/turso/` pattern.** Never scatter libsql clients.
 5. **Conventional commits, atomic, no AI attribution.**
+6. **Patient data is sensitive:** never logged, never leaked in API
+   responses, never copied into specs or docs.
 
 ## Senior quality bar (how to think here)
 
@@ -54,13 +59,11 @@ Integration branch is `development` (PRs go here); `main` is an unused stub.
   submitting, not after.
 - **Push back with alternatives.** If the ask is wrong, underspecified, or
   skips architecture, say so BEFORE coding — with the tradeoff, not just "no".
-- **Abstractions earn their place.** No `packages/` extraction, no shared
-  layers, no "future-proofing" without 2+ real consumers (see
-  `14-team-workflow.md` §4).
 - **Tests prove behavior.** New logic = tests. Existing behavior changed =
   tests updated in the same commit.
-- **Every task ends with:** lint + typecheck + tests green, and a CHANGES MADE
-  summary (what changed, what intentionally untouched, concerns).
+- **Every task ends with:** build green (`pnpm build` + `build:style`),
+  relevant playwright checks, and a CHANGES MADE summary (what changed,
+  what intentionally untouched, concerns).
 
 ## Task flow
 
@@ -68,11 +71,10 @@ Entry point: `pipeline-init` skill (loads this + herdr context). Then:
 
 ```
 1. Worktree: scripts/worktree.sh new feature/<name>
-2. Read the matching rule files (map in AGENTS.md)
-3. Feature or contract change? Spec first: docs/superpowers/specs/
-   (template: TEMPLATE-coach-feature.md)
+2. Pick skills by change type (map in AGENTS.md)
+3. Feature? Spec first: docs/superpowers/specs/ (template: TEMPLATE-coach-feature.md)
 4. Implement — small slices, commit each
-5. Verify: lint, typecheck, tests (+ real-device run for mobile UI)
+5. Verify: pnpm build + build:style (+ playwright when it applies)
 6. PR to development → clean up worktree
 ```
 
