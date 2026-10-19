@@ -8,6 +8,19 @@ const { title } = Astro.props;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="theme-color" content="#007BFF" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="apple-touch-icon" href="/img/pwa/apple-touch-icon.png" />
+		<script is:inline>
+			// PWA: registro del service worker (spec 2026-10-19-pwa-phase1)
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker.register('/sw.js').catch((err) =>
+						console.warn('SW registration failed:', err)
+					);
+				});
+			}
+		</script>
 		<meta name="generator" content={Astro.generator} />
 		<link rel="stylesheet" href="/css/main.css" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
