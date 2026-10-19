@@ -335,6 +335,11 @@ if (userId) {
   loadStats();
 
   // Expose function globally for potential updates
+  declare global {
+    interface Window {
+      refreshClientStats?: () => Promise<void>;
+    }
+  }
   window.refreshClientStats = loadStats;
 </script>
 

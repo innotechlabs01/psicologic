@@ -6,7 +6,8 @@ import PaymentStatus from "../../components/Payment/js/PaymentStatus.tsx";
 import PaymentHistory from "@components/Payment/PaymentHistory.astro";
 import PaymentStats from "@components/Payment/PaymentStats.astro";
 import { CreditCard, ShieldCheck, Zap, Info } from "lucide-react";
-import { PaymentService } from "../../lib/services/paymentService";
+import { PaymentService, type PaymentInfoDTO } from "../../lib/services/paymentService";
+import type { paymentHistory } from "../../constants/interfaces";
 
 const boldOrderId = Astro.url.searchParams.get("bold-order-id");
 const { userId } = Astro.locals.auth();
@@ -15,7 +16,7 @@ if (!userId) {
     return Astro.redirect("/login");
 }
 
-let paymentData = {
+let paymentData: { paymentInfo: PaymentInfoDTO; paymentHistory: paymentHistory[] } = {
     paymentInfo: {
         paymentId: "",
         userId: userId,
@@ -232,7 +233,14 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                     </div>
 
                     <!-- Estadísticas Detalladas -->
-                    <PaymentStats {...paymentData.paymentInfo} />
+                    <PaymentStats
+                        paymentCount={paymentData.paymentInfo.paymentCount}
+                        lastPaymentDate={paymentData.paymentInfo.lastPaymentDate ?? null}
+                        nextPaymentDate={paymentData.paymentInfo.nextPaymentDate}
+                        subscriptionStatus={paymentData.paymentInfo.subscriptionStatus}
+                        daysToNext={paymentData.paymentInfo.daysToNext}
+                        isActive={paymentData.paymentInfo.isActive}
+                    />
                 </div>
 
                 <!-- Columna Lateral: Información de Seguridad -->

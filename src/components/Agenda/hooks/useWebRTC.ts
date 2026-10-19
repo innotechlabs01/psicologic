@@ -98,10 +98,10 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
             const transceivers = pc.getTransceivers?.() || [];
             for (const t of transceivers) {
                 if (t.setCodecPreferences && t.receiver && t.receiver.getCapabilities?.()) {
-                    const caps = RTCRtpReceiver.getCapabilities(t.kind);
+                    const caps = t.receiver.getCapabilities?.(t.kind) ?? null;
                     if (!caps) continue;
 
-                    let preferred: RTCRtpCodecCapability[] = [];
+                    let preferred: RTCRtpCodec[] = [];
                     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
                     if (isSafari) {

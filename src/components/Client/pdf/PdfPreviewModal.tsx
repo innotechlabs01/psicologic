@@ -1,4 +1,4 @@
-export default function ClinicPdfModal({ entry, onClose }) {
+export default function ClinicPdfModal({ entry, onClose }: { entry: { id: string | number; name?: string } | null; onClose: () => void }) {
   if (!entry?.id) return null;
 
   return (

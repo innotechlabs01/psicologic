@@ -2,9 +2,9 @@
 import type { APIRoute } from 'astro';
 import { clerkClient } from '@clerk/astro/server';
 
-export const GET: APIRoute = async ({ request, locals }) => {
+export const GET: APIRoute = async (context) => {
   try {
-    const context = { request, locals };
+    const { request } = context;
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
     
