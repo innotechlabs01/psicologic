@@ -1,11 +1,7 @@
-import { createClient } from '@libsql/client';
+import { db as client } from '../client';
 import type { Games } from './interface';
 
 // Initialize Supabase client with service role key
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
 
 export async function createGame(game: Games): Promise<Games> {
 

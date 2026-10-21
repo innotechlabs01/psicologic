@@ -1,18 +1,12 @@
 import { clerkMiddleware, createRouteMatcher, clerkClient } from "@clerk/astro/server";
 import { isAdminRole, isClientRole } from "./lib/clerk/roles";
-import { createUserFromClerk, triggerUserAccessEvent } from "./pages/api/webhooks/clerk";
+import { createUserFromClerk, triggerUserAccessEvent } from "./lib/clerk/user-provisioning";
 import type { APIContext } from "astro";
 import { checkUserGameAccess } from "./utils/checkUserGameAccess";
 
-import { createClient } from "@libsql/client";
 import { handleUserWithoutRole, handleInsertUsersAdmin } from "./utils/utils";
 import { checkUserPaymentAccess } from "./utils/chechUserPaymentAccess";
-
-// ⚡️ Initialize Turso
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
+import { db as client } from "./lib/turso/client";
 
 async function getUserRole(userId: string): Promise<string> {
   try {

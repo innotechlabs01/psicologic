@@ -1,9 +1,5 @@
-import { createClient } from "@libsql/client";
+import { db as client } from '../lib/turso/client';
 
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
 
 export function getUserRole(userId: string): Promise<string> {
   return Promise.resolve(client

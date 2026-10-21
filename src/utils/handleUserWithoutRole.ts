@@ -1,6 +1,6 @@
 import type { APIContext } from "astro";
 import { clerkClient } from "@clerk/astro/server";
-import { createUserFromClerk } from "../pages/api/webhooks/clerk";
+import { createUserFromClerk } from "../lib/clerk/user-provisioning";
 
 export async function handleUserWithoutRole(
   context: APIContext,

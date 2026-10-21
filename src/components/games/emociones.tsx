@@ -7,7 +7,23 @@ fontLink.href = "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,
 document.head.appendChild(fontLink);
 
 // ─── Theme config ─────────────────────────────────────────────────────────────
-const THEMES = {
+interface Theme {
+  name: string;
+  charName: string;
+  gradient: string;
+  cardGrad: string;
+  pillActive: string;
+  pillActiveBg: string;
+  pillActiveText: string;
+  accent: string;
+  accentLight: string;
+  textDark: string;
+  bubbleColor: string;
+  emoji: string;
+  tagline: string;
+}
+
+const THEMES: Record<string, Theme> = {
   tristeza: {
     name: "Tristeza",
     charName: "Melancolía",
@@ -116,7 +132,15 @@ const THEMES = {
 };
 
 // ─── Emotion data ─────────────────────────────────────────────────────────────
-const CATEGORIAS = [
+interface Categoria {
+  id: string;
+  emoji: string;
+  name: string;
+  desc: string;
+  emociones: string[];
+}
+
+const CATEGORIAS: Categoria[] = [
   {
     id: "tristeza",
     emoji: "😔",
@@ -168,7 +192,7 @@ const CATEGORIAS = [
   },
 ];
 
-const NEEDS = {
+const NEEDS: Record<string, string> = {
   tristeza: "Permítete sentir sin juzgarte. Busca un espacio seguro o alguien que te escuche con calma.",
   alegria: "Comparte este momento. La alegría multiplica cuando se regala.",
   enfado: "Respira antes de actuar. Tu energía puede ser límite o mensaje.",
@@ -179,8 +203,8 @@ const NEEDS = {
 };
 
 
-function Blobs({ theme }) {
-  const t = THEMES[theme] || {};
+function Blobs({ theme }: { theme: string }) {
+  const t: Partial<Theme> = THEMES[theme] ?? {};
   return (
     <div style={{ position: "fixed", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
       <div style={{
@@ -200,7 +224,7 @@ function Blobs({ theme }) {
 }
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
-function StepBar({ step, total = 4 }) {
+function StepBar({ step, total = 4 }: { step: number; total?: number }) {
   const labels = ["Emoción", "Matices", "Intensidad", "Insight"];
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 36 }}>
@@ -240,9 +264,9 @@ function StepBar({ step, total = 4 }) {
 }
 
 // ─── Step 0 — Categoría ───────────────────────────────────────────────────────
-function StepCategoria({ onSelect }) {
-  const [hovered, setHovered] = useState(null);
-  const [pressed, setPressed] = useState(null);
+function StepCategoria({ onSelect }: { onSelect: (cat: Categoria) => void }) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [pressed, setPressed] = useState<string | null>(null);
 
   return (
     <div style={{ animation: "fadeUp 0.5s ease" }}>
@@ -303,7 +327,7 @@ function StepCategoria({ onSelect }) {
 }
 
 // ─── Step 1 — Subemociones ────────────────────────────────────────────────────
-function StepEmociones({ cat, selected, onToggle, onBack, onNext }) {
+function StepEmociones({ cat, selected, onToggle, onBack, onNext }: { cat: Categoria; selected: string[]; onToggle: (e: string) => void; onBack: () => void; onNext: () => void }) {
   const t = THEMES[cat.id];
   return (
     <div style={{ animation: "fadeUp 0.4s ease", display: "flex", flexDirection: "column", height: "100%" }}>
@@ -394,7 +418,7 @@ function StepEmociones({ cat, selected, onToggle, onBack, onNext }) {
 }
 
 // ─── Step 2 — Emoción principal ───────────────────────────────────────────────
-function StepPrincipal({ cat, selected, principal, onSelect, onBack, onNext }) {
+function StepPrincipal({ cat, selected, principal, onSelect, onBack, onNext }: { cat: Categoria; selected: string[]; principal: string | null; onSelect: (e: string) => void; onBack: () => void; onNext: () => void }) {
   const t = THEMES[cat.id];
   return (
     <div style={{ animation: "fadeUp 0.4s ease", display: "flex", flexDirection: "column", height: "100%" }}>
@@ -477,7 +501,7 @@ function StepPrincipal({ cat, selected, principal, onSelect, onBack, onNext }) {
 }
 
 // ─── Step 3 — Resultado ───────────────────────────────────────────────────────
-function StepResultado({ cat, principal, seleccionadas, onReiniciar }) {
+function StepResultado({ cat, principal, seleccionadas, onReiniciar }: { cat: Categoria; principal: string; seleccionadas: string[]; onReiniciar: () => void }) {
   const t = THEMES[cat.id];
   const [reflexion, setReflexion] = useState("");
   const [focused, setFocused] = useState(false);
@@ -568,8 +592,8 @@ function StepResultado({ cat, principal, seleccionadas, onReiniciar }) {
           fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: "#6b7280",
           cursor: "pointer", transition: "all 0.2s ease",
         }}
-        onMouseEnter={e => { e.target.style.borderColor = "#e5e7eb"; e.target.style.color = "#374151"; }}
-        onMouseLeave={e => { e.target.style.borderColor = "#f3f4f6"; e.target.style.color = "#6b7280"; }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#374151"; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "#f3f4f6"; e.currentTarget.style.color = "#6b7280"; }}
       >
         ↩ Nuevo registro
       </button>
@@ -579,18 +603,18 @@ function StepResultado({ cat, principal, seleccionadas, onReiniciar }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function MoodTracker() {
-  const [step, setStep] = useState(0);
-  const [cat, setCat] = useState(null);
-  const [selected, setSelected] = useState([]);
-  const [principal, setPrincipal] = useState(null);
+  const [step, setStep] = useState<number>(0);
+  const [cat, setCat] = useState<Categoria | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [principal, setPrincipal] = useState<string | null>(null);
 
   const bgTheme = cat ? cat.id : null;
   const t = bgTheme ? THEMES[bgTheme] : null;
 
-  const handleSelectCat = (c) => {
+  const handleSelectCat = (c: Categoria) => {
     setCat(c); setSelected([]); setPrincipal(null); setStep(1);
   };
-  const handleToggle = (e) => {
+  const handleToggle = (e: string) => {
     setSelected(prev => prev.includes(e) ? prev.filter(x => x !== e) : prev.length < 3 ? [...prev, e] : prev);
   };
   const handleReiniciar = () => {

@@ -6,7 +6,8 @@ import PaymentStatus from "../../components/Payment/js/PaymentStatus.tsx";
 import PaymentHistory from "@components/Payment/PaymentHistory.astro";
 import PaymentStats from "@components/Payment/PaymentStats.astro";
 import { CreditCard, ShieldCheck, Zap, Info } from "lucide-react";
-import { PaymentService } from "../../lib/services/paymentService";
+import { PaymentService, type PaymentInfoDTO } from "../../lib/services/paymentService";
+import type { paymentHistory } from "../../constants/interfaces";
 
 const boldOrderId = Astro.url.searchParams.get("bold-order-id");
 const { userId } = Astro.locals.auth();
@@ -15,7 +16,7 @@ if (!userId) {
     return Astro.redirect("/login");
 }
 
-let paymentData = {
+let paymentData: { paymentInfo: PaymentInfoDTO; paymentHistory: paymentHistory[] } = {
     paymentInfo: {
         paymentId: "",
         userId: userId,
@@ -41,8 +42,15 @@ try {
 
 // Definir monto según tipo de usuario
 const isGameUser = Boolean(paymentData?.paymentInfo?.isGameUser);
-const paymentAmount = isGameUser ? "5000" : "140000";
+const paymentAmount = isGameUser ? "5000" : "60000";
 const planName = isGameUser ? "Plan Juegos" : "Suscripción Premium";
+
+// Desglose IVA (el precio mostrado es el valor final con IVA incluido)
+const IVA_RATE = 0.19;
+const priceTotal = parseInt(paymentAmount, 10);
+const priceBase = Math.round(priceTotal / (1 + IVA_RATE));
+const priceIva = priceTotal - priceBase;
+const fmtCOP = (n: number) => new Intl.NumberFormat("es-CO").format(n);
 
 const isActive = paymentData.paymentInfo.isActive;
 const daysToNext = paymentData.paymentInfo.daysToNext || 0;
@@ -116,6 +124,9 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                                             >/mes</span
                                         >
                                     </div>
+                                    <p class="text-xs text-gray-400 font-medium mt-0.5">
+                                        IVA incluido (19%): base {fmtCOP(priceBase)} + IVA {fmtCOP(priceIva)}
+                                    </p>
                                     <p
                                         class="text-gray-500 text-sm font-medium"
                                     >
@@ -222,7 +233,14 @@ const BOLD_API_KEY = import.meta.env.BOLD_API_KEY;
                     </div>
 
                     <!-- Estadísticas Detalladas -->
-                    <PaymentStats {...paymentData.paymentInfo} />
+                    <PaymentStats
+                        paymentCount={paymentData.paymentInfo.paymentCount}
+                        lastPaymentDate={paymentData.paymentInfo.lastPaymentDate ?? null}
+                        nextPaymentDate={paymentData.paymentInfo.nextPaymentDate}
+                        subscriptionStatus={paymentData.paymentInfo.subscriptionStatus}
+                        daysToNext={paymentData.paymentInfo.daysToNext}
+                        isActive={paymentData.paymentInfo.isActive}
+                    />
                 </div>
 
                 <!-- Columna Lateral: Información de Seguridad -->

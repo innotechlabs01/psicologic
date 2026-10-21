@@ -1,46 +1,7 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
 import crypto from 'crypto';
-
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
-
-const saveStatusPayment = async (userId: string, paymentId: string, amount: number, status: string) => {
-  try {
-    function isLeapYear(year: number): boolean {
-      return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-    }
-
-    const today = new Date();
-    const daysInMonth = [31, isLeapYear(today.getFullYear()) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    const actualDays = daysInMonth[today.getMonth()];
-
-    const nextPaymentDate = new Date(today);
-    nextPaymentDate.setDate(today.getDate() + actualDays);
-
-    const blockedPaymentDate = new Date(nextPaymentDate);
-    blockedPaymentDate.setDate(nextPaymentDate.getDate() + 5);
-
-    await client.execute({
-      sql: `INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        paymentId,
-        userId,
-        amount,
-        status,
-        new Date().toISOString(),
-        nextPaymentDate.toISOString(),
-        blockedPaymentDate.toISOString(),
-        new Date().toISOString()
-      ]
-    });
-  } catch (error) {
-    console.error('Error al guardar el estado de la transacción:', error);
-  }
-};
+import { db as client } from '../../../lib/turso/client';
+import { saveStatusPayment } from '../../../lib/payments/save-payment';
 
 const verifyBoldSignature = (body: string, signature: string, secretKey: string): boolean => {
   const encoded = Buffer.from(body).toString('base64');
@@ -56,13 +17,16 @@ export const POST: APIRoute = async ({ request }) => {
     const signature = request.headers.get('x-bold-signature') || '';
     const BOLD_SECRET_KEY = import.meta.env.BOLD_SECRET_KEY || '';
 
-    // Validar firma (en modo pruebas la secret puede ser string vacío)
-    if (BOLD_SECRET_KEY) {
-      const isValid = verifyBoldSignature(rawBody, signature, BOLD_SECRET_KEY);
-      if (!isValid) {
-        console.warn('Firma inválida en webhook de Bold');
-        return new Response('Firma inválida', { status: 403 });
-      }
+    // Fail-closed (11-security.md): sin secret configurado no se procesa el webhook.
+    if (!BOLD_SECRET_KEY) {
+      console.error('BOLD_SECRET_KEY no configurada — webhook de Bold rechazado');
+      return new Response('Webhook no configurado', { status: 503 });
+    }
+
+    const isValid = verifyBoldSignature(rawBody, signature, BOLD_SECRET_KEY);
+    if (!isValid) {
+      console.warn('Firma inválida en webhook de Bold');
+      return new Response('Firma inválida', { status: 403 });
     }
 
     const eventType = body.type; // SALE_APPROVED, SALE_REJECTED, VOID_APPROVED, VOID_REJECTED

@@ -1,53 +1,45 @@
-# build output
-dist/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# generated types
+# build output (legacy Astro app)
+dist/
 .astro/
 
 # dependencies
 node_modules/
 
-# logs
+# testing
+coverage/
+
+# next.js
+.next/
+out/
+
+# production
+build/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+.pnpm-debug.log*
 
-.vscode
-.vscode/*
-.vscode/
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
 
-# pnpm lock file
-pnpm-lock.*
-*pmp-lock.yaml
+# vercel
+.vercel
 
-# astro lock file
-astro.lock
+# typescript
+*.tsbuildinfo
+next-env.d.ts
 
-# environment variables
-.env
-.env.local
-.env.*
+# Local dev databases
+apps/web/local.db
 
-# macOS-specific files
-.DS_Store
-
-# jetbrains setting folder
-.idea/
-
-*.txt
-
-# Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
-
-# Vercel
-.vercel/
-
-# PDF
-public/pdfs/
-
-env.*
+# E2E Maestro credentials (real values — never commit)
+e2e/credentials.env

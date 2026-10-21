@@ -1,10 +1,6 @@
 // src/lib/supabase/userControl.ts
-import { createClient } from '@libsql/client';
+import { db as client } from './client';
 
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
 
 export interface User {
   id: string;

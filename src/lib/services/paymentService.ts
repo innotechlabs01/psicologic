@@ -1,12 +1,24 @@
 // src/lib/services/paymentService.ts
-import { createClient, type Value } from '@libsql/client';
+import { type Value } from '@libsql/client';
+import { db as client } from '../turso/client';
 import type { paymentHistory, PaymentInfo } from 'src/constants/interfaces';
 
+// Shape camelCase que consume la página de pagos (unifica las dos ramas
+// de getUserPaymentInfo — antes devolvían shapes distintas).
+export interface PaymentInfoDTO {
+  paymentId?: string;
+  userId?: string;
+  paymentDate?: string | null;
+  paymentCount: number;
+  nextPaymentDate: string | null;
+  lastPaymentDate?: string | null;
+  daysToNext: number;
+  subscriptionStatus: string;
+  isActive: boolean;
+  isGameUser: boolean;
+}
+
 // Initialize Supabase client with service role key
-const client = createClient({
-  url: import.meta.env.TURSO_DATABASE_URL,
-  authToken: import.meta.env.TURSO_AUTH_TOKEN
-});
 
 // 🇪🇸 Formato YYYY-MM-DD
 const processDate = (date: string | number | null | undefined): string => {
@@ -47,7 +59,7 @@ const statusHistory = (status: string) => {
 export class PaymentService {
 
   // Obtener información de pagos de un usuario
-  static async getUserPaymentInfo(userId: string) {
+  static async getUserPaymentInfo(userId: string): Promise<PaymentInfoDTO> {
     try {
       const result = await client.execute(
         `
@@ -75,12 +87,12 @@ export class PaymentService {
       if (!paymentResult.rows[0]) {
         const isGameUser = String(result.rows[0]?.role || '') === 'org:moderator';
         return {
-          payment_count: 0,
-          last_payment_date: null,
-          next_payment_date: null,
-          subscription_status: 'inactive',
-          days_to_next_payment: 0,
-          is_subscription_active: false,
+          paymentCount: 0,
+          lastPaymentDate: null,
+          nextPaymentDate: null,
+          subscriptionStatus: 'inactive',
+          daysToNext: 0,
+          isActive: false,
           isGameUser
         };
       }

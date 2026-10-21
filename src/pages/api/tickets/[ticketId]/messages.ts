@@ -1,11 +1,7 @@
 import type { APIRoute } from 'astro';
-import { createClient } from '@libsql/client';
+import { db } from '../../../../lib/turso/client';
 
 // Configuración de la conexión a Turso
-const db = createClient({
-    url: import.meta.env.TURSO_DATABASE_URL,
-    authToken: import.meta.env.TURSO_AUTH_TOKEN,
-});
 
 export const GET: APIRoute = async ({ request, params, locals }) => {
     // 1. Obtener ID del Ticket y Autenticar Usuario

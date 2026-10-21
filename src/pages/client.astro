@@ -302,6 +302,8 @@ if (userId) {
       <!-- ── Appointments Chart ───────────────────────── -->
       {userId && (
         <div class="mt-8 mb-6">
+          <!-- client:only for now: the first render derives dates from new Date() in useState
+               initializers. Make it deterministic before switching to client:idle. -->
           <AppointmentsChart 
             userId={userId}
             initialData={appointmentsData}
@@ -333,6 +335,11 @@ if (userId) {
   loadStats();
 
   // Expose function globally for potential updates
+  declare global {
+    interface Window {
+      refreshClientStats?: () => Promise<void>;
+    }
+  }
   window.refreshClientStats = loadStats;
 </script>
 

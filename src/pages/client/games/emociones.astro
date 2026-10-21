@@ -12,6 +12,7 @@ export const prerender = false;
       title="Emociones"
       subtitle="Anímate a jugar y descubre cómo las emociones pueden ser divertidas y educativas al mismo tiempo."
     >
+    <!-- client:only required: the module injects fonts via document at import time — SSR would crash -->
     <EmotionsGame client:only/>
     </DashboardWrapper>
   </Show>

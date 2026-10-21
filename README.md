@@ -85,3 +85,24 @@ Si quieres que sustituya más colores (ej. paleta de gráficas completa o paleta
 
 Si necesitas ayuda con la implementación del diseño, o quieres que haga una revisión completa de estilos para dejar todo 100% alineado con la paleta, dime y lo dejo listo.
 
+
+---
+
+## 🤖 Estado del repo y workflow (octubre 2026)
+
+**Ramas:** `development` = integración (PRs acá) · `productive` = deploy
+Vercel (solo por merge — nunca push directo) · `main` = stub sin uso.
+
+**Agentes AI:** `AGENTS.md` es el rule manager (stack real, mapa del app,
+reglas técnicas y skills por tipo de cambio). Bootstrap obligatorio:
+skill `pipeline-init`. Un branch = un worktree:
+`scripts/worktree.sh new feature/<nombre>` (base `origin/development`).
+
+**CI:** `.github/workflows/ci.yml` corre `scripts/check-scaffold.sh` +
+shellcheck en push/PR a `development`. `deploy-vercel.yml` buildea Astro y
+deploya a Vercel en `productive`.
+
+**Pre-commit:** `make install-hooks` — bloquea artefactos de build y secretos.
+
+**`apps/rules/`** contiene un corpus template de otro producto ("MR
+Training"): NO es la fuente de verdad técnica de este repo. Ver `AGENTS.md`.
