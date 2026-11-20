@@ -134,6 +134,8 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
         sendDataMessage?: (msg: string) => void;
     };
 
+    const [sessionStartTime] = useState<number>(() => Date.now());
+
     // ── Emoji reactions ──
     const sendReactionViaDC = useCallback(
         (emoji: string) => {
@@ -299,8 +301,8 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
                                     Tu consulta ha finalizado exitosamente.
                                 </p>
                                 <p className="text-zinc-400 text-sm">
-                                    <span className="font-medium">Duración:</span> 
-                                    {Math.round((new Date() - new Date(eventDate || Date.now())) / 60000)} minutos
+                                    <span className="font-medium">Duración:</span>{" "}
+                                    {Math.round((Date.now() - sessionStartTime) / 60000)} minutos
                                 </p>
                                 <p className="text-zinc-400 text-sm">
                                     <span className="font-medium">Tipo:</span> 
@@ -363,7 +365,8 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className={`w-full h-full object-cover object-center transition-opacity duration-1000 ${status === "connected" ? "opacity-100" : "opacity-0"}` style={{ objectFit: "cover" }}}
+                        className={`w-full h-full object-cover object-center transition-opacity duration-1000 ${status === "connected" ? "opacity-100" : "opacity-0"}`}
+                        style={{ objectFit: "cover" }}
                     />
 
                     {/* Placeholder when disconnected or waiting */}
@@ -463,7 +466,8 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
                             autoPlay
                             playsInline
                             muted
-                            className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity duration-500 ${isVideoOff ? "opacity-0" : "opacity-100}" style={{ objectFit: "cover" }}}
+                            className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity duration-500 ${isVideoOff ? "opacity-0" : "opacity-100"}`}
+                            style={{ objectFit: "cover" }}
                         />
                         {isVideoOff && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 gap-3">
