@@ -4,7 +4,8 @@ import { Show } from "@clerk/astro/components";
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
 import AppointmentsChart from "../components/Chartjs/AppointmentsChart";
 import { format, subMonths } from "date-fns";
-import { getPendingAppointmentsCount, getConfirmedAppointmentsCount, getTotalAppointmentsCount, getEventsByDateRange, getNextAppointment } from "../lib/turso/agenda/agenda-db";
+import { getPendingAppointmentsCount, getConfirmedAppointmentsCount, getTotalAppointmentsCount, getEventsByDateRange, getNextAppointment, getPatientCount } from "../lib/turso/agenda/agenda-db";
+import { PaymentService } from "../lib/services/paymentService";
 
 const { userId } = Astro.locals.auth();
 
@@ -31,6 +32,13 @@ if (userId) {
   
   // Obtener la próxima cita confirmada
   nextAppointment = await getNextAppointment(userId);
+  
+  // Obtener información de pagos para banner "plan vence pronto" + checklist
+  const paymentInfo = await PaymentService.getUserPaymentInfo(userId);
+  const daysToNext = paymentInfo.daysToNext;
+  const isActive = paymentInfo.isActive;
+  
+  // Contar pacientes registrados
   
   console.log('Pending count:', pendingCount);
   console.log('Confirmed count:', confirmedCount);

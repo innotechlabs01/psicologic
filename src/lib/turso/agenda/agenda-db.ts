@@ -421,3 +421,15 @@ export async function getNextAppointment(userId: string): Promise<AgendaEvent | 
         return null;
     }
 }
+export async function getPatientCount(userId: string): Promise<number> {
+  try {
+    const result = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM patients WHERE userId = ?',
+      args: [userId],
+    });
+    return parseInt(result.rows[0].count as string);
+  } catch (error) {
+    console.error('Error counting patients:', error);
+    return 0;
+  }
+}

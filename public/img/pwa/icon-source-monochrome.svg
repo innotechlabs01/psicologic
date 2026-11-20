@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo transparente (sin rectángulo de fondo) -->
+  <!-- Elementos blancos (foreground) -->
+  <rect x="96" y="128" width="320" height="230" rx="48" fill="#fff"/>
+  <path d="M160 340 l-30 62 70-44 Z" fill="#fff"/>
+  <!-- Ojos azules removidos para modo monocromo -->
+</svg>
