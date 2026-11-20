@@ -1,16 +1,17 @@
 import { db } from '../../../lib/turso/client';
-
-
-
 import type { APIRoute } from 'astro';
-
+import { requireAuth } from '../../../lib/auth/api-guard';
 
 export const GET:APIRoute = async (context) => {
-  const { request } = context;
+  const { request, locals } = context;
+  const auth = requireAuth(locals);
+  if (auth instanceof Response) return auth;
+
   const url = new URL(request.url);
   const page = Number(url.searchParams.get('page') || '1');
   const limit = Number(url.searchParams.get('limit') || '10');
-  const clerkUserId = url.searchParams.get('userId');
+  const requestedUserId = url.searchParams.get('userId');
+  const clerkUserId = auth.orgRole === 'org:admin' && requestedUserId ? requestedUserId : auth.userId;
 
   const offset = (page - 1) * limit;
 

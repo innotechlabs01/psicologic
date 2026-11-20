@@ -23,6 +23,8 @@ const Icons = {
   stats:      <Icon d={<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>}/>,
   billing:    <Icon d={<><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></>}/>,
   horario:    <Icon d={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>}/>,
+  security:   <Icon d={<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>}/>,
+  feedback:   <Icon d={<><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></>}/>,
   signout:    <Icon d={<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>}/>,
   chevron:    <Icon d={<path strokeWidth={2} d="m6 9 6 6 6-6"/>}/>,
   menu:       <Icon d={<><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="15" y2="18"/></>}/>,
@@ -111,14 +113,14 @@ function SectionLabel({ children }) {
 /* ═══════════════════════════════════════════════════
    NAV ITEM
 ═══════════════════════════════════════════════════ */
-function NavItem({ label, href, icon, active, onNavigate }) {
+function NavItem({ label, href, icon, active, badge, onNavigate }) {
   const [hovered, setHovered] = useState(false);
-  const isOn = active || hovered;
 
   return (
     <li>
       <a
         href={href}
+        data-astro-prefetch="false"
         onClick={e => { e.preventDefault(); onNavigate(href); }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -153,6 +155,15 @@ function NavItem({ label, href, icon, active, onNavigate }) {
         <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {label}
         </span>
+        {badge > 0 && (
+          <span style={{
+            fontSize: 10, fontWeight: 700, padding: "2px 6px",
+            borderRadius: 999, background: "#fef3c7", color: "#b45309",
+            flexShrink: 0,
+          }}>
+            {badge}
+          </span>
+        )}
       </a>
     </li>
   );
@@ -236,6 +247,7 @@ function SubItem({ label, href, active, onNavigate }) {
     <li>
       <a
         href={href}
+        data-astro-prefetch="false"
         onClick={e => { e.preventDefault(); onNavigate(href); }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -306,10 +318,12 @@ function navigateTo(url) {
 /* ═══════════════════════════════════════════════════
    MAIN SIDEBAR COMPONENT
 ═══════════════════════════════════════════════════ */
-export default function Sidebar() {
+export default function Sidebar({ mode = "client" }) {
+  const isAdmin = mode === "admin";
   const [open, setOpen] = useState(false);         // mobile
   const [currentPath, setCurrentPath] = useState(typeof window !== "undefined" ? window.location.pathname : "/");
   const [menuItems, setMenuItems] = useState(null); // null = loading
+  const [pendingUsers, setPendingUsers] = useState(0);
 
   // Sync path with Astro ClientRouter transitions
   useEffect(() => {
@@ -330,14 +344,40 @@ export default function Sidebar() {
     };
   }, []);
 
-  // Load dynamic menu
+  // Load dynamic menu (solo para clientes; admin usa navegación CRM fija)
   useEffect(() => {
     if (currentPath.includes("/agenda/meet")) return;
+    if (isAdmin) {
+      setMenuItems([]);
+      fetch("/api/dashboard/stats", { credentials: "include" })
+        .then(r => (r.ok ? r.json() : null))
+        .then(data => {
+          if (data?.users?.pending) setPendingUsers(data.users.pending);
+        })
+        .catch(() => {});
+      return;
+    }
+    try {
+      const cached = sessionStorage.getItem("psi_client_menu_v1");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed?.items) && Date.now() - parsed.ts < 60_000) {
+          setMenuItems(parsed.items);
+          return;
+        }
+      }
+    } catch {}
     fetch("/api/settings/games/menu", { credentials: "include" })
       .then(r => r.json())
-      .then(data => setMenuItems(data[0]?.menu?.menu || []))
+      .then(data => {
+        const items = data[0]?.menu?.menu || [];
+        setMenuItems(items);
+        try {
+          sessionStorage.setItem("psi_client_menu_v1", JSON.stringify({ items, ts: Date.now() }));
+        } catch {}
+      })
       .catch(() => setTimeout(() => setMenuItems([]), 5000));
-  }, []);
+  }, [isAdmin]);
 
   const navigate = useCallback((url) => {
     // Astro ClientRouter intercepts <a> clicks automatically.
@@ -347,8 +387,10 @@ export default function Sidebar() {
     navigateTo(url);
   }, []);
 
-  const isActive = (href) =>
-    href === currentPath || (href !== "/client" && currentPath.startsWith(href));
+  const isActive = (href) => {
+    if (href === "/client" || href === "/dashboard") return currentPath === href;
+    return currentPath === href || currentPath.startsWith(`${href}/`);
+  };
 
   // Sidebar width
   const W = 232;
@@ -428,16 +470,27 @@ export default function Sidebar() {
             </svg>
           </div>
 
-          <span style={{
-            flex: 1, fontSize: 15, fontWeight: 800,
-            letterSpacing: "-.03em",
-            background: "linear-gradient(135deg, #6366f1, #7c3aed)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            fontFamily: "system-ui, sans-serif",
-          }}>
-            Psicologic
-          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{
+              display: "block", fontSize: 15, fontWeight: 800,
+              letterSpacing: "-.03em",
+              background: "linear-gradient(135deg, #6366f1, #7c3aed)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontFamily: "system-ui, sans-serif",
+            }}>
+              Psicologic
+            </span>
+            {isAdmin && (
+              <span style={{
+                display: "block", fontSize: 9.5, fontWeight: 700,
+                letterSpacing: ".08em", textTransform: "uppercase",
+                color: T.accentText, fontFamily: "system-ui, sans-serif",
+              }}>
+                Admin CRM
+              </span>
+            )}
+          </div>
 
           {/* Close (mobile only) */}
           <button
@@ -460,60 +513,117 @@ export default function Sidebar() {
           padding: "8px 8px",
           display: "flex", flexDirection: "column",
         }}>
-          {/* Static: Dashboard */}
-          <SectionLabel>Principal</SectionLabel>
-          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-            <NavItem
-              label="Dashboard" href="/client"
-              icon={Icons.dashboard}
-              active={isActive("/client")}
-              onNavigate={navigate}
-            />
-          </ul>
+          {isAdmin ? (
+            <>
+              <SectionLabel>CRM &amp; Gestión</SectionLabel>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+                <NavItem
+                  label="Dashboard CRM" href="/dashboard"
+                  icon={Icons.dashboard}
+                  active={isActive("/dashboard")}
+                  onNavigate={navigate}
+                />
+                <NavItem
+                  label="Psicólogos" href="/admin/users"
+                  icon={Icons.patients}
+                  active={isActive("/admin/users")}
+                  badge={pendingUsers}
+                  onNavigate={navigate}
+                />
+                <NavItem
+                  label="Mensajes y Tickets" href="/dashboard/message"
+                  icon={Icons.chat}
+                  active={isActive("/dashboard/message")}
+                  onNavigate={navigate}
+                />
+                <NavItem
+                  label="Pagos y Planes" href="/dashboard/payments"
+                  icon={Icons.billing}
+                  active={isActive("/dashboard/payments")}
+                  onNavigate={navigate}
+                />
+              </ul>
 
-          {/* Dynamic items */}
-          <SectionLabel>Módulos</SectionLabel>
-          <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 1 }}>
-            {menuItems === null ? (
-              <Skeleton />
-            ) : (
-              menuItems.filter(i => i.status !== false).map(i => {
-                const label = i.name === "config_agend" ? "Config. Horario" : (i.nametext || i.name);
-                const hasSubs = Array.isArray(i.subItem) && i.subItem.length > 0;
+              <SectionLabel>Calidad &amp; Sistema</SectionLabel>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+                <NavItem
+                  label="Feedback" href="/dashboard/feedback"
+                  icon={Icons.feedback}
+                  active={isActive("/dashboard/feedback")}
+                  onNavigate={navigate}
+                />
+                <NavItem
+                  label="Seguridad" href="/dashboard/security"
+                  icon={Icons.security}
+                  active={isActive("/dashboard/security")}
+                  onNavigate={navigate}
+                />
+                <NavItem
+                  label="Configuración" href="/dashboard/settings"
+                  icon={Icons.settings}
+                  active={isActive("/dashboard/settings")}
+                  onNavigate={navigate}
+                />
+              </ul>
+            </>
+          ) : (
+            <>
+              {/* Static: Dashboard */}
+              <SectionLabel>Principal</SectionLabel>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+                <NavItem
+                  label="Dashboard" href="/client"
+                  icon={Icons.dashboard}
+                  active={isActive("/client")}
+                  onNavigate={navigate}
+                />
+              </ul>
 
-                if (hasSubs) {
-                  const isGames = label.toLowerCase().includes("jueg");
-                  const basePath = isGames ? "/client/games" : "/client/settings";
-                  return (
-                    <DropdownItem
-                      key={i.name}
-                      label={label}
-                      icon={getIcon(label)}
-                      subs={i.subItem}
-                      basePath={basePath}
-                      currentPath={currentPath}
-                      onNavigate={navigate}
-                    />
-                  );
-                }
+              {/* Dynamic items */}
+              <SectionLabel>Módulos</SectionLabel>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 1 }}>
+                {menuItems === null ? (
+                  <Skeleton />
+                ) : (
+                  menuItems.filter(i => i.status !== false).map(i => {
+                    const label = i.name === "config_agend" ? "Config. Horario" : (i.nametext || i.name);
+                    const hasSubs = Array.isArray(i.subItem) && i.subItem.length > 0;
 
-                const path = i.name === "Historia Clinica"
-                  ? "/client/history/historias"
-                  : `/client/${i.name}`;
+                    if (hasSubs) {
+                      const isGames = label.toLowerCase().includes("jueg");
+                      const basePath = isGames ? "/client/games" : "/client/settings";
+                      return (
+                        <DropdownItem
+                          key={i.name}
+                          label={label}
+                          icon={getIcon(label)}
+                          subs={i.subItem}
+                          basePath={basePath}
+                          currentPath={currentPath}
+                          onNavigate={navigate}
+                        />
+                      );
+                    }
 
-                return (
-                  <NavItem
-                    key={i.name}
-                    label={label}
-                    href={path}
-                    icon={getIcon(label)}
-                    active={isActive(path)}
-                    onNavigate={navigate}
-                  />
-                );
-              })
-            )}
-          </ul>
+                    const path = i.name === "Historia Clinica"
+                      ? "/client/history/historias"
+                      : `/client/${i.name}`;
+
+                    return (
+                      <NavItem
+                        key={i.name}
+                        label={label}
+                        href={path}
+                        icon={getIcon(label)}
+                        active={isActive(path)}
+                        onNavigate={navigate}
+                      />
+                    );
+                  })
+                )}
+              </ul>
+            </>
+          )}
         </nav>
 
         {/* ── Footer: sign out ── */}

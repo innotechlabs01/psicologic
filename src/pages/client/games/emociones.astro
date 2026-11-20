@@ -1,5 +1,6 @@
 ---
 import EmotionsGame from "@components/games/emociones";
+import GameAccessGate from "../../../components/games/GameAccessGate.astro";
 import DashboardWrapper from "../../../components/Dashboard/DashboardWrapper.astro";
 import LayoutClient from "../../../layouts/LayoutClient.astro";
 import { Show } from "@clerk/astro/components";
@@ -12,8 +13,10 @@ export const prerender = false;
       title="Emociones"
       subtitle="Anímate a jugar y descubre cómo las emociones pueden ser divertidas y educativas al mismo tiempo."
     >
-    <!-- client:only required: the module injects fonts via document at import time — SSR would crash -->
-    <EmotionsGame client:only/>
+      <GameAccessGate gameSlug="emociones">
+        <!-- client:only required: the module injects fonts via document at import time — SSR would crash -->
+        <EmotionsGame client:only/>
+      </GameAccessGate>
     </DashboardWrapper>
   </Show>
 </LayoutClient>

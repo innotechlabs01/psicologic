@@ -147,13 +147,16 @@ export const useWebRTC = ({ meetingToken, userType }: UseWebRTCProps) => {
 
     const fetchTurnCredentials = useCallback(async (): Promise<RTCIceServer[]> => {
         try {
-            const res = await fetch("/api/agenda/turn-credentials");
+            const url = meetingToken
+                ? `/api/agenda/turn-credentials?meetingToken=${encodeURIComponent(meetingToken)}`
+                : "/api/agenda/turn-credentials";
+            const res = await fetch(url);
             const data = await res.json();
             return data.iceServers || [];
         } catch {
             return [];
         }
-    }, []);
+    }, [meetingToken]);
 
     const startCall = useCallback(async () => {
         if (!peerConnection.current) return;

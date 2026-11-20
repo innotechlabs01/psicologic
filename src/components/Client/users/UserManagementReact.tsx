@@ -29,6 +29,13 @@ export function UserManagementReact() {
     const [editModeId, setEditModeId] = useState<string | null>(null);
     const [pendingReactivate, setPendingReactivate] = useState<{ id: string; name: string } | null>(null);
 
+    // Games modal state
+    const [gamesPatient, setGamesPatient] = useState<{ id: string; name: string } | null>(null);
+    const [availableGames, setAvailableGames] = useState<{ slug: string; name: string }[]>([]);
+    const [assignedGames, setAssignedGames] = useState<{ gameSlug: string; isPaid: boolean; price: number }[]>([]);
+    const [gamePriceInput, setGamePriceInput] = useState<number>(20000);
+    const [gamesLoading, setGamesLoading] = useState(false);
+
     // Form state
     const [formData, setFormData] = useState({
         name: "",
@@ -36,6 +43,59 @@ export function UserManagementReact() {
         email: "",
         marital_status: "soltero"
     });
+
+    const openGamesModal = async (patient: Patient) => {
+        setGamesPatient({ id: patient.id, name: patient.name });
+        setGamesLoading(true);
+        try {
+            const res = await fetch(`/api/client/patients/games?patientId=${encodeURIComponent(patient.id)}`);
+            if (!res.ok) throw new Error("Error cargando juegos");
+            const json = await res.json();
+            setAvailableGames(json.availableGames || []);
+            setAssignedGames(json.assigned || []);
+        } catch {
+            toast.error("No se pudieron cargar los juegos del paciente");
+        } finally {
+            setGamesLoading(false);
+        }
+    };
+
+    const handleGrantGame = async (gameSlug: string) => {
+        if (!gamesPatient) return;
+        setGamesLoading(true);
+        try {
+            const res = await fetch("/api/client/patients/games", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ patientId: gamesPatient.id, gameSlug, price: gamePriceInput }),
+            });
+            if (!res.ok) throw new Error("Error otorgando juego");
+            toast.success("Juego otorgado al paciente");
+            await openGamesModal({ ...patients.find(p => p.id === gamesPatient.id)!, id: gamesPatient.id, name: gamesPatient.name });
+        } catch {
+            toast.error("No se pudo otorgar el juego");
+            setGamesLoading(false);
+        }
+    };
+
+    const handleRevokeGame = async (gameSlug: string) => {
+        if (!gamesPatient) return;
+        setGamesLoading(true);
+        try {
+            const res = await fetch("/api/client/patients/games", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ patientId: gamesPatient.id, gameSlug }),
+            });
+            if (!res.ok) throw new Error("Error revocando juego");
+            toast.success("Acceso revocado");
+            setAssignedGames(prev => prev.filter(g => g.gameSlug !== gameSlug));
+        } catch {
+            toast.error("No se pudo revocar el juego");
+        } finally {
+            setGamesLoading(false);
+        }
+    };
 
     const limit = 10;
 
@@ -253,6 +313,12 @@ export function UserManagementReact() {
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex justify-end gap-2">
                                             <button
+                                                onClick={() => openGamesModal(p)}
+                                                className="px-3 py-1 rounded text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-colors"
+                                            >
+                                                Juegos
+                                            </button>
+                                            <button
                                                 onClick={() => openEditModal(p.id)}
                                                 className="px-3 py-1 rounded text-xs font-medium border border-[var(--color-azul-principal)] text-[var(--color-azul-oscuro)] hover:bg-[var(--color-azul-principal)]/10 transition-colors"
                                             >
@@ -380,6 +446,74 @@ export function UserManagementReact() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Games Assignment Modal */}
+            {gamesPatient && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setGamesPatient(null)}>
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Juegos de {gamesPatient.name}</h3>
+                                <p className="text-xs text-gray-500">Otorga juegos terapéuticos. El paciente deberá pagar para desbloquearlos.</p>
+                            </div>
+                            <button onClick={() => setGamesPatient(null)} className="text-gray-400 hover:text-gray-600 text-sm font-bold">✕</button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center justify-between gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <label className="text-xs font-semibold text-gray-700">Precio acceso (COP, 0 = gratis):</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    step={1000}
+                                    value={gamePriceInput}
+                                    onChange={e => setGamePriceInput(Math.max(0, Number(e.target.value) || 0))}
+                                    className="w-32 px-2.5 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-right font-semibold"
+                                />
+                            </div>
+                            {gamesLoading ? (
+                                <p className="text-sm text-gray-400 text-center py-6">Cargando juegos...</p>
+                            ) : (
+                                <div className="space-y-2.5">
+                                    {availableGames.map(g => {
+                                        const match = assignedGames.find(a => a.gameSlug === g.slug);
+                                        return (
+                                            <div key={g.slug} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900">{g.name}</p>
+                                                    {match ? (
+                                                        <span className={`inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                                                            match.isPaid ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                                                        }`}>
+                                                            {match.isPaid ? "Pagado / Activo" : `Pendiente de pago ($${match.price.toLocaleString("es-CO")})`}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">No otorgado</span>
+                                                    )}
+                                                </div>
+                                                {match ? (
+                                                    <button
+                                                        onClick={() => handleRevokeGame(g.slug)}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
+                                                    >
+                                                        Revocar
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleGrantGame(g.slug)}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
+                                                    >
+                                                        Otorgar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

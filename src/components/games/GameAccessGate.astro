@@ -1,0 +1,51 @@
+---
+import { checkPatientGamePermission } from "../../lib/games/patient-game-access";
+
+interface Props {
+  gameSlug: string;
+}
+
+const { gameSlug } = Astro.props;
+const { userId, orgRole } = Astro.locals.auth();
+const access = await checkPatientGamePermission(userId, orgRole, gameSlug);
+---
+
+{access.allowed ? (
+  <slot />
+) : access.reason === "payment_required" ? (
+  <div class="max-w-lg mx-auto my-12 bg-white rounded-2xl border border-amber-200 shadow-sm p-8 text-center space-y-4">
+    <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto font-black text-xl">
+      $
+    </div>
+    <h2 class="text-xl font-black text-gray-900">Pago requerido para acceder al juego</h2>
+    <p class="text-sm text-gray-600">
+      Tu psicólogo habilitó este módulo terapéutico para ti. Completa el pago para desbloquear el acceso inmediato.
+    </p>
+    {access.price && access.price > 0 && (
+      <p class="text-lg font-black text-indigo-600">
+        {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(access.price)}
+      </p>
+    )}
+    <div class="pt-2">
+      <a
+        href="/client/payment"
+        class="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition-colors"
+      >
+        Ir a Pagar Acceso →
+      </a>
+    </div>
+  </div>
+) : (
+  <div class="max-w-lg mx-auto my-12 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center space-y-3">
+    <h2 class="text-xl font-black text-gray-900">Juego no habilitado</h2>
+    <p class="text-sm text-gray-600">
+      Tu psicólogo aún no te ha otorgado acceso a este juego. Comunícate con él para que te lo habilite desde su panel.
+    </p>
+    <a
+      href="/client"
+      class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold"
+    >
+      Volver al inicio
+    </a>
+  </div>
+)}

@@ -304,10 +304,16 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
                                     <span className="font-medium">Duración:</span>{" "}
                                     {Math.round((Date.now() - sessionStartTime) / 60000)} minutos
                                 </p>
-                                <p className="text-zinc-400 text-sm">
+                                <p className="text-zinc-400 text-sm mb-4">
                                     <span className="font-medium">Tipo:</span> 
                                     {userType === "host" ? "Consulta con paciente" : "Consulta de seguimiento"}
                                 </p>
+                                <a
+                                    href="/client/agenda"
+                                    className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors"
+                                >
+                                    Volver a la Agenda ahora
+                                </a>
                             </div>
                         </div>
                     )}

@@ -1,8 +1,10 @@
 import { db as client } from '../../../lib/turso/client';
 import type { APIRoute } from 'astro';
+import { requireAuth } from '../../../lib/auth/api-guard';
 
-
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ locals }) => {
+    const auth = requireAuth(locals, ['org:admin']);
+    if (auth instanceof Response) return auth;
 
     const result = await client.execute('SELECT COUNT(*) as count FROM admin_notifications WHERE type = "new_user"');
     const countUser = result.rows[0].count;

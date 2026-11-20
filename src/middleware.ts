@@ -1,30 +1,11 @@
-import { clerkMiddleware, createRouteMatcher, clerkClient } from "@clerk/astro/server";
-import { isAdminRole, isClientRole } from "./lib/clerk/roles";
-import { createUserFromClerk, triggerUserAccessEvent } from "./lib/clerk/user-provisioning";
+import { clerkMiddleware } from "@clerk/astro/server";
+import { triggerUserAccessEvent } from "./lib/clerk/user-provisioning";
 import type { APIContext } from "astro";
 import { checkUserGameAccess } from "./utils/checkUserGameAccess";
 
 import { handleUserWithoutRole, handleInsertUsersAdmin } from "./utils/utils";
 import { checkUserPaymentAccess } from "./utils/chechUserPaymentAccess";
-import { db as client } from "./lib/turso/client";
-
-async function getUserRole(userId: string): Promise<string> {
-  try {
-    const result = await client.execute(
-      ` select role from usuarios where clerk_user_id = ?
-      `, [userId]
-    );
-
-    if (!result.rows || result.rows.length === 0) {
-      return Promise.resolve("");
-    }
-
-    return Promise.resolve(String(result.rows[0].role || ""));
-  } catch (err) {
-    console.error("❌ Exception getting role:", err);
-    return Promise.reject("");
-  }
-}
+import { getUserRole } from "./utils/getUserRole";
 
 function waitUntil(context: APIContext, promise: Promise<any>) {
   // @ts-ignore - Vercel/Cloudflare specific
@@ -35,6 +16,16 @@ function waitUntil(context: APIContext, promise: Promise<any>) {
     promise.catch(e => console.error("Background task failed:", e));
   } else {
     promise.catch(e => console.error("Background task failed:", e));
+  }
+}
+
+function getClientIp(context: APIContext): string {
+  const forwarded = context.request.headers.get('x-forwarded-for')?.toString();
+  if (forwarded) return forwarded;
+  try {
+    return context.clientAddress || 'unknown';
+  } catch {
+    return 'unknown';
   }
 }
 
@@ -52,8 +43,7 @@ function asyncLogAccessEvent(
     action,
     route,
     role: orgRole,
-    ip: context.request.headers.get('x-forwarded-for')?.toString() ||
-      context.clientAddress,
+    ip: getClientIp(context),
     userAgent: context.request.headers.get('user-agent')?.toString(),
     metadata: {
       timestamp: new Date().toISOString(),
@@ -75,6 +65,21 @@ function parseCookies(cookieHeader?: string) {
     if (k && v !== undefined) acc[k] = decodeURIComponent(v);
     return acc;
   }, {});
+}
+
+// ⚡️ In-memory TTL caches to avoid hitting Turso/Clerk on every navigation/prefetch
+const ADMIN_SYNC_TTL_MS = 10 * 60 * 1000;
+const PAYMENT_CACHE_TTL_MS = 60 * 1000;
+const ROLE_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const adminSyncCache = new Map<string, number>();
+const paymentCache = new Map<string, { data: { canAccess: boolean; daysRemaining: number; isExpired: boolean }; ts: number }>();
+const roleCache = new Map<string, { role: string; ts: number }>();
+
+function isPrefetchRequest(request: Request): boolean {
+  const purpose = request.headers.get('purpose') || '';
+  const secPurpose = request.headers.get('sec-purpose') || '';
+  return purpose.includes('prefetch') || secPurpose.includes('prefetch');
 }
 
 function redirectToRoute(route: string, message: string, status: number = 302) {
@@ -128,15 +133,19 @@ const clerkHandler = clerkMiddleware(async (auth, context, next) => {
     return next();
   }
 
-  // ⚡ Log de acceso
-  waitUntil(context, asyncLogAccessEvent(
-    context,
-    userId ?? 'anonymous',
-    'SIN_ROL',
-    'access',
-    currentPath,
-    { sessionId, authenticated: true }
-  ));
+  const isPrefetch = isPrefetchRequest(context.request);
+
+  // ⚡ Log de acceso (omitir en prefetches para no duplicar registros ni latencia)
+  if (!isPrefetch) {
+    waitUntil(context, asyncLogAccessEvent(
+      context,
+      userId ?? 'anonymous',
+      orgRole ?? 'SIN_ROL',
+      'access',
+      currentPath,
+      { sessionId, authenticated: true }
+    ));
+  }
 
   // Validar acceso a juego
   if (isGameLogin && userId) {
@@ -158,11 +167,28 @@ const clerkHandler = clerkMiddleware(async (auth, context, next) => {
 
   let newAssignedRole = "";
 
-  const paymentCheckPromise = checkUserPaymentAccess(userId ?? "");
-  let adminInsertPromise: Promise<void | string> = Promise.resolve();
+  const now = Date.now();
+  const cachedPayment = userId ? paymentCache.get(userId) : undefined;
+  const paymentCheckPromise = (cachedPayment && now - cachedPayment.ts < PAYMENT_CACHE_TTL_MS)
+    ? Promise.resolve(cachedPayment.data)
+    : checkUserPaymentAccess(userId ?? "").then(res => {
+        if (userId) paymentCache.set(userId, { data: res, ts: Date.now() });
+        return res;
+      });
 
-  if (orgRole === "org:admin") {
-    adminInsertPromise = handleInsertUsersAdmin(context, userId ?? "");
+  let adminInsertPromise: Promise<void | string> = Promise.resolve();
+  let shouldSetAdminCookie = false;
+
+  if (orgRole === "org:admin" && userId) {
+    const lastSync = adminSyncCache.get(userId) ?? 0;
+    const hasSyncCookie = cookies['psi_admin_synced'] === '1';
+    if (!hasSyncCookie && now - lastSync >= ADMIN_SYNC_TTL_MS) {
+      adminInsertPromise = handleInsertUsersAdmin(context, userId).then((res) => {
+        adminSyncCache.set(userId, Date.now());
+        shouldSetAdminCookie = true;
+        return res;
+      });
+    }
   }
 
   const [{ canAccess, daysRemaining, isExpired }] = await Promise.all([
@@ -187,10 +213,19 @@ const clerkHandler = clerkMiddleware(async (auth, context, next) => {
   }
 
   if (!orgRole) {
-    newAssignedRole = await getUserRole(userId ?? "");
+    const cachedRole = userId ? roleCache.get(userId) : undefined;
+    if (cachedRole && now - cachedRole.ts < ROLE_CACHE_TTL_MS) {
+      newAssignedRole = cachedRole.role;
+    } else {
+      newAssignedRole = await getUserRole(userId ?? "");
 
-    if (!newAssignedRole) {
-      newAssignedRole = await handleUserWithoutRole(context, userId ?? "", isGameLogin);
+      if (!newAssignedRole) {
+        newAssignedRole = await handleUserWithoutRole(context, userId ?? "", isGameLogin);
+      }
+
+      if (userId && newAssignedRole) {
+        roleCache.set(userId, { role: newAssignedRole, ts: Date.now() });
+      }
     }
 
     if (!newAssignedRole) {
@@ -210,7 +245,11 @@ const clerkHandler = clerkMiddleware(async (auth, context, next) => {
 
   if (newAssignedRole === "org:admin") {
     if (currentPath.startsWith('/dashboard') || currentPath.startsWith('/admin')) {
-      return next();
+      const response = await next();
+      if (shouldSetAdminCookie) {
+        response.headers.append('Set-Cookie', 'psi_admin_synced=1; Path=/; Max-Age=600; HttpOnly; SameSite=Lax');
+      }
+      return response;
     }
 
     waitUntil(context, asyncLogAccessEvent(

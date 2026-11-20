@@ -44,7 +44,6 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
     "festivos-colombianos": "^1.1.0",
-    "htmldocs": "^0.2.30",
     "lucide-react": "^0.552.0",
     "mercadopago": "2.0.0",
     "nodemailer": "^7.0.11",

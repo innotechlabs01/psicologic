@@ -1,6 +1,9 @@
 import type { APIRoute } from 'astro';
+import { requireAuth } from '../../../lib/auth/api-guard';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
+  const auth = requireAuth(locals);
+  if (auth instanceof Response) return auth;
   const orderId = url.searchParams.get('orderId');
   if (!orderId) {
     return new Response(JSON.stringify({ error: 'Falta orderId' }), { status: 400 });

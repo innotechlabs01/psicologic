@@ -2,11 +2,17 @@ import type { APIRoute } from 'astro';
 import crypto from 'crypto';
 import { db as client } from '../../../lib/turso/client';
 import { saveStatusPayment } from '../../../lib/payments/save-payment';
+import { reportErrorToDiscord } from '../../../lib/monitoring/discord-error';
+import { markPatientGamesPaid } from '../../../lib/games/patient-game-access';
 
 const verifyBoldSignature = (body: string, signature: string, secretKey: string): boolean => {
+  if (!signature) return false;
   const encoded = Buffer.from(body).toString('base64');
   const hashed = crypto.createHmac('sha256', secretKey).update(encoded).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(hashed), Buffer.from(signature));
+  const hashBuf = Buffer.from(hashed);
+  const sigBuf = Buffer.from(signature);
+  if (hashBuf.length !== sigBuf.length) return false;
+  return crypto.timingSafeEqual(hashBuf, sigBuf);
 };
 
 export const POST: APIRoute = async ({ request }) => {
@@ -67,6 +73,7 @@ export const POST: APIRoute = async ({ request }) => {
           sql: `UPDATE patientsClient SET membership_paid = 1, updated_at = ? WHERE userId = ?`,
           args: [new Date().toISOString(), clerkUserId]
         });
+        await markPatientGamesPaid(clerkUserId);
       } catch (err) {
         console.warn('No se encontró registro en patientsClient para este usuario.');
       }
@@ -75,6 +82,12 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('OK', { status: 200 });
   } catch (error) {
     console.error('Error procesando webhook de Bold:', error);
+    await reportErrorToDiscord({
+      source: 'webhook',
+      route: '/api/bold/webhook',
+      error,
+      severity: 'critical',
+    });
     return new Response('Internal Error', { status: 500 });
   }
 };

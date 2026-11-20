@@ -1,11 +1,14 @@
 import { db } from '../../../lib/turso/client';
-
-
 import type { APIRoute } from 'astro';
+import { requireAuth } from '../../../lib/auth/api-guard';
 
 export const GET: APIRoute = async (context) => {
+    const auth = requireAuth(context.locals);
+    if (auth instanceof Response) return auth;
+
     const url = new URL(context.request.url);
-    const id = url.searchParams.get('id');
+    const requestedId = url.searchParams.get('id');
+    const id = auth.orgRole === 'org:admin' && requestedId ? requestedId : auth.userId;
     let res;
     res = await db.execute({ sql: 'SELECT id, template FROM template_history WHERE userId = ? and status = 1 LIMIT 1', args: [id] });
     if (!res.rows.length) return new Response(JSON.stringify({ ok: false, message: 'No Tiene Template configurado, por favor registre un template' }), { status: 404 });

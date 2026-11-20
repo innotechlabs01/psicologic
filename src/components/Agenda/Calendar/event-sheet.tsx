@@ -62,8 +62,11 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
     const [duplicateDate, setDuplicateDate] = useState<Date | undefined>(undefined);
     const [duplicateOpen, setDuplicateOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!event) return null;
+
+    const isConfirmed = event.status === "confirmed";
 
     const triggerRefresh = () => {
         invalidateCache();
@@ -71,6 +74,8 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
     };
 
     const executeDelete = async () => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         try {
             const res = await fetch(`/api/agenda/${event.id}`, { method: 'DELETE' });
             if (res.ok) {
@@ -81,18 +86,22 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             } else {
                 toast.error("Error al eliminar la cita");
             }
-        } catch (error) {
+        } catch {
             toast.error("Error al eliminar la cita");
             setDeleteDialogOpen(false);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDuplicate = async () => {
+        if (isSubmitting) return;
         if (!duplicateDate) {
             toast.error("Selecciona una fecha para duplicar");
             return;
         }
 
+        setIsSubmitting(true);
         try {
             const payload = {
                 title: event.title,
@@ -100,7 +109,6 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                 startTime: event.startTime,
                 endTime: event.endTime,
                 participants: event.participants,
-                meetingLink: event.meetingLink,
                 timezone: event.timezone,
             };
 
@@ -111,7 +119,7 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             });
 
             if (res.ok) {
-                toast.success("Cita duplicada correctamente");
+                toast.success("Cita duplicada con nuevo enlace de sesión");
                 setDuplicateOpen(false);
                 triggerRefresh();
                 setTimeout(() => onOpenChange(false), 300);
@@ -120,6 +128,8 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
             }
         } catch {
             toast.error("Error al duplicar la cita");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -174,11 +184,11 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                        <Button variant="outline" disabled={isSubmitting} onClick={() => setDeleteDialogOpen(false)}>
                             Cancelar
                         </Button>
-                        <Button variant="destructive" onClick={executeDelete}>
-                            Eliminar
+                        <Button variant="destructive" disabled={isSubmitting} onClick={executeDelete}>
+                            {isSubmitting ? "Eliminando..." : "Eliminar"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -191,6 +201,15 @@ export function EventSheet({ event, open, onOpenChange }: EventSheetProps) {
                 >
                     <div className="flex flex-col h-full">
                         <SheetHeader className="px-4 pt-4 pb-4 border-b border-border">
+                            <div className="mb-2">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                                    isConfirmed
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}>
+                                    {isConfirmed ? "Confirmada por paciente" : "Pendiente de confirmación"}
+                                </span>
+                            </div>
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
                                     <Button

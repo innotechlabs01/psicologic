@@ -1,11 +1,13 @@
-// @ts-ignore
 import type { APIRoute } from "astro";
 import PDFDocument from "pdfkit";
+import { requireAuth } from "../../../lib/auth/api-guard";
 
 export const dynamic = "force-node";
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   try {
+    const auth = requireAuth(locals);
+    if (auth instanceof Response) return auth;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
@@ -23,12 +25,14 @@ export const GET: APIRoute = async ({ request }) => {
       request.url
     );
 
-    // Buscar paciente
+    // Buscar paciente (reenviando cookies de sesión para autenticación interna)
+    const cookieHeader = request.headers.get("cookie") || "";
     const patientRes = await fetch(apiUrl.toString(), {
       method: "POST",
       body: JSON.stringify({ id }),
       headers: {
         "Content-Type": "application/json",
+        ...(cookieHeader ? { cookie: cookieHeader } : {}),
       },
       cache: "no-store",
     });

@@ -1,6 +1,5 @@
 ---
 import Footer from "../components/Footer/footer.astro";
-import HeaderClient from "../components/Header/headerClient.astro";
 import { Analytics } from "@vercel/analytics/react";
 
 import Sidebar from "@components/sidebar/Sidebar";
@@ -181,4 +180,30 @@ const { title = "Psicologic", fullscreen = false } = Astro.props;
       setTimeout(() => { b.style.width = "0%"; }, 300);
     }, 150);
   });
+
+  // Reporte automático de errores JS no capturados hacia Discord (vía /api/monitoring/error)
+  if (!(window as any).__psiErrorMonitorAttached) {
+    (window as any).__psiErrorMonitorAttached = true;
+    const sendClientError = (message: string, stack?: string) => {
+      fetch("/api/monitoring/error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          stack,
+          route: window.location.pathname,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    window.addEventListener("error", (ev) => {
+      sendClientError(ev.message || "Unhandled window error", ev.error?.stack);
+    });
+    window.addEventListener("unhandledrejection", (ev) => {
+      const reason = ev.reason;
+      const msg = reason instanceof Error ? reason.message : String(reason || "Unhandled promise rejection");
+      sendClientError(msg, reason instanceof Error ? reason.stack : undefined);
+    });
+  }
 </script>

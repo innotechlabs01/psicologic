@@ -26,35 +26,51 @@ export function calculateBlockedPaymentDate(nextPaymentDate: Date): Date {
 }
 
 /**
- * Persiste el estado de una transacción de pago (Bold).
- * Compartido por /api/bold/webhook y /api/bold/validate.
+ * Persiste el estado de una transacción de pago (Bold) de forma idempotente.
+ * Si el paymentId ya existe, actualiza el estado si cambió y no duplica el registro.
+ * Propaga errores de DB para que el webhook devuelva 500 y Bold reintente.
  */
 export async function saveStatusPayment(
   userId: string,
   paymentId: string,
   amount: number,
   status: string,
-): Promise<void> {
-  try {
-    const now = new Date();
-    const nextPaymentDate = calculateNextPaymentDate(now);
-    const blockedPaymentDate = calculateBlockedPaymentDate(nextPaymentDate);
-
-    await db.execute({
-      sql: `INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        paymentId,
-        userId,
-        amount,
-        status,
-        now.toISOString(),
-        nextPaymentDate.toISOString(),
-        blockedPaymentDate.toISOString(),
-        now.toISOString(),
-      ],
+): Promise<{ inserted: boolean }> {
+  if (paymentId) {
+    const existing = await db.execute({
+      sql: `SELECT id, status FROM payments WHERE paymentId = ? LIMIT 1`,
+      args: [paymentId],
     });
-  } catch (error) {
-    console.error('Error al guardar el estado de la transacción:', error);
+    if (existing.rows && existing.rows.length > 0) {
+      const prevStatus = String(existing.rows[0].status || '');
+      if (status && prevStatus !== status) {
+        await db.execute({
+          sql: `UPDATE payments SET status = ? WHERE paymentId = ?`,
+          args: [status, paymentId],
+        });
+      }
+      return { inserted: false };
+    }
   }
+
+  const now = new Date();
+  const nextPaymentDate = calculateNextPaymentDate(now);
+  const blockedPaymentDate = calculateBlockedPaymentDate(nextPaymentDate);
+
+  await db.execute({
+    sql: `INSERT INTO payments (paymentId, userId, amount, status, paymentDate, nextPaymentDate, blockedPaymentDate, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      paymentId,
+      userId,
+      amount,
+      status,
+      now.toISOString(),
+      nextPaymentDate.toISOString(),
+      blockedPaymentDate.toISOString(),
+      now.toISOString(),
+    ],
+  });
+
+  return { inserted: true };
 }

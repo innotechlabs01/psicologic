@@ -11,9 +11,13 @@
 
 import type { APIRoute } from 'astro';
 import { db } from '../../../../lib/turso/client';
+import { requireAuth } from '../../../../lib/auth/api-guard';
 
 
-export const POST: APIRoute = async ({ params, request, locals }) => {
+export const POST: APIRoute = async ({ params, locals }) => {
+    const auth = requireAuth(locals);
+    if (auth instanceof Response) return auth;
+
     const { ticketId } = params;
 
     await db.execute(

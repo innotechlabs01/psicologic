@@ -1,5 +1,6 @@
 ---
 import MiedosGame from '@components/games/miedos';
+import GameAccessGate from '../../../components/games/GameAccessGate.astro';
 import DashboardWrapper from '../../../components/Dashboard/DashboardWrapper.astro';
 import LayoutClient from '../../../layouts/LayoutClient.astro';
 import { Show } from '@clerk/astro/components';
@@ -12,7 +13,9 @@ export const prerender = false; // Renderizado del lado del cliente
       title="🃏 Jugamos" 
       subtitle="Supera tus miedos"
     >
-      <MiedosGame client:load/>
+      <GameAccessGate gameSlug="miedo">
+        <MiedosGame client:load/>
+      </GameAccessGate>
     </DashboardWrapper>
   </Show>
 </LayoutClient>

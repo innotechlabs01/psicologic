@@ -21,6 +21,8 @@ export function EventCard({ event, style, onClick, loading }: EventCardProps) {
     const timeStr = `${event.startTime} - ${event.endTime}${event.timezone ? ` (${event.timezone})` : ""
         }`;
     const hasMultipleParticipants = event.participants.length > 3;
+    const isConfirmed = event.status === "confirmed";
+    const statusDotClass = isConfirmed ? "bg-emerald-500" : "bg-amber-500";
 
     if (loading) {
         return (
@@ -44,7 +46,7 @@ export function EventCard({ event, style, onClick, loading }: EventCardProps) {
                 style={style}
                 onClick={onClick}
             >
-                <div className="size-1.5 rounded-full bg-cyan-500 shrink-0" />
+                <div className={`size-1.5 rounded-full ${statusDotClass} shrink-0`} title={isConfirmed ? "Confirmada por paciente" : "Pendiente de confirmación"} />
                 <h4 className="text-[10px] font-semibold text-foreground truncate flex-1">
                     {event.title}
                 </h4>
@@ -64,7 +66,7 @@ export function EventCard({ event, style, onClick, loading }: EventCardProps) {
             >
                 <div className="flex flex-col gap-1 h-full">
                     <div className="flex items-center gap-1.5">
-                        <div className="size-1.5 rounded-full bg-cyan-500 shrink-0" />
+                        <div className={`size-1.5 rounded-full ${statusDotClass} shrink-0`} title={isConfirmed ? "Confirmada por paciente" : "Pendiente de confirmación"} />
                         <h4 className="text-[10px] font-semibold text-foreground truncate flex-1">
                             {event.title}
                         </h4>
@@ -85,12 +87,19 @@ export function EventCard({ event, style, onClick, loading }: EventCardProps) {
         >
             <div className="flex flex-col gap-1 h-full">
                 <div className="flex-1 min-h-0">
-                    <h4
-                        className={`text-xs font-semibold text-foreground mb-1 ${duration <= 60 ? "truncate whitespace-nowrap" : "line-clamp-2"
-                            }`}
-                    >
-                        {event.title}
-                    </h4>
+                    <div className="flex items-start justify-between gap-1.5 mb-1">
+                        <h4
+                            className={`text-xs font-semibold text-foreground ${duration <= 60 ? "truncate whitespace-nowrap" : "line-clamp-2"
+                                }`}
+                        >
+                            {event.title}
+                        </h4>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                            isConfirmed ? "bg-emerald-500/15 text-emerald-700" : "bg-amber-500/15 text-amber-700"
+                        }`}>
+                            {isConfirmed ? "Confirmada" : "Pendiente"}
+                        </span>
+                    </div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">
                         {timeStr}
                     </p>
@@ -128,7 +137,7 @@ export function EventCard({ event, style, onClick, loading }: EventCardProps) {
                                 />
                             </svg>
                         </div>
-                        <span className="flex-1 truncate">Join on Google Meet</span>
+                        <span className="flex-1 truncate">Videollamada Psicologic</span>
                         <ExternalLink className="size-3 shrink-0" />
                     </div>
                 )}

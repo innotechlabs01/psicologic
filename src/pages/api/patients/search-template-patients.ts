@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db } from '../../../lib/turso/client';
-
+import { requireAuth } from '../../../lib/auth/api-guard';
 
 // Tipo para que TS no se queje
 type SectionMap = Record<string, {
@@ -11,8 +11,11 @@ type SectionMap = Record<string, {
   value: any;
 }[]>;
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    const auth = requireAuth(locals);
+    if (auth instanceof Response) return auth;
+
     const { id } = await request.json();
 
     if (!id) {

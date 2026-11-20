@@ -1,10 +1,18 @@
 import type { APIRoute } from 'astro';
 import { db as client } from '../../../lib/turso/client';
 import { saveStatusPayment } from '../../../lib/payments/save-payment';
+import { reportErrorToDiscord } from '../../../lib/monitoring/discord-error';
+import { requireAuth } from '../../../lib/auth/api-guard';
+import { markPatientGamesPaid } from '../../../lib/games/patient-game-access';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const { orderId, userId } = await request.json();
+    const auth = requireAuth(locals);
+    if (auth instanceof Response) return auth;
+
+    const body = await request.json();
+    const orderId = body?.orderId;
+    const userId = auth.orgRole === 'org:admin' && body?.userId ? String(body.userId) : auth.userId;
 
     if (!orderId || !userId) {
       return new Response(JSON.stringify({ error: 'Faltan parámetros: orderId, userId' }), { status: 400 });
@@ -65,6 +73,7 @@ export const POST: APIRoute = async ({ request }) => {
           sql: `UPDATE patientsClient SET membership_paid = 1, updated_at = ? WHERE userId = ?`,
           args: [new Date().toISOString(), userId]
         });
+        await markPatientGamesPaid(userId);
       } catch (err) {
         console.warn('No se encontró registro en patientsClient para este usuario.');
       }
@@ -76,6 +85,12 @@ export const POST: APIRoute = async ({ request }) => {
     });
   } catch (error) {
     console.error('Error en bold/validate:', error);
+    await reportErrorToDiscord({
+      source: 'server',
+      route: '/api/bold/validate',
+      error,
+      severity: 'critical',
+    });
     return new Response(JSON.stringify({ error: 'Error interno' }), { status: 500 });
   }
 };

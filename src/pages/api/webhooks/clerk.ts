@@ -8,6 +8,7 @@ import {
   softDeleteUser,
 } from '../../../lib/clerk/user-provisioning';
 import type { ClerkUserEvent } from '../../../lib/clerk/types';
+import { reportErrorToDiscord } from '../../../lib/monitoring/discord-error';
 
 async function handleUserCreated(userData: ClerkUserEvent['data']) {
   return await createUserFromClerk(userData);
@@ -118,6 +119,12 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   } catch (error) {
+    await reportErrorToDiscord({
+      source: 'webhook',
+      route: '/api/webhooks/clerk',
+      error,
+      severity: 'critical',
+    });
     return new Response(JSON.stringify({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error occurred',

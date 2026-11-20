@@ -126,6 +126,19 @@ mr-context + herdr-setup, y herdr si HERDR_ENV=1).
    de mutar la DB. Nunca confies en el request sin validar.
 7. **Datos de pacientes = datos sensibles.** No los loguees, no los expongas
    en respuestas API innecesarias, no los copies a specs/docs.
+8. **Auth explícita en cada `/api/*`:** `middleware.ts` hace bypass de `/api/*`.
+   Todo endpoint nuevo o modificado DEBE validar `locals.auth()` y rol
+   (`org:admin` / `org:client`) al inicio (salvo webhooks con firma verificada).
+9. **Cero código basura ni duplicado:** antes de crear un componente, helper o
+   endpoint, busca si ya existe en `src/components/`, `src/utils/` o `src/pages/api/`.
+   Si reemplazas un componente (ej. `Header` → `Sidebar`), no dejes código muerto.
+10. **Cero métricas inventadas en UI:** prohibido hardcodear tendencias (`+12%`),
+    latencias (`24ms`) o contadores ficticios; todo KPI debe venir de Turso/API real.
+11. **Performance en `middleware.ts` y `ClientRouter`:** no hagas llamadas
+    síncronas repetidas a Clerk/Turso en cada navegación ni prefetches sin control
+    (`data-astro-prefetch="false"` en enlaces sensibles a rol).
+12. **Gate mínimo antes de commit/push:** `npx astro check` con `0 errors` y
+    `scripts/check-scaffold.sh` en verde; sin `console.log` nuevos de debug.
 
 ---
 

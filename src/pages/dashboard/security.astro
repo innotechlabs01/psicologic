@@ -3,6 +3,7 @@ import LayoutDashboard from "../../layouts/LayoutDashboard.astro";
 import DashboardWrapper from "../../components/Dashboard/DashboardWrapper.astro";
 import { Show } from "@clerk/astro/components";
 import { db } from "../../lib/turso/client";
+import { SecurityCRM } from "../../components/Admin/SecurityCRM";
 
 // Guard admin
 const { userId } = Astro.locals.auth();
@@ -24,100 +25,13 @@ if (!isAdmin) {
 }
 ---
 
-<LayoutDashboard title="Alertas de Seguridad | Psicologic">
-    <Show when="signed-in">
-        <DashboardWrapper
-            title="🛡️ Alertas de Seguridad"
-            subtitle="Monitoreo de accesos sospechosos y alertas del sistema"
-        >
-            <div class="mt-6 space-y-8">
-                <!-- Alertas activas -->
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
-                    <h3 class="text-lg font-black text-gray-900 dark:text-white mb-4">
-                        Alertas Activas
-                    </h3>
-                    <div id="security-alerts" class="space-y-4">
-                        <p class="text-center text-gray-500 dark:text-gray-400">Cargando alertas...</p>
-                    </div>
-                </div>
-
-                <!-- Accesos denegados recientes -->
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
-                    <h3 class="text-lg font-black text-gray-900 dark:text-white mb-4">
-                        Accesos Denegados Recientes
-                    </h3>
-                    <div id="denied-access" class="space-y-4">
-                        <p class="text-center text-gray-500 dark:text-gray-400">Cargando accesos denegados...</p>
-                    </div>
-                </div>
-            </div>
-        </DashboardWrapper>
-    </Show>
+<LayoutDashboard title="Seguridad y Accesos | Psicologic">
+  <Show when="signed-in">
+    <DashboardWrapper
+      title="Seguridad y Control de Accesos"
+      subtitle="Monitoreo en tiempo real de alertas, accesos denegados y bloqueo rápido"
+    >
+      <SecurityCRM client:load />
+    </DashboardWrapper>
+  </Show>
 </LayoutDashboard>
-
-<script>
-    async function loadSecurityData() {
-        try {
-            // Cargar alertas activas
-            const alertsRes = await fetch("/api/security/admin");
-            if (!alertsRes.ok) {
-                console.error("Security: error cargando alertas", alertsRes.status);
-                document.getElementById("security-alerts")!.innerHTML = "<p class='text-red-500'>Error cargando alertas</p>";
-            } else {
-                const { alerts } = await alertsRes.json();
-                const alertsEl = document.getElementById("security-alerts")!;
-                if (alerts.length === 0) {
-                    alertsEl.innerHTML = "<p class='text-gray-500 dark:text-gray-400'>No hay alertas activas</p>";
-                } else {
-                    alertsEl.innerHTML = alerts.map((a: any) => `
-                        <div class="p-4 rounded-xl ${a.severity === 'high' ? 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-500' : 'bg-amber-100 dark:bg-amber-900/30 border-amber-200 dark:border-amber-400'} border rounded">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h4 class="font-bold text-gray-900 dark:text-white mb-1">${a.title}</h4>
-                                    <p class="text-sm text-gray-500 dark:text-gray-300 line-clamp-2">${a.message}</p>
-                                </div>
-                                <span class="text-xs font-bold rounded px-2 py-1 ${a.severity === 'high' ? 'bg-red-600 text-white' : 'bg-amber-600 text-white'}">
-                                    ${a.severity.toUpperCase()}
-                                </span>
-                            </div>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">${new Date(a.created_at).toLocaleString("es-CO")}</p>
-                        </div>
-                    `).join("");
-                }
-            }
-
-            // Cargar accesos denegados recientes
-            const logsRes = await fetch("/api/security/admin?since=" + new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-            if (!logsRes.ok) {
-                console.error("Security: error cargando logs", logsRes.status);
-                document.getElementById("denied-access")!.innerHTML = "<p class='text-red-500'>Error cargando logs</p>";
-            } else {
-                const { deniedLogs } = await logsRes.json();
-                const accessEl = document.getElementById("denied-access")!;
-                if (deniedLogs.length === 0) {
-                    accessEl.innerHTML = "<p class='text-gray-500 dark:text-gray-400'>No hay accesos denegados recientes</p>";
-                } else {
-                    accessEl.innerHTML = deniedLogs.map((l: any) => `
-                        <div class="p-3 rounded border-b border-gray-200 dark:border-gray-700">
-                            <div class="flex justify-between items-start">
-                                <span class="text-sm text-gray-600 dark:text-gray-300">${l.email || 'Sin email'}</span>
-                                <span class="text-xs font-bold text-red-600 dark:text-red-400">Denegado</span>
-                            </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${new Date(l.created_at).toLocaleString("es-CO")}</p>
-                        </div>
-                    `).join("");
-                }
-            }
-        } catch (e) {
-            console.error("Security: error general", e);
-            document.getElementById("security-alerts")!.innerHTML = "<p class='text-red-500'>Error cargando datos</p>";
-            document.getElementById("denied-access")!.innerHTML = "<p class='text-red-500'>Error cargando datos</p>";
-        }
-    }
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", loadSecurityData);
-    } else {
-        loadSecurityData();
-    }
-</script>

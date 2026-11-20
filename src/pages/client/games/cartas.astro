@@ -1,5 +1,6 @@
 ---
 import CartasGame from "@components/games/cartas";
+import GameAccessGate from "../../../components/games/GameAccessGate.astro";
 import DashboardWrapper from "../../../components/Dashboard/DashboardWrapper.astro";
 import LayoutClient from "../../../layouts/LayoutClient.astro";
 import { Show } from "@clerk/astro/components";
@@ -12,9 +13,9 @@ export const prerender = false;
       title="🃏 Jugamos"
       subtitle="Anímate a jugar y compartir con tu pareja"
     >
-
-    <CartasGame client:load/>
-      
+      <GameAccessGate gameSlug="cartas">
+        <CartasGame client:load/>
+      </GameAccessGate>
     </DashboardWrapper>
   </Show>
 </LayoutClient>

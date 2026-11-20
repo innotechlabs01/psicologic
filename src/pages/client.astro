@@ -4,55 +4,45 @@ import { Show } from "@clerk/astro/components";
 import DashboardWrapper from "../components/Dashboard/DashboardWrapper.astro";
 import AppointmentsChart from "../components/Chartjs/AppointmentsChart";
 import { format, subMonths } from "date-fns";
-import { getPendingAppointmentsCount, getConfirmedAppointmentsCount, getTotalAppointmentsCount, getEventsByDateRange, getNextAppointment, getPatientCount } from "../lib/turso/agenda/agenda-db";
-import { PaymentService } from "../lib/services/paymentService";
+import {
+  getPendingAppointmentsCount,
+  getConfirmedAppointmentsCount,
+  getEventsByDateRange,
+  getNextAppointment,
+  getPatientCount,
+} from "../lib/turso/agenda/agenda-db";
+import { reportErrorToDiscord } from "../lib/monitoring/discord-error";
 
 const { userId } = Astro.locals.auth();
 
-console.log('User ID from auth:', userId);
-
 let pendingCount = 0;
 let confirmedCount = 0;
+let patientCount = 0;
 let appointmentsData: any[] = [];
 let nextAppointment: any = null;
 
 if (userId) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const oneYearAgo = format(subMonths(new Date(), 12), 'yyyy-MM-dd');
-  
-  console.log('Today date:', today);
-  console.log('Getting appointments from:', oneYearAgo, 'to:', today);
-  
-  pendingCount = await getPendingAppointmentsCount(userId, today);
-  confirmedCount = await getConfirmedAppointmentsCount(userId, today);
-  const totalCount = await getTotalAppointmentsCount(userId);
-  
-  // Obtener historial completo para el gráfico - IGUAL A LAS TARJETAS
-  appointmentsData = await getEventsByDateRange(oneYearAgo, today, userId);
-  
-  // Obtener la próxima cita confirmada
-  nextAppointment = await getNextAppointment(userId);
-  
-  // Obtener información de pagos para banner "plan vence pronto" + checklist
-  const paymentInfo = await PaymentService.getUserPaymentInfo(userId);
-  const daysToNext = paymentInfo.daysToNext;
-  const isActive = paymentInfo.isActive;
-  
-  // Contar pacientes registrados
-  
-  console.log('Pending count:', pendingCount);
-  console.log('Confirmed count:', confirmedCount);
-  console.log('Total count:', totalCount);
-  console.log('Appointments for chart:', appointmentsData.length);
-  console.log('Next appointment details:', {
-    found: nextAppointment !== null,
-    title: nextAppointment?.title,
-    date: nextAppointment?.date,
-    startTime: nextAppointment?.startTime,
-    status: nextAppointment?.status
-  });
-} else {
-  console.log('No userId found');
+
+  try {
+    [pendingCount, confirmedCount, appointmentsData, nextAppointment, patientCount] =
+      await Promise.all([
+        getPendingAppointmentsCount(userId, today),
+        getConfirmedAppointmentsCount(userId, today),
+        getEventsByDateRange(oneYearAgo, today, userId),
+        getNextAppointment(userId),
+        getPatientCount(userId),
+      ]);
+  } catch (err) {
+    console.error("Error cargando métricas de /client:", err);
+    await reportErrorToDiscord({
+      source: "server",
+      route: "/client",
+      error: err,
+      userId,
+    });
+  }
 }
 ---
 
@@ -80,8 +70,8 @@ if (userId) {
             </svg>
           </div>
           <div>
-            <p class="stat-label">Retos completados</p>
-            <p class="stat-value">0</p>
+            <p class="stat-label">Pacientes activos</p>
+            <p class="stat-value">{patientCount}</p>
           </div>
         </div>
 
