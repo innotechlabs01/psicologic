@@ -291,6 +291,24 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
                             ? "Serás redirigido en unos segundos."
                             : "Puedes cerrar esta ventana."}
                     </p>
+                    {isAuthenticated && (
+                        <div className="mt-4 p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-200 text-center">
+                            <div className="max-w-md mx-auto">
+                                <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-3">Resumen de Sesión</h3>
+                                <p className="text-zinc-500 dark:text-zinc-400 mb-2">
+                                    Tu consulta ha finalizado exitosamente.
+                                </p>
+                                <p className="text-zinc-400 text-sm">
+                                    <span className="font-medium">Duración:</span> 
+                                    {Math.round((new Date() - new Date(eventDate || Date.now())) / 60000)} minutos
+                                </p>
+                                <p className="text-zinc-400 text-sm">
+                                    <span className="font-medium">Tipo:</span> 
+                                    {userType === "host" ? "Consulta con paciente" : "Consulta de seguimiento"}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     {!isAuthenticated && (
                         <button
                             onClick={() => window.close()}
@@ -305,10 +323,10 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
     }
 
     return (
-        <div className="relative flex flex-col h-screen bg-[#050505] text-white overflow-hidden font-sans select-none">
+        <div className="relative w-full min-h-screen bg-[#050505] text-white overflow-hidden font-sans select-none" style={{ height: '100vh' }}>
             {/* Ambient Background Glow */}
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-5%] right-[-5%] w-[45%] h-[45%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
 
             {/* Top Bar */}
             <div className={`absolute top-0 left-0 right-0 z-50 p-6 flex justify-between items-center transition-all duration-500 transform ${isControlsVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}>
@@ -340,12 +358,12 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
             {/* Main Content Area */}
             <div className="flex-1 relative flex items-center justify-center p-4 md:p-8">
                 {/* Remote Video Container */}
-                <div className="relative w-full h-full max-w-7xl mx-auto rounded-[2rem] overflow-hidden bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-700">
+                <div className="relative w-full h-full max-w-7xl mx-auto rounded-[2rem] overflow-hidden bg-zinc-900 border border-white/10 shadow-2xl transition-all duration-700" style={{ height: "100%" }}>
                     <video
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className={`w-full h-full object-cover transition-opacity duration-1000 ${status === "connected" ? "opacity-100" : "opacity-0"}`}
+                        className={`w-full h-full object-cover object-center transition-opacity duration-1000 ${status === "connected" ? "opacity-100" : "opacity-0"}` style={{ objectFit: "cover" }}}
                     />
 
                     {/* Placeholder when disconnected or waiting */}
@@ -445,7 +463,7 @@ const VideoRoom: React.FC<VideoRoomProps> = ({ meetingToken, userType, isAuthent
                             autoPlay
                             playsInline
                             muted
-                            className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity duration-500 ${isVideoOff ? "opacity-0" : "opacity-100"}`}
+                            className={`w-full h-full object-cover transform scale-x-[-1] transition-opacity duration-500 ${isVideoOff ? "opacity-0" : "opacity-100}" style={{ objectFit: "cover" }}}
                         />
                         {isVideoOff && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 gap-3">
